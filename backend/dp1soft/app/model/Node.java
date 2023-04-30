@@ -67,6 +67,10 @@ public class Node {
         this.isBlocked = node.isBlocked;
         this.isDestination = node.isDestination;
     }
+    public Node(int x, int y){
+        this.x = x;
+        this.y = y;
+    }
     //endregion
 
     //region Métodos

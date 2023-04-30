@@ -23,14 +23,14 @@ public class Genetic {
     //Porcentaje de la población que serán elegidos como padres
     public static final double PARENTS = 0.5;
     //Porcentaje de mutación
-    private static final double MUTATE_CHANCE = 0.2;
+    private static final double MUTATE_CHANCE = 0.05;
     //Porcentaje de ignorar las heurísticas
     public static final double IGNORE_CHANCE = 0.1;
     //endregion
 
     //region Métodos
     //Método principal para generar una ruta
-    public Solution getBestRoute(Environment env, ArrayList<Vehicle> vehicles, Pack pack, int minute) {
+    public static Solution getBestRoute(Environment env, ArrayList<Vehicle> vehicles, Pack pack, int minute) {
         //Asignar parámetros auxiliares a Solution
         Solution.vehicles = vehicles;
         Solution.pack = pack;
@@ -49,7 +49,7 @@ public class Genetic {
         }
         Solution best = getFit(population); //Obtener el mejor
 
-        for(i =0 ; i < GENERATIONS; i++){ //Comenzar la iteración
+        for(i = 0 ; i < GENERATIONS; i++){ //Comenzar la iteración
             parents = Utils.getParents(population); //Obtener padres
             newPopulation = crossPopulation(parents); //Cruzar los padres
             newPopulation = mutate(newPopulation, env, pack); //Mutar la nueva población
@@ -62,7 +62,7 @@ public class Genetic {
         return best;
     }
     //Método para generar la población inicial
-    private ArrayList<Solution> initPopulation(Environment env, ArrayList<Vehicle> vehicles, Pack pack){
+    private static ArrayList<Solution> initPopulation(Environment env, ArrayList<Vehicle> vehicles, Pack pack){
         ArrayList<Solution> population = new ArrayList<>();
         Solution solution;
         int i, v;
@@ -83,7 +83,7 @@ public class Genetic {
         return population;
     }
     //Genera una ruta válida
-    private Solution getNewSolution(Environment env, Node from, Node to){
+    private static Solution getNewSolution(Environment env, Node from, Node to){
         Solution solution = new Solution();
         Node localFrom = new Node(from);
         Chrom chrom;
@@ -108,7 +108,7 @@ public class Genetic {
         return solution;
     }
     //Obtiene el mejor miembro de la población
-    private Solution getFit(ArrayList<Solution> population) {
+    private static Solution getFit(ArrayList<Solution> population) {
         Solution best = population.get(0);
         for(Solution s : population){
             if(s.isBetter(best)){
@@ -119,13 +119,13 @@ public class Genetic {
         return best;
     }
     //Cruzar los padres
-    private ArrayList<Solution> crossPopulation(ArrayList<Solution> parents){
+    private static ArrayList<Solution> crossPopulation(ArrayList<Solution> parents){
         ArrayList<Solution> newPopulation = new ArrayList<>();
         ArrayList<Solution> children;
         Random rand = new Random();
-        int i, f, m;
+        int i, f, m, parentSize = parents.size();
         for(i = 0 ; i < POPULATION/2; i++){
-            f = rand.nextInt(parents.size()); //Obtiene un padre aleatorio
+            f = rand.nextInt(parentSize); //Obtiene un padre aleatorio
             m = Utils.rollValidMother(f); //Obtiene una madre, diferente al padre
             children = Utils.cross(parents.get(f), parents.get(m)); //Obtiene dos hijos
             newPopulation.add(children.get(0));
@@ -134,19 +134,21 @@ public class Genetic {
         return newPopulation;
     }
     //Mutar un individuo
-    private ArrayList<Solution> mutate (ArrayList<Solution> population, Environment env, Pack pack){
+    private static ArrayList<Solution> mutate (ArrayList<Solution> population, Environment env, Pack pack){
         ArrayList<Solution> newPopulation = new ArrayList<>(population);
         Solution newSolution, regen;
         Node node;
         Random rand = new Random();
+        ArrayList<Chrom> chroms;
         int i, j = 0;
         for(Solution s : newPopulation){
             //Itera, hasta que se la probabilidad de mutación se cumpla
             if(rand.nextInt(100) < 100 * MUTATE_CHANCE){
-                if(s.getChroms().size() > 2){ //Si la solución tiene menos de dos pasos, no vale la pena mutar
+                chroms = s.getChroms();
+                if(chroms.size() > 2){ //Si la solución tiene menos de dos pasos, no vale la pena mutar
                     newSolution = new Solution();
-                    i = Utils.rollValidIndex(s.getChroms().size()); //No sea ni el primer ni el ultimo paso
-                    newSolution.getChroms().addAll(s.getChroms().subList(0, i)); //Sublista con los primeros pasos
+                    i = Utils.rollValidIndex(chroms.size()); //No sea ni el primer ni el ultimo paso
+                    newSolution.getChroms().addAll(chroms.subList(0, i)); //Sublista con los primeros i pasos
                     node = new Node(newSolution.getChroms().get(i-1).getTo());
                     regen = getNewSolution(env, node, pack.getLocation()); //Regenerar el resto de la ruta
                     if(regen != null){ //Si se encontró una ruta valida, agregar y cambiar
