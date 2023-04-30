@@ -166,21 +166,24 @@ public class Utils {
     }
     private static void restartAll(Environment env, ArrayList<Vehicle> vehicles){
         ArrayList<Vehicle> newVehicles;
-        for(Vehicle v : vehicles){
-            if(v.getState() == 1 || v.getState() == 2){
-                for(Blockage b : env.getBlockList()){
-                    if(b.getStart() >= env.getTime()){
-                        for(Chrom c : v.getRoute().getChroms()){
-                            if(c.getFrom().equals(b.getNode())){
+        for(Blockage b : env.getBlockList()){
+            if(b.getStart() <= env.getTime()){
+                for(Vehicle v : vehicles){
+                    if(v.getState() == 1 || v.getState() == 2){
+                        for(int i = v.getStep(); i < v.getRoute().getChroms().size(); i++){
+                            if(v.getRoute().getChroms().get(i).equals(b.getNode())){
                                 newVehicles = new ArrayList<>();
                                 newVehicles.add(v);
                                 v.setRoute(Genetic.getBestRoute(env, newVehicles, v.getPack(), env.getTime()));
                                 v.setStep(0);
+                                System.out.println("Se replanificó la ruta del " + v.getType() + " #" + v.getId());
+                                break;
                             }
                         }
                     }
                 }
-
+            }else {
+                break;
             }
         }
     }
