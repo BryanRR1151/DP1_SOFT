@@ -105,4 +105,31 @@ public class Pack {
     }
     //endregion
 
+    //region Constructores
+    public Pack(){
+        this.location = new Node();
+    }
+    public Pack(int idCustomer, int id, int startDate, int dueDate, int posX, int posY, int demand){
+        this.idCustomer = idCustomer;
+        this.id = id;
+        this.time = startDate;
+        this.originalTime = startDate;
+        this.deadline = dueDate;
+        this.location = new Node(posX, posY);
+        this.demand = demand;
+        this.unassigned = demand;
+        this.fullfilled = 0;
+    }
+    public Pack(Pack p){
+        this.idCustomer = p.idCustomer;
+        this.id = p.id;
+        this.time = p.time;
+        this.originalTime = p.time;
+        this.deadline = p.deadline;
+        this.location = p.location;
+        this.demand = p.demand;
+        this.unassigned = p.unassigned;
+        this.fullfilled = p.fullfilled;
+    }
+    //endregion
 }

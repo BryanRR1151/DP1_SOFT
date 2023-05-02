@@ -40,10 +40,12 @@ public class Vehicle {
     private boolean moved;
     //Paquete que está cumpliendo el vehículo
     private Pack pack;
-    //Ruta que está siguiendo el vehículo
-    private Solution route;
     //Ubicación actual del vehículo
     private Node location;
+    //Ruta que está siguiendo el vehículo
+    private Solution route;
+    //Paso de la ruta
+    private int step;
     //endregion
 
     //region Getters/Setters
@@ -135,6 +137,23 @@ public class Vehicle {
         this.pack = pack;
     }
 
+    public Node getLocation() {
+        return location;
+    }
+
+    public void setLocation(Node location) {
+        this.location.setX(location.getX());
+        this.location.setY(location.getY());
+    }
+
+    public int getStep() {
+        return step;
+    }
+
+    public void setStep(int step) {
+        this.step = step;
+    }
+
     public Solution getRoute() {
         return route;
     }
@@ -142,14 +161,32 @@ public class Vehicle {
     public void setRoute(Solution route) {
         this.route = route;
     }
+    //endregion
 
-    public Node getLocation() {
-        return location;
+    //region Constructores
+    public Vehicle(){
+
+    }
+    public Vehicle(String type){
+        this.location = new Node(45, 30);
+        this.state = 0;
+        this.step = 0;
+        this.type = type;
+        this.moved = false;
+        if(type.equals("Moto")){
+            this.carry = 4;
+            this.capacity = 4;
+            this.cost = 100;
+            this.speed = 60;
+        }else if(type.equals("Auto")){
+            this.carry = 25;
+            this.capacity = 25;
+            this.cost = 20;
+            this.speed = 30;
+        }
     }
 
-    public void setLocation(Node location) {
-        this.location = location;
-    }
+
     //endregion
 
 }

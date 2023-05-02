@@ -7,10 +7,8 @@
 
 package dp1soft.app.logic;
 
-import dp1soft.app.model.Environment;
-import dp1soft.app.model.Node;
-import dp1soft.app.model.Solution;
-import dp1soft.app.model.Vehicle;
+import dp1soft.app.model.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,17 +31,19 @@ public class Utils {
     public static int pickVehicle(ArrayList<Vehicle> vehicles){
         Random rand = new Random();
         ArrayList<Vehicle> newVehicles = new ArrayList<>(vehicles);
+        Vehicle v;
         boolean valid = false;
         int i = ERROR;
         if(vehicles.size() > 1){ //El arreglo es mayor a 1? Cuando los vehículos regresan, solo hay uno
             while (!valid && newVehicles.size() > 0){//Encontrar un vehículo disponible o agotar la lista local
                 //Obtiene un índice aleatorio
                 i = rand.nextInt(newVehicles.size());
+                v = newVehicles.get(i);
                 //Revisa si es válido, es decir, si está libre en el almacén o si está regresando con paquetes restantes
-                valid = newVehicles.get(i).getState() == 0 || (newVehicles.get(i).getState() == 2 && newVehicles.get(i).getCarry() > 0);
+                valid = v.getState() == 0 || (v.getState() == 2 && v.getCarry() > 0);
                 if(valid){
                     //El índice es el id - 1
-                    i = newVehicles.get(i).getId() - 1;
+                    i = v.getId() - 1;
                 }else {
                     //Para no repetir y hacer la ejecución más rápida, se quita de la lista
                     newVehicles.remove(i);
@@ -78,7 +78,7 @@ public class Utils {
                 continue;
             }
             //Si es válido, revisar si lo acerca a su destino, puede ignorar esta heurística
-            if(node.distance(destination) <= node.distance(destination) || rand.nextInt(100) < Genetic.IGNORE_CHANCE * 100){
+            if(node.distance(destination) < location.distance(destination) || rand.nextInt(100) < Genetic.IGNORE_CHANCE * 100){
                 valid = true;
             }
         }
@@ -126,24 +126,26 @@ public class Utils {
         ArrayList<Solution> children = new ArrayList<>();
         Solution child1 = new Solution();
         Solution child2 = new Solution();
-        int i, j, fsize = father.getChroms().size(), msize = mother.getChroms().size();
+        ArrayList<Chrom> cFather = father.getChroms();
+        ArrayList<Chrom> cMother = mother.getChroms();
+        int i, j, fsize = cFather.size(), msize = cMother.size();
         boolean splice = false;
         //Si el padre y la madre no tienen mas de dos pasos, no tiene punto cruzarlos
         if(fsize > 2 && msize > 2){
             //Se itera la solución del padre y la madre hasta encontrar un cromosoma en comun (un punto a otro)
             for(i=1; i < fsize - 1; i++){
                 for(j=1; j < msize - 1; j++){
-                    splice = father.getChroms().get(i).equals(mother.getChroms().get(j));
+                    splice = cFather.get(i).equals(cMother.get(j));
                     if(splice){
                         //Se parte el padre y la madre a la mitad en el cromosoma en común
                         //El primer hijo es mitad padre y mitad madre, con el vehículo del padre
                         //El segundo hijo es mitad madre y mitad padre, con el vehículo de la madre
-                        child1.getChroms().addAll(father.getChroms().subList(0, i));
-                        child1.getChroms().addAll(mother.getChroms().subList(j, msize));
+                        child1.getChroms().addAll(cFather.subList(0, i));
+                        child1.getChroms().addAll(cMother.subList(j, msize));
                         child1.setiVehicle(father.getiVehicle());
-                        child2.getChroms().addAll(mother.getChroms().subList(0, j));
-                        child2.getChroms().addAll(father.getChroms().subList(i, fsize));
-                        child1.setiVehicle(father.getiVehicle());
+                        child2.getChroms().addAll(cMother.subList(0, j));
+                        child2.getChroms().addAll(cFather.subList(i, fsize));
+                        child2.setiVehicle(mother.getiVehicle());
                         children.add(child1);
                         children.add(child2);
                         break;
@@ -165,7 +167,7 @@ public class Utils {
     public static int rollValidIndex(int cap){
         Random rand = new Random();
         int i = 0;
-        while (i == 0) {
+        while (i < 2) {
             i = rand.nextInt(cap - 1);
         }
         return i;

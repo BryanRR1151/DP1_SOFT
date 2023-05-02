@@ -47,4 +47,11 @@ public class Environment {
     }
     //endregion
 
+    //region Constructores
+    public Environment(){
+        this.map = new ArrayList<>();
+        this.blockList = new ArrayList<>();
+    }
+    //endregion
+
 }

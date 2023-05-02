@@ -11,6 +11,8 @@ package dp1soft.app.model;
 public class Blockage {
 
     //region Atributos
+    //Código del bloqueo
+    private int id;
     //Nodo que será bloqueado
     private Node node;
     //Tiempo en el que empezará
@@ -20,6 +22,15 @@ public class Blockage {
     //endregion
 
     //region Getters/Setters
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public Node getNode() {
         return node;
     }
@@ -45,4 +56,16 @@ public class Blockage {
     }
     //endregion
 
+    //region Constructores
+    public Blockage(){
+
+    }
+    public Blockage(int id, int tStart, int tEnd, int posX, int posY){
+        this.id = id;
+        this.start = tStart;
+        this.end = tEnd;
+        this.node = new Node(posX, posY);
+    }
+
+    //endregion
 }
