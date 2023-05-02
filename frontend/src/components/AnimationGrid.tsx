@@ -14,12 +14,10 @@ interface CarProps {
 }
 
 const Car = ({ vehicle, openVehiclePopup }: CarProps) => {
-  
   const { movement: { from, to }} = vehicle;
 
   const springs = useSpring({
-    config: { mass: 1, tension: 300, friction: 20, precision: 0.001, duration: 1000 },
-    native: true,
+    config: { duration: 1000 },
     from: { x: from.x*CELL_SIZE, y: from.y*CELL_SIZE },
     to: { x: to.x*CELL_SIZE, y: to.y*CELL_SIZE }
   })
@@ -84,7 +82,8 @@ export const AnimationGrid = ({ moment, openVehiclePopup }: IAnimationGrid) => {
         {
           moment !== undefined ? moment.activeVehicles.map((v) => {
             return (
-              <Car 
+              <Car
+                key={v.id} 
                 vehicle={v} 
                 openVehiclePopup={openVehiclePopup}
               />

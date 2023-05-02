@@ -13,15 +13,14 @@ const TARGET_TIMER = 180;
 export const WeekSimulationPage = () => {
 
   const [firstRender, setFirstRender] = useState<boolean>(true);
-  const [timer, setTimer] = useState(-1);
-  const [finished, setFinished] = useState(true);
   const [apiMoment, setApiMoment] = useState<TMoment|undefined>(undefined);
+  const [timer, setTimer] = useState(-1);
   const interval = useRef<any>(null);
   
   const startAlgorithm = async() => {
-    setFinished(false);
     await AlgorithmService.start().then((response) => {
       console.log('Algorithm executed successfully');
+      if (timer >= TARGET_TIMER) setTimer(-1);
     }).catch((err) => {
       console.log(err);
     });
@@ -35,10 +34,11 @@ export const WeekSimulationPage = () => {
     });
   }
 
+
   const stopSimulation = async() => {
-    setFinished(true);
     setApiMoment(undefined);
-    setTimer(-1);
+    clearInterval(interval.current);
+    setTimer(-2);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
     }).catch((err) => {
@@ -57,10 +57,9 @@ export const WeekSimulationPage = () => {
       setFirstRender(false);
       return;
     }
-    if (timer == -1) return;
+    if (timer == -1 || timer == -2) return;
     if (timer >= TARGET_TIMER && interval.current) {
       clearInterval(interval.current);
-      if (finished) setTimer(-1);
     }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
@@ -91,6 +90,20 @@ export const WeekSimulationPage = () => {
           if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, 
                                      to: { x: move.to.x, y: move.to.y-0.5 }};
           else newMove = { from: { x: move.from.x, y: move.from.y+0.5 }, 
+                          to: { x: move.to.x, y: move.to.y }};
+          v.movement = newMove;
+        }
+        else if (move.to.x - move.from.x < 0) {
+          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, 
+                                     to: { x: move.to.x+0.5, y: move.to.y }};
+          else newMove = { from: { x: move.from.x-0.5, y: move.from.y }, 
+                          to: { x: move.to.x, y: move.to.y }};
+          v.movement = newMove;
+        } 
+        else if (move.to.y - move.from.y < 0) {
+          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, 
+                                     to: { x: move.to.x, y: move.to.y+0.5 }};
+          else newMove = { from: { x: move.from.x, y: move.from.y-0.5 }, 
                           to: { x: move.to.x, y: move.to.y }};
           v.movement = newMove;
         }
