@@ -6,9 +6,11 @@ import sizeConfigs from '../configs/sizeConfigs';
 import { AnimationGrid } from '../components/AnimationGrid';
 import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
+import { DropzoneComponent } from '../components/DropzoneComponent';
 
 const INITIAL_TIMER = 0;
 const TARGET_TIMER = 180;
+const fileTypes = ["TXT"];
 
 export const WeekSimulationPage = () => {
 
@@ -16,7 +18,7 @@ export const WeekSimulationPage = () => {
   const [apiMoment, setApiMoment] = useState<TMoment|undefined>(undefined);
   const [timer, setTimer] = useState(-1);
   const interval = useRef<any>(null);
-  
+
   const startAlgorithm = async() => {
     await AlgorithmService.start().then((response) => {
       console.log('Algorithm executed successfully');
@@ -114,6 +116,10 @@ export const WeekSimulationPage = () => {
     return moment;
   }
 
+  const onFileChange = (updatedList: any[]) => {
+    console.log(updatedList);
+  }
+
   return (
     <>
       <Breadcrumbs 
@@ -135,7 +141,6 @@ export const WeekSimulationPage = () => {
         <Box
           sx={{
             display: 'flex',
-            width: `calc(100vw - ${sizeConfigs.sidebar.width})`
           }}
         >
           <Box
@@ -177,18 +182,15 @@ export const WeekSimulationPage = () => {
               openVehiclePopup={openVehiclePopup}
             />
           </Box>
-          <Box
-            sx={{
-              padding: 5,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              width: 'calc(100% - 50vw)'
-            }}
-          >
-            {/* TO BE MADE: <FileComponent /> */}
-            {/* TO BE MADE: <FileComponent /> */}
-          </Box>
+        </Box>
+        <Box
+          sx={{
+            padding: 5
+          }}
+        >
+          <Typography variant='h6' sx={{marginBottom: 2}}>Subir archivos para la simulación:</Typography>
+          <Typography sx={{marginBottom: 2}}>Pedidos:</Typography>
+          <DropzoneComponent onFileChange={onFileChange} />
         </Box>
       </Container>
     </>

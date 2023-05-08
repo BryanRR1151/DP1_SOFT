@@ -3,6 +3,7 @@ import { OrdersPage } from '../pages/OrdersPage';
 import { SimulationPage } from "../pages/SimulationPage";
 import { HomePage } from "../pages/HomePage";
 import { WeekSimulationPage } from "../pages/WeekSimulationPage";
+import { DailyOperationsPage } from "../pages/DailyOperationsPage";
 
 type Route = {
   name: string;
@@ -36,6 +37,12 @@ const routes: Route[] = [
     path: '/simulacion/semanal',
     component: WeekSimulationPage,
     inMenu: false
+  },
+  {
+    name: 'Visualización',
+    path: '/visualization',
+    component: DailyOperationsPage,
+    inMenu: true
   }
 ];
 
