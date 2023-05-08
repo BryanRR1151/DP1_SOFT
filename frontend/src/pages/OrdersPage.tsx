@@ -4,11 +4,10 @@ import { Popover, Container, Breadcrumbs, Typography, Box, Button } from '@mui/m
 import colorConfigs from '../configs/colorConfigs';
 import sizeConfigs from '../configs/sizeConfigs';
 import { DataGrid, GridRenderCellParams, GridActionsCellItem, GridRowParams } from '@mui/x-data-grid';
-import { TOrder, OrderState, PanelType } from '../types/types';
+import { TOrder, OrderState, PanelType, panelStyles } from '../types/types';
 import { TNode } from '../test/movements';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { OrdersForm } from '../components/OrdersForm';
+import { FaPen, FaTrash } from 'react-icons/fa';
 
 interface GridColDef {
   field: string;
@@ -19,34 +18,6 @@ interface GridColDef {
   valueGetter?: any;
   getActions?: any;
 }
-
-const styles = {
-  panel: {
-    position: "fixed",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: 0,
-    backgroundColor: "#fff",
-    boxShadow: "2px 0 6px rgba(0, 0, 0, 0.3)",
-    zIndex: 9999,
-    transition: "width 0.3s ease-in-out",
-    padding: 0
-  } as const,
-  panelOpen: {
-    width: 400,
-    padding: 3
-  } as const,
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    zIndex: 9998,
-  } as const,
-};
 
 export const OrdersPage = () => {
 
@@ -119,7 +90,7 @@ export const OrdersPage = () => {
     {
       field: 'registerDate',
       headerName: 'Fecha de registro',
-      minWidth: 200
+      minWidth: 150
     },
     {
       field: 'term',
@@ -158,10 +129,10 @@ export const OrdersPage = () => {
       field: 'actions',
       headerName: '',
       type: 'actions',
-      minWidth: 150,
+      minWidth: 50,
       getActions: (params: GridRowParams) => [
-        <GridActionsCellItem icon={<EditIcon />} label="Editar" onClick={(e) => handleEdit(e, params)} />,
-        <GridActionsCellItem icon={<DeleteIcon />} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
+        <GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
+        <GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
     }
   ];
@@ -221,7 +192,7 @@ export const OrdersPage = () => {
           </Box>
         </Container>
         <Box
-          sx={{ ...styles.panel, ...(isOpenPanel && styles.panelOpen) }}
+          sx={{ ...panelStyles.panel, ...(isOpenPanel && panelStyles.panelOpen) }}
           display="flex"
           flexDirection="column"
         >
@@ -232,7 +203,7 @@ export const OrdersPage = () => {
             handleDeselect={handleDeselect}
           />
         </Box>
-        {isOpenPanel && <Box sx={styles.overlay} onClick={ () => { setIsOpenPanel(false); handleDeselect() }}/>}
+        {isOpenPanel && <Box sx={panelStyles.overlay} onClick={ () => { setIsOpenPanel(false); handleDeselect() }}/>}
       </>
       }
     </>

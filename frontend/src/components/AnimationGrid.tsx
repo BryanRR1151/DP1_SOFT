@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSpring, animated } from 'react-spring';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
 import colorConfigs from '../configs/colorConfigs';
 
@@ -39,13 +38,13 @@ const Car = ({ vehicle, openVehiclePopup }: CarProps) => {
               zIndex: 1000
             }}
           >
-            <LocalShippingIcon
+            {/* <LocalShippingIcon
               sx={{
                 width: 20,
                 height: 20,
                 cursor: 'pointer'
               }}
-            />
+            /> */}
           </div>
         </animated.div>
       }

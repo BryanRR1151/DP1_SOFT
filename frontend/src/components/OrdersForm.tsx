@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { OrderState, PanelType, TOrder, TOrderError } from '../types/types';
-import { Typography, TextField, Button } from '@mui/material'
+import { Typography, TextField, Button, Box } from '@mui/material';
 
 interface IOrdersForm {
   order: TOrder|undefined;
@@ -50,7 +50,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
   }
     
   return ( 
-    <>
+    <Box sx={{ paddingLeft: 3.5, paddingRight: 3.5 }}>
       <form autoComplete="off" onSubmit={handleSubmit}>
         <Typography sx={{mb: 3}} >{type == PanelType.create ? 'Nuevo pedido' : 'Editar pedido'}</Typography>
         {(type == PanelType.edit) &&
@@ -129,6 +129,6 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
         }
         <Button variant="contained" color="secondary" type="submit">Guardar</Button>
       </form>
-    </>
+    </Box>
   );
 }

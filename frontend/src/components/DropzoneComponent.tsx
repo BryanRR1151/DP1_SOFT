@@ -1,61 +1,68 @@
-import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import { FaWindowClose } from 'react-icons/fa';
 import '../assets/drop-file-input.css';
 
 interface IDropzoneComponent {
-  onFileChange: (updatedList: any[]) => void;
+  onFileChange: (updatedList: any[], type: string) => void;
+  type: string;
+  files: any[];
 }
 
-export const DropzoneComponent = ({ onFileChange }: IDropzoneComponent) => {
-  const [fileList, setFileList] = useState<any[]>([]);
+export const DropzoneComponent = ({ onFileChange, type, files }: IDropzoneComponent) => {
+  const [fileList, setFileList] = useState<any[]>(files);
   const [dragging, setDragging] = useState<boolean>(false);
 
   const onFileDrop = (e: any) => {
-      if (e.target.files) {
-          const updatedList = [...fileList, ...e.target.files];
-          setFileList(updatedList);
-          onFileChange(updatedList);
-      }
+    e.preventDefault();
+    if (e.target.files) {
+      const allowedFiles = [...e.target.files].filter((f: any) => f.type == 'text/plain');
+      const updatedList = [...fileList, ...allowedFiles];
+      setFileList(updatedList);
+      onFileChange(updatedList, type);
+    }
   }
 
   const fileRemove = (file: any) => {
-      const updatedList = [...fileList];
-      updatedList.splice(fileList.indexOf(file), 1);
-      setFileList(updatedList);
-      onFileChange(updatedList);
+    const updatedList = [...fileList];
+    updatedList.splice(fileList.indexOf(file), 1);
+    setFileList(updatedList);
+    onFileChange(updatedList, type);
   }
 
   return (
     <>
-      <div
+      <Box
         className={`drop-file-input ${dragging ? 'dragover' : ''}`}
         onDragEnter={() => setDragging(true)}
         onDragLeave={() => setDragging(false)}
         onDrop={() => setDragging(false)}
       >
-        <div className="drop-file-input__label">
-          <p>Drag & Drop your files here</p>
-        </div>
-        <input type="file" multiple value="" onChange={onFileDrop}/>
-      </div>
+        <Box className="drop-file-input__label">
+          <Typography>Arrastra y suelta archivos aquí</Typography>
+        </Box>
+        <input type="file" multiple onChange={onFileDrop} accept=".txt" />
+      </Box>
       {
         fileList.length > 0 ? (
-          <div className="drop-file-preview">
-            <p className="drop-file-preview__title">
-              Ready to upload
-            </p>
+          <Box className="drop-file-preview">
             {
               fileList.map((item, index) => (
-                <div key={index} className="drop-file-preview__item">
-                  <div className="drop-file-preview__item__info">
-                    <p>{item.name}</p>
-                    <p>{item.size}B</p>
-                  </div>
-                  <span className="drop-file-preview__item__del" onClick={() => fileRemove(item)}>x</span>
-                </div>
+                <Box key={index} className="drop-file-preview__item">
+                  <Box className="drop-file-preview__item__info">
+                    <Box>
+                      <Typography sx={{fontSize: '15px'}}>{item.name}</Typography>
+                    </Box>
+                    <Box>
+                      <span className="drop-file-preview__item__del" onClick={() => fileRemove(item)}>
+                        <FaWindowClose />
+                      </span>
+                    </Box>
+                  </Box>
+                </Box>
               ))
             }
-          </div>
+          </Box>
         ) : null
       }
     </>
