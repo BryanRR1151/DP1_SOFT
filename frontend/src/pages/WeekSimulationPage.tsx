@@ -9,6 +9,7 @@ import AlgorithmService from '../services/AlgorithmService';
 import { DropzoneComponent } from '../components/DropzoneComponent';
 import { PanelType, panelStyles } from '../types/types';
 import { FaAngleDown } from 'react-icons/fa';
+import { ToastContainer, toast } from 'react-toastify';
 
 const INITIAL_TIMER = 0;
 const TARGET_TIMER = 180;
@@ -26,7 +27,11 @@ export const WeekSimulationPage = () => {
   const interval = useRef<any>(null);
 
   const startAlgorithm = async() => {
-    await AlgorithmService.start().then((response) => {
+    const data = new FormData();
+    for (let i = 0 ; i < oFiles.length ; i++) {
+      data.append("fPacks", oFiles[i]);
+    }
+    await AlgorithmService.start(data).then((response) => {
       console.log('Algorithm executed successfully');
       if (timer >= TARGET_TIMER) setTimer(-1);
     }).catch((err) => {
@@ -88,31 +93,23 @@ export const WeekSimulationPage = () => {
         let move = v.movement;
         let newMove: TMovement;
         if (move.to.x - move.from.x > 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, 
-                                     to: { x: move.to.x-0.5, y: move.to.y }};
-          else newMove = { from: { x: move.from.x+0.5, y: move.from.y }, 
-                          to: { x: move.to.x, y: move.to.y }};
+          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x-0.5, y: move.to.y }};
+          else newMove = { from: { x: move.from.x+0.5, y: move.from.y }, to: { x: move.to.x, y: move.to.y }};
           v.movement = newMove;
         } 
         else if (move.to.y - move.from.y > 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, 
-                                     to: { x: move.to.x, y: move.to.y-0.5 }};
-          else newMove = { from: { x: move.from.x, y: move.from.y+0.5 }, 
-                          to: { x: move.to.x, y: move.to.y }};
+          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x, y: move.to.y-0.5 }};
+          else newMove = { from: { x: move.from.x, y: move.from.y+0.5 }, to: { x: move.to.x, y: move.to.y }};
           v.movement = newMove;
         }
         else if (move.to.x - move.from.x < 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, 
-                                     to: { x: move.to.x+0.5, y: move.to.y }};
-          else newMove = { from: { x: move.from.x-0.5, y: move.from.y }, 
-                          to: { x: move.to.x, y: move.to.y }};
+          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x+0.5, y: move.to.y }};
+          else newMove = { from: { x: move.from.x-0.5, y: move.from.y }, to: { x: move.to.x, y: move.to.y }};
           v.movement = newMove;
         } 
         else if (move.to.y - move.from.y < 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, 
-                                     to: { x: move.to.x, y: move.to.y+0.5 }};
-          else newMove = { from: { x: move.from.x, y: move.from.y-0.5 }, 
-                          to: { x: move.to.x, y: move.to.y }};
+          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x, y: move.to.y+0.5 }};
+          else newMove = { from: { x: move.from.x, y: move.from.y-0.5 }, to: { x: move.to.x, y: move.to.y }};
           v.movement = newMove;
         }
       }
@@ -167,7 +164,7 @@ export const WeekSimulationPage = () => {
                   variant='contained'
                   color='secondary'
                   disabled={timer >= 0}
-                  onClick={() => setTimer(INITIAL_TIMER)}
+                  onClick={() => { if(oFiles.length == 7) { setTimer(INITIAL_TIMER); } else { toast.error('Debe subir 7 archivos de pedidos'); } }}
                 >
                   Iniciar simulación {timer}
                 </Button>
@@ -257,6 +254,7 @@ export const WeekSimulationPage = () => {
       }
       </Box>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null) }}/>}
+      <ToastContainer />
     </>
   )
 }

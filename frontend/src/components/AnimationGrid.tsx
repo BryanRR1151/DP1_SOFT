@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSpring, animated } from 'react-spring';
 import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
+import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
 import colorConfigs from '../configs/colorConfigs';
 
 const GRID_COLS = 70;
@@ -33,18 +34,27 @@ const Car = ({ vehicle, openVehiclePopup }: CarProps) => {
             onClick={() => openVehiclePopup(vehicle)}
             style={{
               position: 'absolute',
-              top: -10,
-              left: -10,
+              top: '-10px',
+              left: '-5px',
               zIndex: 1000
             }}
           >
-            {/* <LocalShippingIcon
-              sx={{
-                width: 20,
-                height: 20,
-                cursor: 'pointer'
-              }}
-            /> */}
+            {vehicle.type == VehicleType.auto ?
+              <FaCarSide
+                sx={{
+                  width: 50,
+                  height: 50,
+                  cursor: 'pointer'
+                }}
+              /> :
+              <FaMotorcycle
+                sx={{
+                  width: 50,
+                  height: 50,
+                  cursor: 'pointer'
+                }}
+              />
+            }
           </div>
         </animated.div>
       }
@@ -124,12 +134,12 @@ export const AnimationGrid = ({ moment, openVehiclePopup }: IAnimationGrid) => {
               <div
                 style={{
                   position: 'absolute',
-                  width: color == colorConfigs.dots.normal ? 5 : 7,
-                  height: color == colorConfigs.dots.normal ? 5 : 7,
+                  width: color == colorConfigs.dots.normal ? 5 : 10,
+                  height: color == colorConfigs.dots.normal ? 5 : 10,
                   backgroundColor: color,
                   borderRadius: 20,
-                  top: color == colorConfigs.dots.normal ? y-2.5 : y-3.5,
-                  left: color == colorConfigs.dots.normal ? x-2.5 : x-3.5
+                  top: color == colorConfigs.dots.normal ? y-2.5 : y-5,
+                  left: color == colorConfigs.dots.normal ? x-2.5 : x-5
                 }}
               >
               </div>

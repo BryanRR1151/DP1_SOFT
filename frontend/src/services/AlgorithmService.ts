@@ -1,7 +1,11 @@
 import axios from 'axios'
 
-const start = () => {
-  return axios.get('http://localhost:8080/StartGenetic');
+const start = (data: FormData) => {
+  return axios.post('http://localhost:8080/StartGenetic', data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 const getMoment = (min: number) => {

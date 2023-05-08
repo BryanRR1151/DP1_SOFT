@@ -4,6 +4,7 @@ import { MainLayout } from './layouts/MainLayout'
 import routes from './routes/routes'
 import { ThemeProvider } from '@mui/material'
 import { theme } from './themes/mainTheme'
+import 'react-toastify/dist/ReactToastify.min.css';
 
 function App() {
 
