@@ -28,9 +28,18 @@ export type TVehicle = {
   moved: boolean;
   pack: TPack;
   location: TNode;
-  route: any;
+  route?: TSolution;
   step: number;
   movement: TMovement;
+}
+
+export type TSolution = {
+  chroms: TChrom;
+}
+
+export type TChrom = {
+  from: TNode;
+  to: TNode;
 }
 
 export type TPack = {

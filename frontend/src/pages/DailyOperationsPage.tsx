@@ -1,89 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import { useSpring, animated } from 'react-spring';
-import { Button } from '@mui/material'
- 
-type Translation = {
-  x: number;
-  opacity: number;
-};
-
-type AnimatedProps = {
-  from: Translation;
-  to: Translation;
-};
-
-const AnimatedObject = () => {
-  const translations = [{ x: 0, opacity: 1 }, { x: 50, opacity: 1 }, { x: 100, opacity: 1 }];
-
-  const config = {
-    duration: 1000,
-  };
-
-  const [animatedProps, set] = useSpring<any>(() => ({
-    from: translations[0],
-    to: translations[0],
-    config,
-  }));
-
-  useEffect(() => {
-    let i = 1;
-    const intervalId = setInterval(() => {
-      if(i == 2) clearInterval(intervalId);
-      set({
-        from: translations[i-1],
-        to: translations[i],
-        config,
-      });
-      i = (i + 1) % translations.length;
-    }, config.duration);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  return (
-    <animated.div style={animatedProps}>
-      <div
-        style={{
-          width: 10,
-          height: 10,
-          backgroundColor: '#000'
-        }}
-      >
-      </div>
-    </animated.div>
-  );
-};
-
-type TObject = {
-  key: number;
-}
+import React, { useState, useEffect } from "react";
+import { Link } from 'react-router-dom'
+import { AnimationGrid } from '../components/AnimationGrid';
+import colorConfigs from '../configs/colorConfigs'
+import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid } from '@mui/material';
+import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
+import AlgorithmService from '../services/AlgorithmService';
 
 export const DailyOperationsPage = () => {
 
-  const [objects, setObjects] = useState<TObject[]>([{key: 1}]);
-  const [key, setKey] = useState<number>(1);
-
-  const handleAdd = () => {
-    setKey(key+1);
-    setObjects([...objects, {key: key+1}])
+  const [vehicles, setVehicles] = useState<TVehicle[]|undefined>(undefined);
+  const [count, setCount] = useState(0);
+  const [apiMoment, setApiMoment] = useState<TMoment|undefined>(undefined);
+  var time = new Date();
+  var started = true;
+  const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
+  
+  const parseRoutes = (vehicles: TVehicle[]) => {
+    let newVehicles = vehicles.map((v, index) => {
+      if (v.type == VehicleType.auto) {
+        v.id
+      }
+      return v;
+    });
+    return newVehicles;
   }
+
+  const parseApiMoment = (vehicles: TVehicle[]) => {
+    let moment: TMoment;
+    //moment = TMoment();
+    //moment.activeVehicles = vehicles.map(vehicle => {
+      //return vehicle;
+    //});
+    //return moment;
+  }
+
+  const openVehiclePopup = (vehicle: TVehicle) => {
+    console.log(vehicle);
+  }
+
+  const planTheRoutes = async() => {
+    await AlgorithmService.planRoutes(seconds).then((response) => {
+      //setVehicles(parseRoutes(response.data));
+      //setApiMoment(parseApiMoment(response.data));
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  const initiateAlgorithm = async() => {
+    await AlgorithmService.initDaily().then((response) => {
+      console.log('Algorithm initiated successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  useEffect(() => {
+    setInterval(() => {
+      setCount(prevCount => prevCount + 1);
+      time = new Date();
+      planTheRoutes;
+    }, 60000);
+  }, []);
+
+  useEffect(() => {
+    if(count==0 && started){
+      started=false;
+      initiateAlgorithm;
+    }
+  }, []);
 
   return (
     <>
-      <Button
-        variant='contained'
-        color='secondary'
-        onClick={handleAdd}
+      <Breadcrumbs 
+        maxItems={2} 
+        aria-label='breadcrumb'
+        sx={{
+          paddingLeft: '10px',
+          paddingRight: '10px',
+          paddingTop: '5px',
+          paddingBottom: '5px',
+          backgroundColor: colorConfigs.breadcrumb.bg
+        }}
       >
-        Añadir
-      </Button>
-      {
-        objects.map((o) => {
-          return (
-            <AnimatedObject key={o.key}/>
-          )
-        }) 
-      }
+          <Typography>Visualización</Typography>
+      </Breadcrumbs>
+
+      <Container>
+        <Box sx={{ display: 'flex' }}>
+          <Box
+            sx={{
+              padding: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <AnimationGrid 
+              moment = {undefined}
+              openVehiclePopup={openVehiclePopup}
+            />
+          </Box>
+        </Box>
+      </Container>
+
+      <h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
     </>
   )
 }
