@@ -10,9 +10,10 @@ import { DropzoneComponent } from '../components/DropzoneComponent';
 import { PanelType, panelStyles } from '../types/types';
 import { FaAngleDown } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
+import { SimulatedTimer } from '../components/SimulatedTimer';
 
 const INITIAL_TIMER = 0;
-const TARGET_TIMER = 180;
+const TARGET_TIMER = 10080;
 
 export const WeekSimulationPage = () => {
 
@@ -24,6 +25,7 @@ export const WeekSimulationPage = () => {
   const [oFiles, setOFiles] = useState<any[]>([]);
   const [bFiles, setBFiles] = useState<any[]>([]);
   const [fFiles, setFFiles] = useState<any[]>([]);
+  const [vehicle, setVehicle] = useState<TVehicle|undefined>(undefined);
   const interval = useRef<any>(null);
 
   const startAlgorithm = async() => {
@@ -31,6 +33,14 @@ export const WeekSimulationPage = () => {
     for (let i = 0 ; i < oFiles.length ; i++) {
       data.append("fPacks", oFiles[i]);
     }
+    for (let i = 0 ; i < bFiles.length ; i++) {
+      data.append("fBlocks", bFiles[i]);
+    }
+    if(bFiles.length == 0) data.append("fBlocks", '');
+    for (let i = 0 ; i < fFiles.length ; i++) {
+      data.append("fFaults", fFiles[i]);
+    }
+    if(fFiles.length == 0) data.append("fFaults", '');
     await AlgorithmService.start(data).then((response) => {
       console.log('Algorithm executed successfully');
       if (timer >= TARGET_TIMER) setTimer(-1);
@@ -84,7 +94,9 @@ export const WeekSimulationPage = () => {
   }, [timer]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
-    console.log(vehicle);
+    setOpenPanel(true);
+    setTypePanel(PanelType.vehicleInfo);
+    setVehicle(vehicle);
   }
 
   const parseMoment = (moment: TMoment) => {
@@ -166,7 +178,7 @@ export const WeekSimulationPage = () => {
                   disabled={timer >= 0}
                   onClick={() => { if(oFiles.length == 7) { setTimer(INITIAL_TIMER); } else { toast.error('Debe subir 7 archivos de pedidos'); } }}
                 >
-                  Iniciar simulación {timer}
+                  Iniciar simulación
                 </Button>
                 <Button
                   variant='outlined'
@@ -179,6 +191,16 @@ export const WeekSimulationPage = () => {
                 >
                   Detener simulación
                 </Button>
+                {(timer >= 0) &&
+                  <Button
+                    variant='outlined'
+                    color='secondary'
+                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
+                    sx={{ marginLeft: 2 }}
+                  >
+                    Ver detalles
+                  </Button>
+                }
               </Box>
               <Box>
                 {(timer <= -1) &&
@@ -191,6 +213,7 @@ export const WeekSimulationPage = () => {
                     Subir archivos
                   </Button>
                 }
+                {timer >= 0 && <SimulatedTimer min={timer} />}
               </Box>
             </Box>
             <AnimationGrid 
@@ -251,9 +274,26 @@ export const WeekSimulationPage = () => {
               </AccordionDetails>
             </Accordion>
           </Box> : null
-      }
+        }
+        {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles del vehiculo:</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Tipo: </b>{vehicle.type}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
+          </Box>
+        }
+        {typePanel == PanelType.simulationDetails && apiMoment !== undefined &&
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles de la simulación:</Typography>
+            {timer >= 0 && <SimulatedTimer min={timer} />}
+            <Typography sx={{marginTop: 2, marginBottom: 2}}><b>Pedidos entregados: </b>{apiMoment.ordersDelivered}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Pedidos restantes: </b>{apiMoment.ordersLeft}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota: </b>{apiMoment.fleetCapacity}%</Typography>
+          </Box>
+        }
       </Box>
-      {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null) }}/>}
+      {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
       <ToastContainer />
     </>
   )

@@ -36,7 +36,8 @@ const Car = ({ vehicle, openVehiclePopup }: CarProps) => {
               position: 'absolute',
               top: '-10px',
               left: '-5px',
-              zIndex: 1000
+              zIndex: 1000,
+              cursor: 'pointer'
             }}
           >
             {vehicle.type == VehicleType.auto ?
