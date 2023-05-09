@@ -55,6 +55,7 @@ export type TBlockage = {
 export type TMoment = {
   min: number;
   ordersDelivered: number;
+  ordersLeft: number;
   fleetCapacity: number;
   activeVehicles: TVehicle[];
   activePacks: TPack[];
