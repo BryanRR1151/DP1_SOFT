@@ -1,89 +1,43 @@
-import React, { useEffect, useState } from 'react';
-import { useSpring, animated } from 'react-spring';
-import { Button } from '@mui/material'
- 
-type Translation = {
-  x: number;
-  opacity: number;
-};
-
-type AnimatedProps = {
-  from: Translation;
-  to: Translation;
-};
-
-const AnimatedObject = () => {
-  const translations = [{ x: 0, opacity: 1 }, { x: 50, opacity: 1 }, { x: 100, opacity: 1 }];
-
-  const config = {
-    duration: 1000,
-  };
-
-  const [animatedProps, set] = useSpring<any>(() => ({
-    from: translations[0],
-    to: translations[0],
-    config,
-  }));
-
-  useEffect(() => {
-    let i = 1;
-    const intervalId = setInterval(() => {
-      if(i == 2) clearInterval(intervalId);
-      set({
-        from: translations[i-1],
-        to: translations[i],
-        config,
-      });
-      i = (i + 1) % translations.length;
-    }, config.duration);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  return (
-    <animated.div style={animatedProps}>
-      <div
-        style={{
-          width: 10,
-          height: 10,
-          backgroundColor: '#000'
-        }}
-      >
-      </div>
-    </animated.div>
-  );
-};
-
-type TObject = {
-  key: number;
-}
+import React, { useState, useEffect } from "react";
+import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
+import AlgorithmService from '../services/AlgorithmService';
 
 export const DailyOperationsPage = () => {
 
-  const [objects, setObjects] = useState<TObject[]>([{key: 1}]);
-  const [key, setKey] = useState<number>(1);
+  const [vehicles, setVehicles] = useState<TVehicle[]|undefined>(undefined);
+  const [count, setCount] = useState(0);
+  var time = new Date();
+  const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
 
-  const handleAdd = () => {
-    setKey(key+1);
-    setObjects([...objects, {key: key+1}])
+  const parseRoutes = (vehicles: TVehicle[]) => {
+    let newVehicles = vehicles.map((v, index) => {
+      if (v.type == VehicleType.auto) {
+        
+      }
+      return v;
+    });
+    return newVehicles;
   }
+
+  const planTheRoutes = async() => {
+    await AlgorithmService.planRoutes(seconds).then((response) => {
+      setVehicles(parseRoutes(response.data));
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  useEffect(() => {
+    setInterval(() => {
+      setCount(prevCount => prevCount + 1);
+      time = new Date();
+      planTheRoutes;
+    }, 60000);
+  }, []);
 
   return (
     <>
-      <Button
-        variant='contained'
-        color='secondary'
-        onClick={handleAdd}
-      >
-        Añadir
-      </Button>
-      {
-        objects.map((o) => {
-          return (
-            <AnimatedObject key={o.key}/>
-          )
-        }) 
-      }
+    <h1>The component has been rendered for {count} minutes {seconds}</h1>
     </>
   )
 }

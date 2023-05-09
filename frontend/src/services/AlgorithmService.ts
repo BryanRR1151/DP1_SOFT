@@ -16,8 +16,23 @@ const kill = () => {
   return axios.get('http://localhost:8080/KillGenetic');
 }
 
+const initDaily = () => {
+  return axios.get('http://localhost:8080/InitDaily');
+}
+
+const planRoutes = (time: number) => {
+  return axios.get(`http://localhost:8080/PlanRoutes?minute=${ time }`)
+}
+
+const completePack = (idVehicle: number) => {
+  return axios.get(`http://localhost:8080/CompletePack?minute=${ idVehicle }`)
+}
+
 export default {
   start,
   getMoment,
-  kill
+  kill,
+  initDaily,
+  planRoutes,
+  completePack
 };
