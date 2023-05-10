@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import data from './momentDefault.json';
+import movementData from './movementDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
@@ -13,7 +14,7 @@ export const DailyOperationsPage = () => {
   const [count, setCount] = useState(0);
   const [apiMoment, setApiMoment] = useState<TMoment|undefined>(undefined);
   var time = new Date();
-  var started = true;
+  var started = false;
   const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
   
   const parseRoutes = (vehicles: TVehicle[]) => {
@@ -41,7 +42,6 @@ export const DailyOperationsPage = () => {
   }
 
   const planTheRoutes = async() => {
-    setApiMoment(parseMoment(data.moment));
     await AlgorithmService.planRoutes(seconds).then((response) => {
       //setVehicles(parseRoutes(response.data));
       //setApiMoment(parseApiMoment(response.data));
@@ -67,12 +67,29 @@ export const DailyOperationsPage = () => {
       setCount(prevCount => prevCount + 1);
       time = new Date();
       planTheRoutes;
-    }, 1000);
+    }, 60000);
   }, []);
 
   useEffect(() => {
-    if(count==0 && started){
-      started=false;
+    setInterval(() => {
+      setCount(prevCount => prevCount + 1);
+      data.moment.activeVehicles.forEach( (v)=>{
+        v.movement.from=v.route.chroms[0].from;
+        v.movement.to=v.route.chroms[0].to;
+        v.route.chroms.shift();
+      })
+    }, 2000);
+  }, []);
+
+  useEffect(() => {
+    if(count==0 && !started){
+      started=true;
+      setApiMoment(parseMoment(data.moment));
+      data.moment.activeVehicles.forEach( (v)=>{
+        v.movement.from=v.route.chroms[0].from;
+        v.movement.to=v.route.chroms[0].to;
+        v.route.chroms.shift();
+      })
       initiateAlgorithm;
     }
   }, []);
@@ -104,7 +121,7 @@ export const DailyOperationsPage = () => {
             }}
           >
             <AnimationGrid 
-              moment = {undefined}
+              moment = {apiMoment}
               openVehiclePopup={openVehiclePopup}
             />
           </Box>

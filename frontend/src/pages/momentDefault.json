@@ -6,23 +6,956 @@
         "fleetCapacity": 0,
         "activeVehicles": [
             {
-                "id": 0,
-                "type": "Auto",
-                "speed": 0,
-                "cost": 0,
-                "turn": 0,
-                "overtime": 0,
-                "state": 0,
-                "capacity": 0,
-                "carry": 0,
-                "moved": false,
-                "pack": null,
-                "location": null,
-                "route": null,
-                "step": 0,
-                "movement": null
-            }            
-        ],
+              "id": 56,
+              "type": "Auto",
+              "speed": 30,
+              "cost": 20,
+              "turn": 0,
+              "overtime": 0,
+              "state": 1,
+              "capacity": 25,
+              "carry": 25,
+              "moved": false,
+              "pack": {
+                "id": 1,
+                "idCustomer": 1,
+                "originalTime": 1,
+                "deadline": 1441,
+                "time": 1,
+                "demand": 40,
+                "fullfilled": 0,
+                "unassigned": 40,
+                "location": {
+                  "x": 27,
+                  "y": 18,
+                  "blocked": false,
+                  "destination": false
+                }
+              },
+              "location": {
+                "x": 45,
+                "y": 30,
+                "blocked": false,
+                "destination": false
+              },
+              "route": {
+                "chroms": [
+                  {
+                    "from": {
+                      "x": 45,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 45,
+                      "y": 29,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 45,
+                      "y": 29,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 45,
+                      "y": 28,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 45,
+                      "y": 28,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 45,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 45,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 26,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 26,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 25,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 25,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 24,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 24,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 22,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 22,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 21,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 21,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 43,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 43,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 43,
+                      "y": 19,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 43,
+                      "y": 19,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 43,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 43,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 42,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 42,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 41,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 41,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 40,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 40,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 39,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 39,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 38,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 38,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 37,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 37,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 36,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 36,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 35,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 35,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 34,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 34,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 33,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 33,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 32,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 32,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 31,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 31,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 30,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 30,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 29,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 29,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 28,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 28,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 27,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  }
+                ],
+                "iVehicle": 55,
+                "late": false
+              },
+              "step": 0,
+              "movement": {
+                "from": {
+                  "x": 45,
+                  "y": 30,
+                  "blocked": false,
+                  "destination": false
+                },
+                "to": {
+                  "x": 45,
+                  "y": 30,
+                  "blocked": false,
+                  "destination": false
+                }
+              }
+            },
+            {
+              "id": 46,
+              "type": "Auto",
+              "speed": 30,
+              "cost": 20,
+              "turn": 0,
+              "overtime": 0,
+              "state": 1,
+              "capacity": 25,
+              "carry": 15,
+              "moved": false,
+              "pack": {
+                "id": 1,
+                "idCustomer": 1,
+                "originalTime": 1,
+                "deadline": 1441,
+                "time": 1,
+                "demand": 40,
+                "fullfilled": 0,
+                "unassigned": 15,
+                "location": {
+                  "x": 27,
+                  "y": 18,
+                  "blocked": false,
+                  "destination": false
+                }
+              },
+              "location": {
+                "x": 45,
+                "y": 30,
+                "blocked": false,
+                "destination": false
+              },
+              "route": {
+                "chroms": [
+                  {
+                    "from": {
+                      "x": 45,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 44,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 44,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 43,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 43,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 42,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 42,
+                      "y": 30,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 42,
+                      "y": 29,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 42,
+                      "y": 29,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 42,
+                      "y": 28,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 42,
+                      "y": 28,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 42,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 42,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 41,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 41,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 40,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 40,
+                      "y": 27,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 40,
+                      "y": 26,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 40,
+                      "y": 26,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 40,
+                      "y": 25,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 40,
+                      "y": 25,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 39,
+                      "y": 25,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 39,
+                      "y": 25,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 39,
+                      "y": 24,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 39,
+                      "y": 24,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 39,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 39,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 38,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 38,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 37,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 37,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 36,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 36,
+                      "y": 23,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 36,
+                      "y": 22,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 36,
+                      "y": 22,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 36,
+                      "y": 21,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 36,
+                      "y": 21,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 36,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 36,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 35,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 35,
+                      "y": 20,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 35,
+                      "y": 19,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 35,
+                      "y": 19,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 35,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 35,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 34,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 34,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 33,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 33,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 32,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 32,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 31,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 31,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 30,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 30,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 29,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 29,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 28,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  },
+                  {
+                    "from": {
+                      "x": 28,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    },
+                    "to": {
+                      "x": 27,
+                      "y": 18,
+                      "blocked": false,
+                      "destination": false
+                    }
+                  }
+                ],
+                "iVehicle": 45,
+                "late": false
+              },
+              "step": 0,
+              "movement": {
+                "from": {
+                  "x": 45,
+                  "y": 30,
+                  "blocked": false,
+                  "destination": false
+                },
+                "to": {
+                  "x": 45,
+                  "y": 30,
+                  "blocked": false,
+                  "destination": false
+                }
+              }
+            }
+          ],
         "activePacks": [],
         "activeBlockages": []
     }
