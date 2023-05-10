@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import data from './momentDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
@@ -27,6 +28,7 @@ export const DailyOperationsPage = () => {
 
   const parseApiMoment = (vehicles: TVehicle[]) => {
     let moment: TMoment;
+
     //moment = TMoment();
     //moment.activeVehicles = vehicles.map(vehicle => {
       //return vehicle;
@@ -39,12 +41,17 @@ export const DailyOperationsPage = () => {
   }
 
   const planTheRoutes = async() => {
+    setApiMoment(parseMoment(data.moment));
     await AlgorithmService.planRoutes(seconds).then((response) => {
       //setVehicles(parseRoutes(response.data));
       //setApiMoment(parseApiMoment(response.data));
     }).catch((err) => {
       console.log(err);
     });
+  }
+
+  const parseMoment = (moment: TMoment) => {
+    return moment;
   }
 
   const initiateAlgorithm = async() => {
@@ -60,7 +67,7 @@ export const DailyOperationsPage = () => {
       setCount(prevCount => prevCount + 1);
       time = new Date();
       planTheRoutes;
-    }, 60000);
+    }, 1000);
   }, []);
 
   useEffect(() => {

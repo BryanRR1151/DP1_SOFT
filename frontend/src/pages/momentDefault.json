@@ -1,0 +1,29 @@
+{
+    "moment":{
+        "min": 0,
+        "ordersDelivered": 0,
+        "ordersLeft": 0,
+        "fleetCapacity": 0,
+        "activeVehicles": [
+            {
+                "id": 0,
+                "type": "Auto",
+                "speed": 0,
+                "cost": 0,
+                "turn": 0,
+                "overtime": 0,
+                "state": 0,
+                "capacity": 0,
+                "carry": 0,
+                "moved": false,
+                "pack": null,
+                "location": null,
+                "route": null,
+                "step": 0,
+                "movement": null
+            }            
+        ],
+        "activePacks": [],
+        "activeBlockages": []
+    }
+}
