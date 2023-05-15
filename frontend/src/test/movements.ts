@@ -6,8 +6,8 @@ export type TNode = {
 }
 
 export type TMovement = {
-  from: TNode;
-  to: TNode;
+  from: TNode | null;
+  to: TNode | null;
 }
 
 export enum VehicleType {
@@ -26,15 +26,15 @@ export type TVehicle = {
   capacity: number;
   carry: number;
   moved: boolean;
-  pack: TPack;
-  location: TNode;
-  route?: TSolution;
+  pack: TPack | null;
+  location: TNode | null;
+  route?: TSolution | null;
   step: number;
-  movement: TMovement;
+  movement: TMovement | null;
 }
 
 export type TSolution = {
-  chroms: TChrom;
+  chroms: TChrom[];
 }
 
 export type TChrom = {

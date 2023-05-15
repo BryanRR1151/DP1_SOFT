@@ -1,0 +1,84 @@
+{
+    "vehicle":{
+        "id": 56,
+        "type": "Auto",
+        "speed": 30,
+        "cost": 20,
+        "turn": 0,
+        "overtime": 0,
+        "state": 1,
+        "capacity": 25,
+        "carry": 25,
+        "moved": false,
+        "pack": null,
+        "location": {
+        "x": 45,
+        "y": 30,
+        "blocked": false,
+        "destination": false
+        },
+        "route": {
+            "chroms": [
+                {
+                    "from": {
+                        "x": 27,
+                        "y": 18,
+                        "blocked": false,
+                        "destination": false
+                    },
+                    "to": {
+                        "x": 28,
+                        "y": 18,
+                        "blocked": false,
+                        "destination": false
+                    }
+                },
+                {
+                    "from": {
+                        "x": 28,
+                        "y": 18,
+                        "blocked": false,
+                        "destination": false
+                    },
+                    "to": {
+                        "x": 29,
+                        "y": 18,
+                        "blocked": false,
+                        "destination": false
+                    }
+                },
+                {
+                    "from": {
+                        "x": 29,
+                        "y": 18,
+                        "blocked": false,
+                        "destination": false
+                    },
+                    "to": {
+                        "x": 30,
+                        "y": 18,
+                        "blocked": false,
+                        "destination": false
+                    }
+                }
+            ],
+            "iVehicle": 55,
+            "late": false
+        },
+        "step": 0,
+        "movement": {
+            "from": {
+                "x": 29,
+                "y": 18,
+                "blocked": false,
+                "destination": false
+            },
+            "to": {
+                "x": 30,
+                "y": 18,
+                "blocked": false,
+                "destination": false
+            }
+        }
+    }
+}

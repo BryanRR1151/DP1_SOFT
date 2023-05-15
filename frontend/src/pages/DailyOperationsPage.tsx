@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from "react";
 import data from './momentDefault.json';
+import returnData from './returnTest.json';
+import routesData from './routesTest.json';
 import movementData from './movementDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
 import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid } from '@mui/material';
-import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
+import { TMoment, TMovement, TSolution, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
 
 export const DailyOperationsPage = () => {
 
   const [vehicles, setVehicles] = useState<TVehicle[]|undefined>(undefined);
   const [count, setCount] = useState(0);
-  const [apiMoment, setApiMoment] = useState<TMoment|undefined>(undefined);
+  const [route, setRoute] = useState<TSolution|undefined>({chroms:[]});
+  const [movement, setMovement] = useState<TMovement|null>({from:null,to:null});
+  const [vehicle, setVehicle] = useState<TVehicle|undefined>({id: 0,type: VehicleType.auto,speed: 0,cost: 0,
+    turn: 0,overtime: 0,state: 0,capacity: 0,carry: 0,moved: false,
+    pack: null,location: null,route: null,step: 0,movement: null});
+  const [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
+    fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: []});
   var time = new Date();
-  var started = false;
   const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
   
   const parseRoutes = (vehicles: TVehicle[]) => {
@@ -54,6 +61,10 @@ export const DailyOperationsPage = () => {
     return moment;
   }
 
+  const parseVehicle = (vehicle: TVehicle) => {
+    return vehicle;
+  }
+
   const initiateAlgorithm = async() => {
     await AlgorithmService.initDaily().then((response) => {
       console.log('Algorithm initiated successfully');
@@ -62,35 +73,80 @@ export const DailyOperationsPage = () => {
     });
   }
 
+  const completePackage = async(vehicle: TVehicle) => {
+    /*await AlgorithmService.completePack(idVehicle).then((response) => {
+      console.log('Package completed successfully');
+      return response;
+    }).catch((err) => {
+      console.log(err);
+      return null;
+    });*/
+    //vehicle = returnData.vehicle;
+    //setV(parseVehicle(returnData.vehicle));
+    return returnData;
+  }
+  var once = false;
+  //should activate every time there's a new pack
   useEffect(() => {
     setInterval(() => {
       setCount(prevCount => prevCount + 1);
       time = new Date();
-      planTheRoutes;
-    }, 60000);
+      if(!once){
+        routesData.forEach( (v)=>{
+          v.movement.from.x=45;
+          v.movement.from.y=30;
+          v.movement.to.x=45;
+          v.movement.to.y=30;
+        })
+        setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+          ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
+          activeVehicles: apiMoment!.activeVehicles.concat(routesData),
+          activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});
+          
+        once=true;
+      }
+      //planTheRoutes;
+    }, 1000);
   }, []);
-
+  
+  //updates the vehicles position displayed and reduces routes
   useEffect(() => {
     setInterval(() => {
-      setCount(prevCount => prevCount + 1);
-      data.moment.activeVehicles.forEach( (v)=>{
-        v.movement.from=v.route.chroms[0].from;
-        v.movement.to=v.route.chroms[0].to;
-        v.route.chroms.shift();
-      })
-    }, 2000);
+      let newVehicles = routesData.map((v,index) => {
+        if(v.route!.chroms.length!=0){
+          v.movement.from=v.route!.chroms[0].from;
+          v.movement.to=v.route!.chroms[0].to;
+          v.route!.chroms.shift();
+        }else{
+          if(v.location!.destination==true){
+            return null;
+          }else{
+            //notify package has been delivered
+            v.route!.chroms = returnData.vehicle.route?.chroms;
+            v.location!.destination=true;
+          }
+        }
+        return v;
+      });
+      newVehicles = newVehicles.filter((value)=>value!=null);
+      setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+        ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
+        activeVehicles: newVehicles,
+        activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});
+      //every minute
+    }, 1000);
   }, []);
-
+  var started = false;
   useEffect(() => {
     if(count==0 && !started){
-      started=true;
-      setApiMoment(parseMoment(data.moment));
+      started = true;
+      setApiMoment(parseMoment(data.moment));/*
       data.moment.activeVehicles.forEach( (v)=>{
         v.movement.from=v.route.chroms[0].from;
         v.movement.to=v.route.chroms[0].to;
         v.route.chroms.shift();
-      })
-      initiateAlgorithm;
+      })*/
+      //initiateAlgorithm;
     }
   }, []);
 
@@ -128,6 +184,7 @@ export const DailyOperationsPage = () => {
         </Box>
       </Container>
 
+      <h1>{JSON.stringify(apiMoment)}</h1>
       <h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
     </>
   )
