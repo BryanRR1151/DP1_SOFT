@@ -8,8 +8,8 @@ const start = (data: FormData) => {
   });
 };
 
-const getMoment = (min: number) => {
-  return axios.get(`http://localhost:8080/GetScreenshot?minute=${ min }`)
+const getMoment = (min: number, offset: number) => {
+  return axios.get(`http://localhost:8080/GetScreenshot?minute=${ min }&offset=${ offset }`)
 }
 
 const kill = () => {
@@ -20,8 +20,7 @@ const initDaily = () => {
   return axios.get('http://localhost:8080/InitDaily');
 }
 
-co
-nst planRoutes = (time: number) => {
+const planRoutes = (time: number) => {
   return axios.get(`http://localhost:8080/PlanRoutes?minute=${ time }`)
 }
 

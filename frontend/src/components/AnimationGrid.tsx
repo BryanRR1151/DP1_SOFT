@@ -11,13 +11,14 @@ const CELL_SIZE = 15;
 interface CarProps {
   vehicle: TVehicle;
   openVehiclePopup: (vehicle: TVehicle) => void;
+  speed: number;
 }
 
-const Car = ({ vehicle, openVehiclePopup }: CarProps) => {
+const Car = ({ vehicle, openVehiclePopup, speed }: CarProps) => {
   const { movement: { from, to }} = vehicle;
 
   const springs = useSpring({
-    config: { duration: 1000 },
+    config: { duration: 1000/speed },
     from: { x: from.x*CELL_SIZE, y: from.y*CELL_SIZE },
     to: { x: to.x*CELL_SIZE, y: to.y*CELL_SIZE }
   })
@@ -64,9 +65,10 @@ const Car = ({ vehicle, openVehiclePopup }: CarProps) => {
 interface IAnimationGrid {
   moment: TMoment | undefined;
   openVehiclePopup: (vehicle: TVehicle) => void;
+  speed: number;
 }
 
-export const AnimationGrid = ({ moment, openVehiclePopup }: IAnimationGrid) => {
+export const AnimationGrid = ({ moment, openVehiclePopup, speed }: IAnimationGrid) => {
 
   const gridCells = Array.from({ length: (GRID_ROWS + 1) * (GRID_COLS + 1) }, (_, index) => {
     const row = Math.floor(index / (GRID_COLS + 1));
@@ -94,6 +96,7 @@ export const AnimationGrid = ({ moment, openVehiclePopup }: IAnimationGrid) => {
                 key={v.id} 
                 vehicle={v} 
                 openVehiclePopup={openVehiclePopup}
+                speed={speed}
               />
             )
           }) : null
