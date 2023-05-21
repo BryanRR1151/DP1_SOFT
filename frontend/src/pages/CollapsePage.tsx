@@ -4,7 +4,7 @@ import colorConfigs from '../configs/colorConfigs'
 import { Breadcrumbs, Typography } from '@mui/material';
 import { Simulation } from '../components/Simulation';
 
-export const WeekSimulationPage = () => {
+export const CollapsePage = () => {
   return (
     <>
       <Breadcrumbs 
@@ -19,10 +19,10 @@ export const WeekSimulationPage = () => {
         }}
       >
           <Link to={'/simulacion'} style={{ textDecoration: 'none' }}>Seleccionar simulación</Link>
-          <Typography>Simulación semanal</Typography>
+          <Typography>Simulación de colapso logístico</Typography>
       </Breadcrumbs>
 
-      <Simulation isCollapse={ false } targetTimer={ 7 } />
+      <Simulation isCollapse={ true } targetTimer={ 365 } />
     </>
   )
 }

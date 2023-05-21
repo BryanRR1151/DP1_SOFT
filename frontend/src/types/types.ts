@@ -32,6 +32,21 @@ export type TOrderError = {
   y: boolean;
 }
 
+export type TBlockage = {
+  id?: number;
+  initialDate: string;
+  finishDate: string;
+  blockNode: TNode;
+  registerDate?: string;
+}
+
+export type TBlockageError = {
+  initialDate: boolean;
+  finishDate: boolean;
+  x: boolean;
+  y: boolean;
+}
+
 export const panelStyles = {
   panel: {
     position: "fixed",
