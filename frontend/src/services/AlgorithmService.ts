@@ -20,7 +20,8 @@ const initDaily = () => {
   return axios.get('http://localhost:8080/InitDaily');
 }
 
-const planRoutes = (time: number) => {
+co
+nst planRoutes = (time: number) => {
   return axios.get(`http://localhost:8080/PlanRoutes?minute=${ time }`)
 }
 

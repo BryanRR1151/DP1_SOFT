@@ -35,23 +35,21 @@ const Car = ({ vehicle, openVehiclePopup }: CarProps) => {
             style={{
               position: 'absolute',
               top: '-10px',
-              left: '-5px',
+              left: '-10px',
               zIndex: 1000,
               cursor: 'pointer'
             }}
           >
             {vehicle.type == VehicleType.auto ?
               <FaCarSide
+                size={20}
                 sx={{
-                  width: 50,
-                  height: 50,
                   cursor: 'pointer'
                 }}
               /> :
               <FaMotorcycle
+                size={20}
                 sx={{
-                  width: 50,
-                  height: 50,
                   cursor: 'pointer'
                 }}
               />

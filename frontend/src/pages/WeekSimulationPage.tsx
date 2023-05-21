@@ -8,7 +8,7 @@ import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
 import { DropzoneComponent } from '../components/DropzoneComponent';
 import { PanelType, panelStyles } from '../types/types';
-import { FaAngleDown } from 'react-icons/fa';
+import { FaAmazonPay, FaAngleDown } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import { SimulatedTimer } from '../components/SimulatedTimer';
 
