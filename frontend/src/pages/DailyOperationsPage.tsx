@@ -116,7 +116,7 @@ export const DailyOperationsPage = () => {
         once=true;
       }
       //planTheRoutes;
-    }, 1000);
+    }, 60000);
   }, []);
   
   //updates the vehicles position displayed and reduces routes
@@ -144,7 +144,7 @@ export const DailyOperationsPage = () => {
         activeVehicles: newVehicles,
         activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});
       //every minute
-    }, 1000);
+    }, 60000);
   }, []);
   var started = false;
   useEffect(() => {
@@ -289,8 +289,8 @@ export const DailyOperationsPage = () => {
           }
         </Box>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
-      <h1>{JSON.stringify(apiMoment)}</h1>
-      <h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
     </>
   )
-}
+}/*
+<h1>{JSON.stringify(apiMoment)}</h1>
+<h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>*/
