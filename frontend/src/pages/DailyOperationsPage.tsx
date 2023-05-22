@@ -222,6 +222,7 @@ export const DailyOperationsPage = () => {
       </Box> : null
         }
       </Box>
+      {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
       <h1>{JSON.stringify(apiMoment)}</h1>
       <h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
     </>
