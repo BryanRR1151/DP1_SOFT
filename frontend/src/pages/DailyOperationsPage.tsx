@@ -228,10 +228,10 @@ export const DailyOperationsPage = () => {
             <Box sx={{ marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
               <Box>
                 <Button
-                  variant='outlined'
+                  variant='contained'
                   color='secondary'
                   onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
-                  sx={{ marginLeft: 2 }}
+                  sx={{}}
                 >
                   Registrar incidencias
                 </Button>
