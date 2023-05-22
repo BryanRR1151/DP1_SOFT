@@ -4,6 +4,8 @@ import { SimulationPage } from "../pages/SimulationPage";
 import { HomePage } from "../pages/HomePage";
 import { WeekSimulationPage } from "../pages/WeekSimulationPage";
 import { DailyOperationsPage } from "../pages/DailyOperationsPage";
+import { BlockagesPage } from "../pages/BlockagesPage";
+import { CollapsePage } from "../pages/CollapsePage";
 
 type Route = {
   name: string;
@@ -39,9 +41,21 @@ const routes: Route[] = [
     inMenu: false
   },
   {
+    name: 'Colapso Logístico',
+    path: '/simulacion/colapso',
+    component: CollapsePage,
+    inMenu: false
+  },
+  {
     name: 'Visualización',
     path: '/visualization',
     component: DailyOperationsPage,
+    inMenu: true
+  },
+  {
+    name: 'Bloqueos',
+    path: '/blockages',
+    component: BlockagesPage,
     inMenu: true
   }
 ];

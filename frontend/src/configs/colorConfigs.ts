@@ -20,7 +20,7 @@ const colorConfigs = {
   secondary: '#E86C00',
   dots: {
     normal: 'rgb(231, 231, 231)',
-    depot: '#E86C00',
+    depot: 'black',
     pack: 'green',
     block: 'red'
   }
