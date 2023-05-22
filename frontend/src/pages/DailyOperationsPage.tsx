@@ -11,11 +11,13 @@ import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box
 import { TMoment, TMovement, TSolution, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
 import { PanelType, panelStyles } from "../types/types";
+import { DropzoneComponent } from "../components/DropzoneComponent";
 
 export const DailyOperationsPage = () => {
 
   const [vehicles, setVehicles] = useState<TVehicle[]|undefined>(undefined);
   const [count, setCount] = useState(0);
+  const [bFiles, setBFiles] = useState<any[]>([]);
   const [selected, setSelected] = useState(null);
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
@@ -183,6 +185,9 @@ export const DailyOperationsPage = () => {
     handlePanel(false);
     handleDeselect();*/
 }
+  const onFileChange = (updatedList: any[], type: string) => {
+    setBFiles(updatedList);
+  }
 
   const options = [
     { value: 'TI1', label: 'TI1' },
@@ -238,8 +243,7 @@ export const DailyOperationsPage = () => {
             />
           </Box>
         </Box>
-      </Container>
-      <form autoComplete="off" onSubmit={handleSubmit}>  
+      </Container> 
         <Box
           sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
           display="flex"
@@ -247,34 +251,43 @@ export const DailyOperationsPage = () => {
         >
           {typePanel == PanelType.simulationFiles ?
             <Box sx={{height:500,paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
-              <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
-                
-              <TextField 
-                label="Código del vehículo"
-                //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
-                required
-                variant="outlined"
-                color="secondary"
-                type="string"
-                //value={data.term}
-                //error={error.term}
-                fullWidth
-                sx={{mb: 3}}
-              />
-              <Box sx={{width:343, height:65}}>
-                <Select 
-                  defaultValue={options[0]}
-                  isSearchable = {true}
-                  name = "incident type"
-                  options={options} 
-                  onChange={handleChange}
-                />
+              <Box>
+                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+                <form autoComplete="off" onSubmit={handleSubmit}> 
+                  <TextField 
+                    label="Código del vehículo"
+                    //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+                    required
+                    variant="outlined"
+                    color="secondary"
+                    type="string"
+                    //value={data.term}
+                    //error={error.term}
+                    fullWidth
+                    sx={{mb: 3}}
+                  />
+                  <Box sx={{width:343, height:65}}>
+                    <Select 
+                      defaultValue={options[0]}
+                      isSearchable = {true}
+                      name = "incident type"
+                      options={options} 
+                      onChange={handleChange}
+                    />
+                  </Box>
+                  <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+                </form>
               </Box>
-              <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+              <Box sx={{height:100}}/>
+              <Box > 
+                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar bloqueos:</Typography>
+                <Box>
+                  <DropzoneComponent onFileChange={onFileChange} type={'Blockage'} files={bFiles} />
+                </Box>
+              </Box>
             </Box> : null
           }
         </Box>
-      </form>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
       <h1>{JSON.stringify(apiMoment)}</h1>
       <h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
