@@ -6,6 +6,7 @@ import movementData from './movementDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
+import Select from 'react-select'
 import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, TextField } from '@mui/material';
 import { TMoment, TMovement, TSolution, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
@@ -15,6 +16,7 @@ export const DailyOperationsPage = () => {
 
   const [vehicles, setVehicles] = useState<TVehicle[]|undefined>(undefined);
   const [count, setCount] = useState(0);
+  const [selected, setSelected] = useState(null);
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
   const [route, setRoute] = useState<TSolution|undefined>({chroms:[]});
@@ -48,6 +50,9 @@ export const DailyOperationsPage = () => {
   }
 
   const openVehiclePopup = (vehicle: TVehicle) => {
+    setOpenPanel(true);
+    setTypePanel(PanelType.vehicleInfo);
+    setVehicle(vehicle);
     console.log(vehicle);
   }
 
@@ -153,6 +158,42 @@ export const DailyOperationsPage = () => {
     }
   }, []);
 
+  const handleSubmit = (e: any) => {
+    e.preventDefault()/*
+    let newError: TOrderError = { quantity: false, term: false, x: false, y: false };
+    
+    if (!data.quantity || data.quantity <= 0) {
+      newError.quantity = true;
+    }
+    if (!data.term || data.quantity <= 0) {
+      newError.term = true;
+    }
+    if (!data.orderNode.x || (data.orderNode.x < 0 || data.orderNode.x > 70)) {
+      newError.x = true;
+    }
+    if (!data.orderNode.y || (data.orderNode.y < 0 || data.orderNode.y > 50)) {
+      newError.y = true;
+    }
+
+    if (Object.values(newError).find((e) => e == true)) {
+      setError(newError);
+      return;
+    }
+
+    handlePanel(false);
+    handleDeselect();*/
+}
+
+  const options = [
+    { value: 'TI1', label: 'TI1' },
+    { value: 'TI2', label: 'TI2' },
+    { value: 'TI3', label: 'TI3' }
+  ]
+  const handleChange = (selectedOption) => {
+    setSelected(selectedOption);
+    console.log(`Option selected:`, selectedOption);
+  };
+
   return (
     <>
       <Breadcrumbs 
@@ -198,30 +239,42 @@ export const DailyOperationsPage = () => {
           </Box>
         </Box>
       </Container>
-      <Box
-        sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
-        display="flex"
-        flexDirection="column"
-      >
-        {typePanel == PanelType.simulationFiles ?
-          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
-            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
-            
-        <TextField 
-          label="Código del vehículo"
-          //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
-          required
-          variant="outlined"
-          color="secondary"
-          type="string"
-          //value={data.term}
-          //error={error.term}
-          fullWidth
-          sx={{mb: 3}}
-        />
-      </Box> : null
-        }
-      </Box>
+      <form autoComplete="off" onSubmit={handleSubmit}>  
+        <Box
+          sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
+          display="flex"
+          flexDirection="column"
+        >
+          {typePanel == PanelType.simulationFiles ?
+            <Box sx={{height:500,paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+              <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+                
+              <TextField 
+                label="Código del vehículo"
+                //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+                required
+                variant="outlined"
+                color="secondary"
+                type="string"
+                //value={data.term}
+                //error={error.term}
+                fullWidth
+                sx={{mb: 3}}
+              />
+              <Box sx={{width:343, height:65}}>
+                <Select 
+                  defaultValue={options[0]}
+                  isSearchable = {true}
+                  name = "incident type"
+                  options={options} 
+                  onChange={handleChange}
+                />
+              </Box>
+              <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+            </Box> : null
+          }
+        </Box>
+      </form>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
       <h1>{JSON.stringify(apiMoment)}</h1>
       <h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
