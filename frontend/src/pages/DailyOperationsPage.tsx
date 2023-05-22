@@ -6,14 +6,17 @@ import movementData from './movementDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
-import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid } from '@mui/material';
+import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, TextField } from '@mui/material';
 import { TMoment, TMovement, TSolution, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
+import { PanelType, panelStyles } from "../types/types";
 
 export const DailyOperationsPage = () => {
 
   const [vehicles, setVehicles] = useState<TVehicle[]|undefined>(undefined);
   const [count, setCount] = useState(0);
+  const [openPanel, setOpenPanel] = useState<boolean>(false);
+  const [typePanel, setTypePanel] = useState<PanelType|null>(null);
   const [route, setRoute] = useState<TSolution|undefined>({chroms:[]});
   const [movement, setMovement] = useState<TMovement|null>({from:null,to:null});
   const [vehicle, setVehicle] = useState<TVehicle|undefined>({id: 0,type: VehicleType.auto,speed: 0,cost: 0,
@@ -176,6 +179,18 @@ export const DailyOperationsPage = () => {
               justifyContent: 'center',
             }}
           >
+            <Box sx={{ marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
+              <Box>
+                <Button
+                  variant='outlined'
+                  color='secondary'
+                  onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
+                  sx={{ marginLeft: 2 }}
+                >
+                  Registrar incidencias
+                </Button>
+              </Box>
+            </Box>
             <AnimationGrid 
               moment = {apiMoment}
               openVehiclePopup={openVehiclePopup}
@@ -183,7 +198,30 @@ export const DailyOperationsPage = () => {
           </Box>
         </Box>
       </Container>
-
+      <Box
+        sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
+        display="flex"
+        flexDirection="column"
+      >
+        {typePanel == PanelType.simulationFiles ?
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+            
+        <TextField 
+          label="Código del vehículo"
+          //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+          required
+          variant="outlined"
+          color="secondary"
+          type="string"
+          //value={data.term}
+          //error={error.term}
+          fullWidth
+          sx={{mb: 3}}
+        />
+      </Box> : null
+        }
+      </Box>
       <h1>{JSON.stringify(apiMoment)}</h1>
       <h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
     </>
