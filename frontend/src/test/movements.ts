@@ -69,4 +69,5 @@ export type TMoment = {
   activeVehicles: TVehicle[];
   activePacks: TPack[];
   activeBlockages: TBlockage[];
+  collapsed: boolean;
 }

@@ -1,12 +1,20 @@
 import axios from 'axios'
 
-const start = (data: FormData) => {
+const startWeekly = (data: FormData) => {
   return axios.post('http://localhost:8080/StartGenetic', data, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
 };
+
+const startCollapse = (data: FormData) => {
+  return axios.post('http://localhost:8080/StartCollapse', data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+}
 
 const getMoment = (min: number, offset: number) => {
   return axios.get(`http://localhost:8080/GetScreenshot?minute=${ min }&offset=${ offset }`)
@@ -29,7 +37,8 @@ const completePack = (idVehicle: number) => {
 }
 
 export default {
-  start,
+  startWeekly,
+  startCollapse,
   getMoment,
   kill,
   initDaily,

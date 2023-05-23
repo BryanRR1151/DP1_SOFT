@@ -111,7 +111,7 @@ export const DailyOperationsPage = () => {
         setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
           ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
           activeVehicles: apiMoment!.activeVehicles.concat(routesData),
-          activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});
+          activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages, collapsed: false});
           
         once=true;
       }
@@ -198,7 +198,7 @@ export const DailyOperationsPage = () => {
     { value: 'at', label: 'Aut' },
     { value: 'mot', label: 'Mot' }
   ]
-  const handleChange = (selectedOption) => {
+  const handleChange = (selectedOption: any) => {
     setSelected(selectedOption);
     console.log(`Option selected:`, selectedOption);
   };
@@ -244,6 +244,7 @@ export const DailyOperationsPage = () => {
             <AnimationGrid 
               moment = {apiMoment}
               openVehiclePopup={openVehiclePopup}
+              speed = {1}
             />
           </Box>
         </Box>

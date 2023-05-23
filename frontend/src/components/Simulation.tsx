@@ -33,6 +33,7 @@ export const Simulation = (props: ISimulation) => {
   const [vehicle, setVehicle] = useState<TVehicle|undefined>(undefined);
   const [speed, setSpeed] = useState<number>(1); // 1 = 1 min/seg
   const [auxCount, setAuxCount] = useState<number>(0);
+  const [stopped, setStopped] = useState<boolean>(false);
   const interval = useRef<any>(null);
 
   const startAlgorithm = async() => {
@@ -47,46 +48,53 @@ export const Simulation = (props: ISimulation) => {
     for (let i = 0 ; i < fFiles.length ; i++) {
       data.append("fFaults", fFiles[i]);
     }
-    if(fFiles.length == 0) data.append("fFaults", '');
-    await AlgorithmService.start(data).then((response) => {
-      console.log('Algorithm executed successfully');
-      if (timer >= props.targetTimer*24*60) setTimer(-1);
-    }).catch((err) => {
-      console.log(err);
-    });
+    if (fFiles.length == 0) data.append("fFaults", '');
+    if (!props.isCollapse) {
+      await AlgorithmService.startWeekly(data).then((response) => {
+        console.log('Algorithm executed successfully');
+        if (timer >= props.targetTimer*24*60) setTimer(-1);
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+    else {
+      await AlgorithmService.startCollapse(data).then((response) => {
+        console.log('Algorithm executed successfully');
+        if (timer >= props.targetTimer*24*60) setTimer(-1);
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
   }
 
   const getMomentFromAlgorithm = async() => {
     if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
       await AlgorithmService.getMoment( timer, speed ).then((response) => {
-        /*
-          if (props.isCollapse) {
-            let moments: TMoment[] = response.data.moments;
-            let end = response.data.end;
-            if (!end) {
-              setApiMoment(parseMoment(moments[0]));
-              setApiMoments(moments);
-            }
-            else {
-              const minutes = Math.floor(timer);
-              const hours = Math.floor(timer / 60);
-              const days = Math.floor(hours / 24);
-              setApiMoment(undefined);
-              clearInterval(interval.current);
-              setTimer(-2);
-              toast.error(`La simulación alcanzó el colapso logístico en el siguiente tiempo: ${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)} (dd/hh/mm)`);
-            }
-          }
-        */
         let moments: TMoment[] = response.data;
         setApiMoment(parseMoment(moments[0]));
         setApiMoments(moments);
+        if (props.isCollapse) {
+          if (moments[0].collapsed && !stopped)  {
+            setStopped(true);
+          }
+          if (stopped) {
+            stopCollapse();
+          }
+        }
       }).catch((err) => {
         console.log(err);
       });
     }
     else {
       setApiMoment(parseMoment(apiMoments[auxCount]));
+      if (props.isCollapse) {
+        if (apiMoments[0].collapsed && !stopped)  {
+          setStopped(true);
+        }
+        if (stopped) {
+          stopCollapse();
+        }
+      }
     }
   }
 
@@ -99,6 +107,17 @@ export const Simulation = (props: ISimulation) => {
     }).catch((err) => {
       console.log(err);
     });
+  }
+
+  const stopCollapse = () => {
+    const minutes = Math.floor(timer);
+    const hours = Math.floor(timer / 60);
+    const days = Math.floor(hours / 24);
+    setApiMoment(undefined);
+    clearInterval(interval.current);
+    setStopped(false);
+    setTimer(-2);
+    toast.error(`La simulación alcanzó el colapso logístico en el siguiente tiempo: ${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)} (dd/hh/mm)`);
   }
   
   const handleTimer = () => {
@@ -146,26 +165,26 @@ export const Simulation = (props: ISimulation) => {
   const parseMoment = (moment: TMoment) => {
     let newVehicles = moment.activeVehicles.map((v, index) => {
       if (v.type == VehicleType.auto) {
-        let move = v.movement;
+        let move = v.movement as TMovement;
         let newMove: TMovement;
-        if (move.to.x - move.from.x > 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x-0.5, y: move.to.y }};
-          else newMove = { from: { x: move.from.x+0.5, y: move.from.y }, to: { x: move.to.x, y: move.to.y }};
+        if (move.to!.x - move.from!.x > 0) {
+          if (!v.moved) newMove = { from: { x: move.from!.x, y: move.from!.y }, to: { x: move.to!.x-0.5, y: move.to!.y }};
+          else newMove = { from: { x: move.from!.x+0.5, y: move.from!.y }, to: { x: move.to!.x, y: move.to!.y }};
           v.movement = newMove;
         } 
-        else if (move.to.y - move.from.y > 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x, y: move.to.y-0.5 }};
-          else newMove = { from: { x: move.from.x, y: move.from.y+0.5 }, to: { x: move.to.x, y: move.to.y }};
+        else if (move.to!.y - move.from!.y > 0) {
+          if (!v.moved) newMove = { from: { x: move.from!.x, y: move.from!.y }, to: { x: move.to!.x, y: move.to!.y-0.5 }};
+          else newMove = { from: { x: move.from!.x, y: move.from!.y+0.5 }, to: { x: move.to!.x, y: move.to!.y }};
           v.movement = newMove;
         }
-        else if (move.to.x - move.from.x < 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x+0.5, y: move.to.y }};
-          else newMove = { from: { x: move.from.x-0.5, y: move.from.y }, to: { x: move.to.x, y: move.to.y }};
+        else if (move.to!.x - move.from!.x < 0) {
+          if (!v.moved) newMove = { from: { x: move.from!.x, y: move.from!.y }, to: { x: move.to!.x+0.5, y: move.to!.y }};
+          else newMove = { from: { x: move.from!.x-0.5, y: move.from!.y }, to: { x: move.to!.x, y: move.to!.y }};
           v.movement = newMove;
         } 
-        else if (move.to.y - move.from.y < 0) {
-          if (!v.moved) newMove = { from: { x: move.from.x, y: move.from.y }, to: { x: move.to.x, y: move.to.y+0.5 }};
-          else newMove = { from: { x: move.from.x, y: move.from.y-0.5 }, to: { x: move.to.x, y: move.to.y }};
+        else if (move.to!.y - move.from!.y < 0) {
+          if (!v.moved) newMove = { from: { x: move.from!.x, y: move.from!.y }, to: { x: move.to!.x, y: move.to!.y+0.5 }};
+          else newMove = { from: { x: move.from!.x, y: move.from!.y-0.5 }, to: { x: move.to!.x, y: move.to!.y }};
           v.movement = newMove;
         }
       }
