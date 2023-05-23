@@ -28,7 +28,7 @@ export const DailyOperationsPage = () => {
   const [vehicle, setVehicle] = useState<TVehicle|undefined>({id: 0,type: VehicleType.auto,speed: 0,cost: 0,
     turn: 0,overtime: 0,state: 0,capacity: 0,carry: 0,moved: false,
     pack: null,location: null,route: null,step: 0,movement: null});
-  const [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
+  var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
     fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: []});
   var time = new Date();
   const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
@@ -121,13 +121,20 @@ export const DailyOperationsPage = () => {
         v!.movement!.to!.x=45;
         v!.movement!.to!.y=30;
       })
-      setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+      apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
+      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
         ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
-        //activeVehicles: apiMoment!.activeVehicles.concat(vehicles),
         activeVehicles: apiMoment!.activeVehicles.concat(vehicles),
-        activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});
+        activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});*/
+      let packs : TPack[]=[];
+      vehicles.forEach(v => {
+        packs.push(v.pack);
+      });
+      apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
+      setApiMoment(apiMoment);
+      vehicles=[];
           
-    }, 3000);
+    }, 1000);
   }, []);
   
   //updates the vehicles position displayed and reduces routes
@@ -143,20 +150,27 @@ export const DailyOperationsPage = () => {
             return null;
           }else{
             //notify package has been delivered
+            apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack),1);
             v.route!.chroms = returnData.vehicle.route?.chroms;
             v.location!.destination=true;
+
+            v.movement!.from=v.route!.chroms[0].from;
+            v.movement!.to=v.route!.chroms[0].to;
+            v.route!.chroms.shift();
             //completePackage;
           }
         }
         return v;
       });
       newVehicles = newVehicles!.filter((value)=>value!=null);
-      setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+      apiMoment!.activeVehicles=newVehicles;
+      setApiMoment(apiMoment);
+      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
         ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
         activeVehicles: newVehicles,
-        activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});
+        activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});*/
       //every minute
-    }, 60000);
+    }, 1000);
   }, []);
 
   useEffect(() => {
@@ -170,12 +184,13 @@ export const DailyOperationsPage = () => {
   useEffect(() => {
     if(count==0 && !started){
       started = true;
-      setApiMoment(data.moment);
+      apiMoment=data.moment;
+      setApiMoment(apiMoment);
       getTodaysBlockages;
-      setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
         ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
         activeVehicles: apiMoment!.activeVehicles,
-        activePacks: apiMoment!.activePacks,activeBlockages: todaysBlockages});
+        activePacks: apiMoment!.activePacks,activeBlockages: todaysBlockages});*/
       /*
       data.moment.activeVehicles.forEach( (v)=>{
         v.movement.from=v.route.chroms[0].from;
@@ -184,8 +199,8 @@ export const DailyOperationsPage = () => {
       })*/
       initiateAlgorithm;
       //planTheRoutes;
-      setVehicles(parseVehicles(routesData));
       vehicles=routesData;
+      //setVehicles(vehicles);
     }
   }, []);
 
@@ -342,8 +357,8 @@ export const DailyOperationsPage = () => {
         </Box>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
   
-<h1>{JSON.stringify(apiMoment)}</h1>
-<h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>
     </>
   )
-}/**/
+}/*
+<h1>{JSON.stringify(apiMoment)}</h1>
+<h1>The component has been rendered for {count} minutes. {seconds} seconds since beggining of day</h1>*/
