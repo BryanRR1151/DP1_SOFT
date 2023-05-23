@@ -194,6 +194,10 @@ export const DailyOperationsPage = () => {
     { value: 'TI2', label: 'TI2' },
     { value: 'TI3', label: 'TI3' }
   ]
+  const vehicleOptions = [
+    { value: 'at', label: 'Aut' },
+    { value: 'mot', label: 'Mot' }
+  ]
   const handleChange = (selectedOption) => {
     setSelected(selectedOption);
     console.log(`Option selected:`, selectedOption);
@@ -254,18 +258,36 @@ export const DailyOperationsPage = () => {
               <Box>
                 <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
                 <form autoComplete="off" onSubmit={handleSubmit}> 
-                  <TextField 
-                    label="Código del vehículo"
-                    //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
-                    required
-                    variant="outlined"
-                    color="secondary"
-                    type="string"
-                    //value={data.term}
-                    //error={error.term}
-                    fullWidth
-                    sx={{mb: 3}}
-                  />
+                  <Box
+                    display="flex"
+                    flexDirection="row"
+                    sx={{}}
+                  >
+                    <Box
+                      sx={{width:120}}
+                    >
+                      <Select 
+                        defaultValue={vehicleOptions[0]}
+                        isSearchable = {false}
+                        name = "vehicle options"
+                        options={vehicleOptions} 
+                        //onChange={handleChange}
+                      />
+                    </Box>
+                    <TextField 
+                      label="Código del vehículo"
+                      //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+                      required
+                      variant="outlined"
+                      color="secondary"
+                      type="number"
+                      //value={data.term}
+                      //error={error.term}
+                      fullWidth
+                      size="small"
+                      sx={{marginLeft: 2,mb: 3}}
+                    />
+                  </Box>
                   <Box sx={{width:343, height:65}}>
                     <Select 
                       defaultValue={options[0]}
@@ -289,6 +311,7 @@ export const DailyOperationsPage = () => {
           }
         </Box>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
+      <h1>{selected}</h1>
     </>
   )
 }/*
