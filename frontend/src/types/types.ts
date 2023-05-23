@@ -17,6 +17,7 @@ export enum PanelType {
 
 export type TOrder = {
   id?: number;
+  idCustomer?: number;
   order?: string;
   quantity: number;
   registerDate?: string;
@@ -26,6 +27,7 @@ export type TOrder = {
 }
 
 export type TOrderError = {
+  idCustomer: boolean;
   quantity: boolean;
   term: boolean;
   x: boolean;
