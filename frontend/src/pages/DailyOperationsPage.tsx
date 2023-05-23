@@ -242,6 +242,7 @@ export const DailyOperationsPage = () => {
     { value: 'at', label: 'Aut' },
     { value: 'mot', label: 'Mot' }
   ]
+
   const handleChange = (selectedOption: typeof options[0]) => {
     setSelected(selectedOption.value);
     console.log(`Option selected:`, selectedOption);
@@ -288,6 +289,7 @@ export const DailyOperationsPage = () => {
             <AnimationGrid 
               moment = {apiMoment}
               openVehiclePopup={openVehiclePopup}
+              speed = {1}
             />
           </Box>
         </Box>

@@ -6,6 +6,7 @@
         "fleetCapacity": 0,
         "activeVehicles": [],
         "activePacks": [],
-        "activeBlockages": []
+        "activeBlockages": [],
+        "stopped": false
     }
 }

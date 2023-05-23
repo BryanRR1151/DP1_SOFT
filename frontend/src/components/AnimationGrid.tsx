@@ -15,12 +15,12 @@ interface CarProps {
 }
 
 const Car = ({ vehicle, openVehiclePopup, speed }: CarProps) => {
-  const { movement: { from, to }} = vehicle;
+  const { from , to } = vehicle.movement as TMovement;
 
   const springs = useSpring({
     config: { duration: 1000/speed },
-    from: { x: from.x*CELL_SIZE, y: from.y*CELL_SIZE },
-    to: { x: to.x*CELL_SIZE, y: to.y*CELL_SIZE }
+    from: { x: from!.x*CELL_SIZE, y: from!.y*CELL_SIZE },
+    to: { x: to!.x*CELL_SIZE, y: to!.y*CELL_SIZE }
   })
 
   return (
