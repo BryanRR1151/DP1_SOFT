@@ -26,7 +26,7 @@ export type TVehicle = {
   capacity: number;
   carry: number;
   moved: boolean;
-  pack: TPack | null;
+  pack: TPack;
   location: TNode | null;
   route?: TSolution | null;
   step: number;
