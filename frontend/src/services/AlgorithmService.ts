@@ -21,12 +21,12 @@ const initDaily = () => {
   return axios.get('http://localhost:8080/InitDaily');
 }
 
-const planRoutes = (time: number) => {
-  return axios.get(`http://localhost:8080/PlanRoutes?minute=${ time }`)
+const planRoutes = (time: String) => {
+  return axios.get(`http://localhost:8080/PlanRoutes?time=${ time }`)
 }
 
 const completePack = (idVehicle: number) => {
-  return axios.get(`http://localhost:8080/CompletePack?minute=${ idVehicle }`)
+  return axios.get(`http://localhost:8080/CompletePack?idVehicle=${ idVehicle }`)
 }
 
 const getBlockages = () => {

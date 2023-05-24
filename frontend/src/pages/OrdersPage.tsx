@@ -77,7 +77,6 @@ export const OrdersPage = () => {
     if(!started){
       started = true;
       getPackList();
-      console.log("yeah")
     }
   }, []);
   useEffect(() => {
@@ -136,7 +135,7 @@ export const OrdersPage = () => {
     {
       field: 'term',
       headerName: 'Plazo',
-      valueGetter: (params: any) => `${params.value} horas`,
+      valueGetter: (params: any) => `${(params.value/60)/60} horas`,
       minWidth: 150
     },
     {

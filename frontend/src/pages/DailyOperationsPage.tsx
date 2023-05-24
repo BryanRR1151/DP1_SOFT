@@ -19,7 +19,7 @@ export const DailyOperationsPage = () => {
   var [vehicles, setVehicles] = useState<TVehicle[]>([]);
   var [vehicleReturnData, setVehicleReturnData] = useState<TVehicle|undefined>(undefined);
   const [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
-  const [count, setCount] = useState(0);
+  var [count, setCount] = useState(0);
   const [bFiles, setBFiles] = useState<any[]>([]);
   const [selected, setSelected] = useState<String>("TI1");
   const [openPanel, setOpenPanel] = useState<boolean>(false);
@@ -34,6 +34,77 @@ export const DailyOperationsPage = () => {
   var time = new Date();
   //new Date().getHours()*60+new Date().getMinutes();
   const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
+  
+  const getTodaysBlockages = async() => {
+    await AlgorithmService.getBlockages().then((response) => {
+      setTodaysBlockages(response.data);
+      console.log('Blockages retrieved successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  const initiateAlgorithm = async() => {
+    await AlgorithmService.initDaily().then((response) => {
+      console.log('Algorithm initiated successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+
+    await AlgorithmService.getBlockages().then((response) => {
+      setTodaysBlockages(response.data);
+      console.log('Blockages retrieved successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+
+    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+      vehicles=parseVehicles(response.data);
+      console.log(vehicles);
+      console.log('Routes planned successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  const parseVehicles = (vehicles: TVehicle[]) => {
+    return vehicles;
+  }
+
+  const planTheRoutes = async() => {
+    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+      vehicles=parseVehicles(response.data);
+      console.log(vehicles);
+      console.log('Routes planned successfully');
+      //setApiMoment(parseApiMoment(response.data));
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  var started = false;
+  useEffect(() => {
+    if(count==0 && !started){
+      started = true;
+      apiMoment=data.moment;
+      setApiMoment(apiMoment);
+      //getTodaysBlockages();
+      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+        ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
+        activeVehicles: apiMoment!.activeVehicles,
+        activePacks: apiMoment!.activePacks,activeBlockages: todaysBlockages});*/
+      /*
+      data.moment.activeVehicles.forEach( (v)=>{
+        v.movement.from=v.route.chroms[0].from;
+        v.movement.to=v.route.chroms[0].to;
+        v.route.chroms.shift();
+      })*/
+      initiateAlgorithm();
+      //planTheRoutes();
+      //vehicles=routesData;
+      //setVehicles(vehicles);
+    }
+  }, []);
   
   const parseRoutes = (vehicles: TVehicle[]) => {
     let newVehicles = vehicles.map((v, index) => {
@@ -62,45 +133,28 @@ export const DailyOperationsPage = () => {
     console.log(vehicle);
   }
 
-  const planTheRoutes = async() => {
-    await AlgorithmService.planRoutes(seconds).then((response) => {
-      vehicles=parseVehicles(response.data);
-      //setApiMoment(parseApiMoment(response.data));
-    }).catch((err) => {
-      console.log(err);
-    });
-  }
+  
 
   const parseMoment = (moment: TMoment) => {
     return moment;
   }
 
-  const parseVehicles = (vehicles: TVehicle[]) => {
-    return vehicles;
-  }
+  
   const parseVehicle = (vehicle: TVehicle) => {
     return vehicle;
   }
 
-  const initiateAlgorithm = async() => {
-    await AlgorithmService.initDaily().then((response) => {
-      console.log('Algorithm initiated successfully');
-    }).catch((err) => {
-      console.log(err);
-    });
-  }
+  
 
-  const getTodaysBlockages = async() => {
-    await AlgorithmService.getBlockages().then((response) => {
-      setTodaysBlockages(response.data);
-      console.log('Blockages retrieved successfully');
-    }).catch((err) => {
-      console.log(err);
-    });
-  }
+  
   const completePackage = async(vehicle: TVehicle) => {
+    console.log(vehicle.id);
     await AlgorithmService.completePack(vehicle.id).then((response) => {
       vehicle.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+      vehicle.location!.destination=true;
+      vehicle.movement!.from=vehicle.route!.chroms[0].from;
+      vehicle.movement!.to=vehicle.route!.chroms[0].to;
+      vehicle.route!.chroms.shift();
       console.log('Package completed successfully');
     }).catch((err) => {
       console.log(err);
@@ -111,7 +165,8 @@ export const DailyOperationsPage = () => {
   //should activate every time there's a new pack
   useEffect(() => {
     setInterval(() => {
-      setCount(prevCount => prevCount + 1);
+      count=count+60;
+      setCount(count);
       time = new Date();
       planTheRoutes();
       vehicles!.forEach( (v)=>{
@@ -153,11 +208,11 @@ export const DailyOperationsPage = () => {
             completePackage(v);
             //v.route!.chroms = returnData.vehicle.route?.chroms;
             //v.route!.chroms = vehicleReturnData!.route!.chroms!;
-            v.location!.destination=true;
+            /*v.location!.destination=true;
 
             v.movement!.from=v.route!.chroms[0].from;
             v.movement!.to=v.route!.chroms[0].to;
-            v.route!.chroms.shift();
+            v.route!.chroms.shift();*/
           }
         }
         return v;
@@ -193,29 +248,7 @@ export const DailyOperationsPage = () => {
     }, 60000);
   }, []);
 
-  var started = false;
-  useEffect(() => {
-    if(count==0 && !started){
-      started = true;
-      apiMoment=data.moment;
-      setApiMoment(apiMoment);
-      getTodaysBlockages();
-      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
-        ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
-        activeVehicles: apiMoment!.activeVehicles,
-        activePacks: apiMoment!.activePacks,activeBlockages: todaysBlockages});*/
-      /*
-      data.moment.activeVehicles.forEach( (v)=>{
-        v.movement.from=v.route.chroms[0].from;
-        v.movement.to=v.route.chroms[0].to;
-        v.route.chroms.shift();
-      })*/
-      initiateAlgorithm();
-      planTheRoutes();
-      //vehicles=routesData;
-      //setVehicles(vehicles);
-    }
-  }, []);
+  
 
   const handleSubmit = (e: any) => {
     e.preventDefault()/*

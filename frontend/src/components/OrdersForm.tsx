@@ -65,7 +65,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
       handleDeselect();
       packToSend.idCustomer=data.idCustomer;
       packToSend.demand=data.quantity;
-      packToSend.deadline=data.term;
+      packToSend.deadline=data.term*60*60;
       packToSend.location.x=data.orderNode.x;
       packToSend.location.y=data.orderNode.y;
       packToSend.originalTime=new Date().getHours()*60+new Date().getMinutes();
