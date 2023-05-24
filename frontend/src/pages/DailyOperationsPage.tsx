@@ -148,8 +148,8 @@ export const DailyOperationsPage = () => {
 
   
   const completePackage = async(vehicle: TVehicle) => {
-    console.log(vehicle.id);
     await AlgorithmService.completePack(vehicle.id).then((response) => {
+      console.log(response.data);
       vehicle.route!.chroms = parseVehicle(response.data)!.route!.chroms;
       vehicle.location!.destination=true;
       vehicle.movement!.from=vehicle.route!.chroms[0].from;
