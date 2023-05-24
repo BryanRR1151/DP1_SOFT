@@ -22,7 +22,8 @@ const colorConfigs = {
     normal: 'rgb(231, 231, 231)',
     depot: 'black',
     pack: 'green',
-    block: 'red'
+    block: 'red',
+    route: 'blue'
   }
 };
 

@@ -225,7 +225,7 @@ export const DailyOperationsPage = () => {
         activeVehicles: newVehicles,
         activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});*/
       //every minute
-    }, 1000);
+    }, 5000);
   }, []);
 
   useEffect(() => {
