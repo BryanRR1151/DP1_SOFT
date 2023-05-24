@@ -5,9 +5,11 @@ import colorConfigs from '../configs/colorConfigs';
 import sizeConfigs from '../configs/sizeConfigs';
 import { DataGrid, GridRenderCellParams, GridActionsCellItem, GridRowParams } from '@mui/x-data-grid';
 import { TOrder, OrderState, PanelType, panelStyles } from '../types/types';
-import { TNode } from '../test/movements';
+import { TNode, TPack } from '../test/movements';
 import { OrdersForm } from '../components/OrdersForm';
 import { FaPen, FaTrash } from 'react-icons/fa';
+import AlgorithmService from '../services/AlgorithmService';
+import axios from 'axios';
 
 interface GridColDef {
   field: string;
@@ -24,6 +26,9 @@ export const OrdersPage = () => {
   const [selected, setSelected] = useState<TOrder|undefined>(undefined);
   const [isOpenPanel, setIsOpenPanel] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [count, setCount] = useState(0);
+  var [rowsToShow, setRowsToShow] = useState<TOrder[]>([]);
+  var [packsToShow, setPacksToShow] = useState<TPack[]>([]);
 
   useEffect(() => {
     setLoading(false);
@@ -45,7 +50,42 @@ export const OrdersPage = () => {
   const handleDeselect = () => {
     setSelected(undefined);
   }
- 
+
+  const parsePacks = (packs: TPack[]) => {
+    return packs;
+  }
+
+  const getPackList = async() => {
+    await AlgorithmService.getPacks().then((response) => {
+      packsToShow = parsePacks(response.data);
+      setPacksToShow(parsePacks(response.data));
+      rowsToShow = [];
+      packsToShow.forEach(p => {
+        let temporaryOrder: TOrder = {order:p.id.toString(), id: p.id, registerDate:p.time.toString(),
+          quantity: p.demand, term: p.deadline, orderNode: {x:p.location.x,y:p.location.y}}
+          rowsToShow.push(temporaryOrder)
+      });
+      setRowsToShow(rowsToShow);
+      console.log('Packs retrieved successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  var started = false;
+  useEffect(() => {
+    if(!started){
+      started = true;
+      getPackList();
+    }
+  }, []);
+  useEffect(() => {
+    setInterval(() => {
+      getPackList();
+      //every minute
+    }, 10000);
+  }, []);
+ /*
   const testRows: TOrder[] = [
     {
       id: 1,
@@ -74,7 +114,7 @@ export const OrdersPage = () => {
       orderNode: {x: 40, y: 40} as TNode,
       state: OrderState.active
     }
-  ];
+  ];*/
 
   const columns: GridColDef[] = [
     {
@@ -95,7 +135,7 @@ export const OrdersPage = () => {
     {
       field: 'term',
       headerName: 'Plazo',
-      valueGetter: (params: any) => `${params.value} horas`,
+      valueGetter: (params: any) => `${(params.value/60)/60} horas`,
       minWidth: 150
     },
     {
@@ -124,17 +164,17 @@ export const OrdersPage = () => {
         )
       },
       minWidth: 150
-    },
+    },/*
     {
       field: 'actions',
       headerName: '',
       type: 'actions',
       minWidth: 50,
       getActions: (params: GridRowParams) => [
-        <GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
-        <GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
+        //<GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
+        //<GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
-    }
+    }*/
   ];
   
   return (
@@ -187,7 +227,7 @@ export const OrdersPage = () => {
                 Filtrar
               </Button>
             </Box>
-            <DataGrid rows={testRows} columns={columns} />
+            <DataGrid rows={rowsToShow} columns={columns} />
 
           </Box>
         </Container>
@@ -204,8 +244,14 @@ export const OrdersPage = () => {
           />
         </Box>
         {isOpenPanel && <Box sx={panelStyles.overlay} onClick={ () => { setIsOpenPanel(false); handleDeselect() }}/>}
+      
       </>
       }
     </>
   )
 }
+/*
+
+<h1>{JSON.stringify(packsToShow)}</h1>
+<h1>The component has been rendered for {count} minutes.</h1>
+*/

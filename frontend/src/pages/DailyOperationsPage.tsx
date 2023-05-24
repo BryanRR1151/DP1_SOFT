@@ -17,8 +17,9 @@ import { TBlockage } from "../test/movements";
 export const DailyOperationsPage = () => {
 
   var [vehicles, setVehicles] = useState<TVehicle[]>([]);
+  var [vehicleReturnData, setVehicleReturnData] = useState<TVehicle|undefined>(undefined);
   const [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
-  const [count, setCount] = useState(0);
+  var [count, setCount] = useState(0);
   const [bFiles, setBFiles] = useState<any[]>([]);
   const [selected, setSelected] = useState<String>("TI1");
   const [openPanel, setOpenPanel] = useState<boolean>(false);
@@ -31,7 +32,79 @@ export const DailyOperationsPage = () => {
   var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
     fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: []});
   var time = new Date();
+  //new Date().getHours()*60+new Date().getMinutes();
   const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
+  
+  const getTodaysBlockages = async() => {
+    await AlgorithmService.getBlockages().then((response) => {
+      setTodaysBlockages(response.data);
+      console.log('Blockages retrieved successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  const initiateAlgorithm = async() => {
+    await AlgorithmService.initDaily().then((response) => {
+      console.log('Algorithm initiated successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+
+    await AlgorithmService.getBlockages().then((response) => {
+      setTodaysBlockages(response.data);
+      console.log('Blockages retrieved successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+
+    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+      vehicles=parseVehicles(response.data);
+      console.log(vehicles);
+      console.log('Routes planned successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  const parseVehicles = (vehicles: TVehicle[]) => {
+    return vehicles;
+  }
+
+  const planTheRoutes = async() => {
+    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+      vehicles=parseVehicles(response.data);
+      console.log(vehicles);
+      console.log('Routes planned successfully');
+      //setApiMoment(parseApiMoment(response.data));
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  var started = false;
+  useEffect(() => {
+    if(count==0 && !started){
+      started = true;
+      apiMoment=data.moment;
+      setApiMoment(apiMoment);
+      //getTodaysBlockages();
+      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+        ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
+        activeVehicles: apiMoment!.activeVehicles,
+        activePacks: apiMoment!.activePacks,activeBlockages: todaysBlockages});*/
+      /*
+      data.moment.activeVehicles.forEach( (v)=>{
+        v.movement.from=v.route.chroms[0].from;
+        v.movement.to=v.route.chroms[0].to;
+        v.route.chroms.shift();
+      })*/
+      initiateAlgorithm();
+      //planTheRoutes();
+      //vehicles=routesData;
+      //setVehicles(vehicles);
+    }
+  }, []);
   
   const parseRoutes = (vehicles: TVehicle[]) => {
     let newVehicles = vehicles.map((v, index) => {
@@ -60,61 +133,42 @@ export const DailyOperationsPage = () => {
     console.log(vehicle);
   }
 
-  const planTheRoutes = async() => {
-    await AlgorithmService.planRoutes(seconds).then((response) => {
-      setVehicles(response.data);
-      //setApiMoment(parseApiMoment(response.data));
-    }).catch((err) => {
-      console.log(err);
-    });
-  }
+  
 
   const parseMoment = (moment: TMoment) => {
     return moment;
   }
 
-  const parseVehicles = (vehicles: TVehicle[]) => {
-    return vehicles;
+  
+  const parseVehicle = (vehicle: TVehicle) => {
+    return vehicle;
   }
 
-  const initiateAlgorithm = async() => {
-    await AlgorithmService.initDaily().then((response) => {
-      console.log('Algorithm initiated successfully');
-    }).catch((err) => {
-      console.log(err);
-    });
-  }
+  
 
-  const getTodaysBlockages = async() => {
-    /*
-    await AlgorithmService.().then((response) => {
-      setTodaysBlockages(response.data);
-      console.log('Blockages retrieved successfully');
-    }).catch((err) => {
-      console.log(err);
-    });
-    */
-  }
-
+  
   const completePackage = async(vehicle: TVehicle) => {
-    /*await AlgorithmService.completePack(idVehicle).then((response) => {
+    await AlgorithmService.completePack(vehicle.id).then((response) => {
+      console.log(response.data);
+      vehicle.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+      vehicle.location!.destination=true;
+      vehicle.movement!.from=vehicle.route!.chroms[0].from;
+      vehicle.movement!.to=vehicle.route!.chroms[0].to;
+      vehicle.route!.chroms.shift();
       console.log('Package completed successfully');
-      return response;
     }).catch((err) => {
       console.log(err);
-      return null;
-    });*/
-    //vehicle = returnData.vehicle;
-    //setV(parseVehicle(returnData.vehicle));
-    return returnData;
+    });
+    //vehicle.route!.chroms = returnData.vehicle.route.chroms;
   }
   
   //should activate every time there's a new pack
   useEffect(() => {
     setInterval(() => {
-      setCount(prevCount => prevCount + 1);
+      count=count+60;
+      setCount(count);
       time = new Date();
-      //planTheRoutes;
+      planTheRoutes();
       vehicles!.forEach( (v)=>{
         v!.movement!.from!.x=45;
         v!.movement!.from!.y=30;
@@ -151,13 +205,14 @@ export const DailyOperationsPage = () => {
           }else{
             //notify package has been delivered
             apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack),1);
-            v.route!.chroms = returnData.vehicle.route?.chroms;
-            v.location!.destination=true;
+            completePackage(v);
+            //v.route!.chroms = returnData.vehicle.route?.chroms;
+            //v.route!.chroms = vehicleReturnData!.route!.chroms!;
+            /*v.location!.destination=true;
 
             v.movement!.from=v.route!.chroms[0].from;
             v.movement!.to=v.route!.chroms[0].to;
-            v.route!.chroms.shift();
-            //completePackage;
+            v.route!.chroms.shift();*/
           }
         }
         return v;
@@ -175,34 +230,25 @@ export const DailyOperationsPage = () => {
 
   useEffect(() => {
     setInterval(() => {
-      
+      let blockagesToAdd : TBlockage[]=[];
+      todaysBlockages.forEach(b => {
+        if(b.start==time.getHours()*60+time.getMinutes()){
+          blockagesToAdd.push(b);
+        }
+        if(b.end==time.getHours()*60+time.getMinutes()){
+          let index = apiMoment!.activeBlockages.indexOf(b);
+          if(index!=-1){
+            apiMoment!.activeBlockages.splice(index,1);
+          }
+        }
+      });
+      apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
+      setApiMoment(apiMoment);
       //every minute
     }, 60000);
   }, []);
 
-  var started = false;
-  useEffect(() => {
-    if(count==0 && !started){
-      started = true;
-      apiMoment=data.moment;
-      setApiMoment(apiMoment);
-      getTodaysBlockages;
-      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
-        ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
-        activeVehicles: apiMoment!.activeVehicles,
-        activePacks: apiMoment!.activePacks,activeBlockages: todaysBlockages});*/
-      /*
-      data.moment.activeVehicles.forEach( (v)=>{
-        v.movement.from=v.route.chroms[0].from;
-        v.movement.to=v.route.chroms[0].to;
-        v.route.chroms.shift();
-      })*/
-      initiateAlgorithm;
-      //planTheRoutes;
-      vehicles=routesData;
-      //setVehicles(vehicles);
-    }
-  }, []);
+  
 
   const handleSubmit = (e: any) => {
     e.preventDefault()/*

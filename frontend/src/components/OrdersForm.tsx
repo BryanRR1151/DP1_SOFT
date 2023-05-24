@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { OrderState, PanelType, TOrder, TOrderError } from '../types/types';
 import { Typography, TextField, Button, Box } from '@mui/material';
+import { TPack } from '../test/movements';
+import AlgorithmService from '../services/AlgorithmService';
 
 interface IOrdersForm {
   order: TOrder|undefined;
@@ -10,6 +12,7 @@ interface IOrdersForm {
 }
 
 const defaultOrder: TOrder = {
+  idCustomer: 0,
   quantity: 0,
   term: 0,
   orderNode: { x: 0, y: 0 }
@@ -17,16 +20,29 @@ const defaultOrder: TOrder = {
 
 export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrdersForm) => {
   const [data, setData] = useState<TOrder>( order ?? defaultOrder );
-  const [error, setError] = useState<TOrderError>({ quantity: false, term: false, x: false, y: false });
+  const [error, setError] = useState<TOrderError>({ idCustomer: false, quantity: false, term: false, x: false, y: false });
+  var [packToSend, setPackToSend] = useState<TPack>({id: 0, idCustomer: 0, originalTime: 0, deadline: 0,
+    time: 0, demand: 0, fullfilled: 0, unassigned: 0, location: {x:-1,y:-1}});
 
   useEffect(() => {
     setData( order ?? defaultOrder );
   }, [order]);
 
+  const registerPack = async(pack: TPack) => {
+    await AlgorithmService.insertPack(pack).then((response) => {
+      console.log('Package inserted successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
   const handleSubmit = (e: any) => {
       e.preventDefault()
-      let newError: TOrderError = { quantity: false, term: false, x: false, y: false };
+      let newError: TOrderError = { idCustomer: false, quantity: false, term: false, x: false, y: false };
       
+      if (!data.idCustomer || data.idCustomer <= 0) {
+        newError.idCustomer = true;
+      }
       if (!data.quantity || data.quantity <= 0) {
         newError.quantity = true;
       }
@@ -47,6 +63,14 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
 
       handlePanel(false);
       handleDeselect();
+      packToSend.idCustomer=data.idCustomer;
+      packToSend.demand=data.quantity;
+      packToSend.deadline=data.term*60*60;
+      packToSend.location.x=data.orderNode.x;
+      packToSend.location.y=data.orderNode.y;
+      packToSend.originalTime=new Date().getHours()*60+new Date().getMinutes();
+      packToSend.unassigned=data.quantity;
+      registerPack(packToSend);
   }
     
   return ( 
@@ -77,6 +101,18 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
           fullWidth
           value={data.quantity}
           error={error.quantity}
+        />
+        <TextField 
+          label="Cliente"
+          onChange={(e: any) => setData({ ...data, idCustomer: e.target?.value })}
+          required
+          variant="outlined"
+          color="secondary"
+          type="number"
+          sx={{mb: 3}}
+          fullWidth
+          value={data.idCustomer}
+          error={error.idCustomer}
         />
         <TextField 
           label="Plazo (Horas)"
