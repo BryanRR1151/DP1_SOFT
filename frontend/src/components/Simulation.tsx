@@ -208,96 +208,108 @@ export const Simulation = (props: ISimulation) => {
 
   return (
     <>
-      <Container>
+      <Box>
         <Box sx={{ display: 'flex' }}>
           <Box
             sx={{
               padding: 5,
+              paddingTop: 3,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
             }}
           >
-            <Box sx={{ marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex' }}>
               <Box>
-                <Button
-                  variant='contained'
-                  color='secondary'
-                  disabled={timer >= 0}
-                  onClick={() => { if(!props.isCollapse ? oFiles.length == props.targetTimer : oFiles.length == 1) { setTimer(INITIAL_TIMER); } else { toast.error(`Debe subir ${ props.isCollapse ? '1 archivo' : `${ props.targetTimer } archivos`} de pedidos`); } }}
-                >
-                  Iniciar simulación
-                </Button>
-                <Button
-                  variant='outlined'
-                  color='secondary'
-                  onClick={stopSimulation}
-                  disabled={timer <= -1}
-                  sx={{
-                    marginLeft: 2
-                  }}
-                >
-                  Detener simulación
-                </Button>
-                {(timer >= 0) &&
-                  <Button
-                    variant='outlined'
-                    color='secondary'
-                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
-                    sx={{ marginLeft: 2 }}
-                  >
-                    Ver detalles
-                  </Button>
-                }
+                <AnimationGrid 
+                  moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
+                  openVehiclePopup={ openVehiclePopup }
+                  speed={ speed }
+                />
               </Box>
-              <Box>
-                {(timer <= -1) &&
+              <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
+                <Box>
+                  <Button
+                    variant='contained'
+                    color='secondary'
+                    disabled={timer >= 0}
+                    onClick={() => { if(!props.isCollapse ? oFiles.length == props.targetTimer : oFiles.length == 1) { setTimer(INITIAL_TIMER); } else { toast.error(`Debe subir ${ props.isCollapse ? '1 archivo' : `${ props.targetTimer } archivos`} de pedidos`); } }}
+                    sx={{ width: '220px' }}
+                  >
+                    Iniciar simulación
+                  </Button>
+                </Box>
+                <Box>
                   <Button
                     variant='outlined'
                     color='secondary'
-                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
-                    sx={{ marginLeft: 2 }}
+                    onClick={stopSimulation}
+                    disabled={timer <= -1}
+                    sx={{ width: '220px' }}
                   >
-                    Subir archivos
+                    Detener simulación
                   </Button>
-                }
-                {timer >= 0 && 
-                  <Box sx={{ display: 'flex', gap: 5 }}>
-                    <Box sx={{ gap: 1, marginLeft: 2, borderRadius: 2, display: 'flex', justifyContent: 'space-between' }}>
-                      <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); setAuxCount(-1); }}>x1</Button>
-                      <Button variant={ speed == 2 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(2); setAuxCount(-1); }}>x2</Button>
-                      <Button variant={ speed == 3 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(3); setAuxCount(-1); }}>x3</Button>
-                    </Box>
-                    <Box>
-                      <SimulatedTimer min={timer} />
-                    </Box>
+                </Box>
+                {(timer >= 0) &&
+                  <Box>
+                    <Button
+                      variant='outlined'
+                      color='secondary'
+                      onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
+                      sx={{ width: '220px' }}
+                    >
+                      Ver detalles
+                    </Button>
                   </Box>
                 }
-              </Box>
-            </Box>
-            <AnimationGrid 
-              moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
-              openVehiclePopup={ openVehiclePopup }
-              speed={ speed }
-            />
-            <Box sx={{ marginTop: 4, gap: 2, borderRadius: 2, display: 'flex', alignItems: 'center' }}>
-              <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
-              <Box sx={{ display: 'flex' }}>
-                <Typography>Depósito:</Typography>
-                <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.depot, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
-              </Box>
-              <Box sx={{ display: 'flex' }}>
-                <Typography>Punto de entrega:</Typography>
-                <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.pack, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
-              </Box>
-              <Box sx={{ display: 'flex' }}>
-                <Typography>Bloqueo:</Typography>
-                <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.block, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+                <Box>
+                  {(timer <= -1) &&
+                    <Box>
+                    <Button
+                      variant='outlined'
+                      color='secondary'
+                      onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
+                      sx={{ width: '220px' }}
+                    >
+                      Subir archivos
+                    </Button>
+                    </Box>
+                  }
+                  {timer >= 0 && 
+                    <>
+                      <Box sx={{ display: 'flex', gap: 5, marginTop: 5 }}>
+                        <Box sx={{ gap: 1, borderRadius: 2, display: 'flex', justifyContent: 'space-between', width: '220px'}}>
+                          <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); setAuxCount(-1); }}>x1</Button>
+                          <Button variant={ speed == 2 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(2); setAuxCount(-1); }}>x2</Button>
+                          <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); setAuxCount(-1); }}>x8</Button>
+                        </Box>
+                      </Box>
+                      <Box sx={{ marginTop: 5 }}>
+                        <SimulatedTimer min={timer} />
+                      </Box>
+                    </>
+                  }
+                  <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
+                    <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
+                    <Box sx={{ display: 'flex' }}>
+                      <Typography>Depósito:</Typography>
+                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.depot, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+                    </Box>
+                    <Box sx={{ display: 'flex' }}>
+                      <Typography>Punto de entrega:</Typography>
+                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.pack, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+                    </Box>
+                    <Box sx={{ display: 'flex' }}>
+                      <Typography>Bloqueo:</Typography>
+                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.block, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+                    </Box>
+                  </Box>
+                </Box>
               </Box>
             </Box>
           </Box>
         </Box>
-      </Container>
+      </Box>
       <Box
         sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
         display="flex"

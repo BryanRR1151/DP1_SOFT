@@ -6,7 +6,7 @@ import colorConfigs from '../configs/colorConfigs';
 
 const GRID_COLS = 70;
 const GRID_ROWS = 50;
-const CELL_SIZE = 15;
+const CELL_SIZE = 12;
 
 interface CarProps {
   vehicle: TVehicle;
@@ -43,13 +43,13 @@ const Car = ({ vehicle, openVehiclePopup, speed }: CarProps) => {
           >
             {vehicle.type == VehicleType.auto ?
               <FaCarSide
-                size={20}
+                size={15}
                 sx={{
                   cursor: 'pointer'
                 }}
               /> :
               <FaMotorcycle
-                size={20}
+                size={15}
                 sx={{
                   cursor: 'pointer'
                 }}
@@ -106,8 +106,8 @@ export const AnimationGrid = ({ moment, openVehiclePopup, speed }: IAnimationGri
         style={{
           position: 'relative',
           display: 'grid',
-          gridTemplateColumns: `repeat(${GRID_COLS}, 15px)`,
-          gridTemplateRows: `repeat(${GRID_ROWS}, 15px)`,
+          gridTemplateColumns: `repeat(${GRID_COLS}, ${CELL_SIZE}px)`,
+          gridTemplateRows: `repeat(${GRID_ROWS}, ${CELL_SIZE}px)`,
           zIndex: 0
         }}
       >
