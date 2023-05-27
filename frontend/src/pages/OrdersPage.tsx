@@ -164,17 +164,17 @@ export const OrdersPage = () => {
         )
       },
       minWidth: 150
-    },/*
+    },
     {
       field: 'actions',
       headerName: '',
       type: 'actions',
       minWidth: 50,
       getActions: (params: GridRowParams) => [
-        //<GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
-        //<GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
+        <GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
+        <GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
-    }*/
+    }
   ];
   
   return (
@@ -250,8 +250,3 @@ export const OrdersPage = () => {
     </>
   )
 }
-/*
-
-<h1>{JSON.stringify(packsToShow)}</h1>
-<h1>The component has been rendered for {count} minutes.</h1>
-*/

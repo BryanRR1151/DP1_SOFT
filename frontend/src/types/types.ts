@@ -36,15 +36,14 @@ export type TOrderError = {
 
 export type TBlockage = {
   id?: number;
-  initialDate: string;
-  finishDate: string;
-  blockNode: TNode;
-  registerDate?: string;
+  node: TNode;
+  start: string;
+  end: string;
 }
 
 export type TBlockageError = {
-  initialDate: boolean;
-  finishDate: boolean;
+  start: boolean;
+  end: boolean;
   x: boolean;
   y: boolean;
 }

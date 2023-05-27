@@ -1,20 +1,12 @@
 import axios from 'axios'
 import { TPack } from '../test/movements';
 
-const startWeekly = (data: FormData) => {
-  return axios.post('http://localhost:8080/StartGenetic', data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+const startWeekly = (initialDate: string) => {
+  return axios.get(`http://localhost:8080/StartGenetic?startDate=${ initialDate }`);
 };
 
-const startCollapse = (data: FormData) => {
-  return axios.post('http://localhost:8080/StartCollapse', data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+const startCollapse = (initialDate: string) => {
+  return axios.get(`http://localhost:8080/StartCollapse?startDate=${ initialDate }`);
 }
 
 const getMoment = (min: number, offset: number) => {
