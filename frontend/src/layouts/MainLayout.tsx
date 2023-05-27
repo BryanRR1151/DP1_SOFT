@@ -23,6 +23,7 @@ export const MainLayout = () => {
           sx={{
             flexGrow: 1,
             width: `calc(100%-${sizeConfigs.sidebar.width})`,
+            height: 'calc(100vh - 10px)',
             backgroundColor: colorConfigs.mainBg,
             marginRight: '-8px',
             marginLeft: '-10px',

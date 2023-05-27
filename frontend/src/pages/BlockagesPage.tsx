@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Popover, Container, Breadcrumbs, Typography, Box, Button } from '@mui/material';
+import { Popover, Container, Breadcrumbs, Typography, Box, Button, CircularProgress } from '@mui/material';
 import colorConfigs from '../configs/colorConfigs';
 import sizeConfigs from '../configs/sizeConfigs';
 import { DataGrid, GridRenderCellParams, GridActionsCellItem, GridRowParams } from '@mui/x-data-grid';
@@ -10,6 +10,9 @@ import { TBlockage, TBlockageError } from '../types/types';
 import { OrdersForm } from '../components/OrdersForm';
 import { FaPen, FaTrash } from 'react-icons/fa';
 import { BlockagesForm } from '../components/BlockagesForm';
+import BlockageService from '../services/BlockageService';
+import functions from '../utils/functions';
+import { ToastContainer, toast } from 'react-toastify';
 
 interface GridColDef {
   field: string;
@@ -26,18 +29,41 @@ export const BlockagesPage = () => {
   const [selected, setSelected] = useState<TBlockage|undefined>(undefined);
   const [isOpenPanel, setIsOpenPanel] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [blockages, setBlockages] = useState<TBlockage[]>([]);
 
   useEffect(() => {
-    setLoading(false);
+    loadBlockages();
   });
 
-  const handleEdit = (e: any, params: any) => {
-    setSelected(params.row);
+  const loadBlockages = async() => {
+    await BlockageService.getBlockages().then((response) => {
+      let items = response.data;
+      items = items.map((item: any) => {
+        return { ...item, start: functions.intToDate(item.start), end: functions.intToDate(item.end) }
+      })
+      setBlockages(items);
+      setLoading(false);
+    }).catch((err) => {
+      console.log(err);
+      setLoading(false);
+    })
+  }
+
+  const handleEdit = (e: any, { row }: any) => {
+    setSelected(row);
     setIsOpenPanel(true);
   }
 
-  const handleDelete = (e: any, params: any) => {
-
+  const handleDelete = async(e: any, { row }: any) => {
+    setLoading(true);
+    await BlockageService.deleteBlockage(row.id).then((response) => {
+      loadBlockages();
+      toast.success(`Registro eliminado exitosamente`);
+    }).catch((err) => {
+      console.log(err);
+      setLoading(false);
+      toast.error(`Sucedió un error, intente de nuevo`);
+    })
   }
 
   const handlePanel = (open: boolean) => {
@@ -51,54 +77,51 @@ export const BlockagesPage = () => {
   const testRows: TBlockage[] = [
     {
       id: 1,
-      initialDate: '2023/05/07',
-      finishDate: '2023/05/07',
-      registerDate: '2023/05/07',
-      blockNode: {x: 30, y: 40} as TNode,
+      start: '2023/05/07',
+      end: '2023/05/07',
+      node: {x: 30, y: 40} as TNode,
     },
     {
       id: 2,
-      initialDate: '2023/05/07',
-      finishDate: '2023/05/07',
-      registerDate: '2023/05/07',
-      blockNode: {x: 30, y: 40} as TNode,
+      start: '2023/05/07',
+      end: '2023/05/07',
+      node: {x: 30, y: 40} as TNode,
     },
     {
       id: 3,
-      initialDate: '2023/05/07',
-      finishDate: '2023/05/07',
-      registerDate: '2023/05/07',
-      blockNode: {x: 30, y: 40} as TNode,
+      start: '2023/05/07',
+      end: '2023/05/07',
+      node: {x: 30, y: 40} as TNode,
     }
   ];
 
   const columns: GridColDef[] = [
     {
-      field: 'blockage',
+      field: 'id',
       headerName: 'Bloqueo',
       minWidth: 100
     },
     {
-      field: 'initialDate',
+      field: 'start',
       headerName: 'Fecha de inicio',
-      minWidth: 100
+      minWidth: 150
     },
     {
-      field: 'finishDate',
+      field: 'end',
       headerName: 'Fecha de fin',
-      minWidth: 100
+      minWidth: 150
     },
     {
-      field: 'blockNode',
+      field: 'node',
       headerName: 'Lugar',
       valueGetter: (params: any) => `X: ${params.value.x}km, Y: ${params.value.y}km`,
       minWidth: 200
     },
-    {
-      field: 'registerDate',
-      headerName: 'Fecha de registro',
-      minWidth: 150
-    },
+    // {
+    //   field: 'registerDate',
+    //   headerName: 'Fecha de registro',
+    //   minWidth: 150
+    // },
     {
       field: 'actions',
       headerName: '',
@@ -116,9 +139,7 @@ export const BlockagesPage = () => {
       <Breadcrumbs 
         maxItems={2} 
         aria-label='breadcrumb'
-        sx={{
-          backgroundColor: colorConfigs.breadcrumb.bg
-        }}
+        sx={{ backgroundColor: colorConfigs.breadcrumb.bg }}
       >
         <Box
           sx={{
@@ -131,19 +152,11 @@ export const BlockagesPage = () => {
           <Typography>Bloqueos</Typography>
         </Box>
       </Breadcrumbs>
-      { !loading &&
+      { !loading ?
       <>
         <Container>
-          <Box
-            sx={{
-              padding: '20px'
-            }}
-          >
-            <Box
-              sx={{
-                marginBottom: 2
-              }}
-            >
+          <Box sx={{ padding: '20px' }}>
+            <Box sx={{ marginBottom: 2 }}>
               <Button
                 variant='contained'
                 color='secondary'
@@ -154,15 +167,12 @@ export const BlockagesPage = () => {
               <Button
                 variant='outlined'
                 color='secondary'
-                sx={{
-                  marginLeft: 2
-                }}
+                sx={{ marginLeft: 2 }}
               >
                 Filtrar
               </Button>
             </Box>
-            <DataGrid rows={testRows} columns={columns} />
-
+            <DataGrid rows={blockages} columns={columns} />
           </Box>
         </Container>
         <Box
@@ -170,16 +180,22 @@ export const BlockagesPage = () => {
           display="flex"
           flexDirection="column"
         >
-          <BlockagesForm 
+          <BlockagesForm
             blockage={selected} 
             type={selected ? PanelType.edit : PanelType.create} 
             handlePanel={handlePanel} 
             handleDeselect={handleDeselect}
+            loadBlockages={loadBlockages}
           />
         </Box>
         {isOpenPanel && <Box sx={panelStyles.overlay} onClick={ () => { setIsOpenPanel(false); handleDeselect() }}/>}
-      </>
+      </> : 
+      <Box sx={{ display: 'flex', width: '100%', justifyContent: 'center', marginTop: '20px' }}>
+        <CircularProgress />
+      </Box>
       }
+      <ToastContainer />
     </>
   )
 }
+

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import colorConfigs from '../configs/colorConfigs'
-import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid } from '@mui/material';
+import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, Input, TextField } from '@mui/material';
 import sizeConfigs from '../configs/sizeConfigs';
 import { AnimationGrid } from '../components/AnimationGrid';
 import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
@@ -34,23 +34,30 @@ export const Simulation = (props: ISimulation) => {
   const [speed, setSpeed] = useState<number>(1); // 1 = 1 min/seg
   const [auxCount, setAuxCount] = useState<number>(0);
   const [stopped, setStopped] = useState<boolean>(false);
+  const [initialDate, setInitialDate] = useState<string>('2023-05-27');
   const interval = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      stopAlgorithmOnDismount();
+    }
+  }, [])
+
+  const stopAlgorithmOnDismount = async() => {
+    if (timer > 0) {
+      AlgorithmService.kill().then((response) => {
+        console.log('Algorithm stopped successfully');
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+  }
 
   const startAlgorithm = async() => {
     const data = new FormData();
-    for (let i = 0 ; i < oFiles.length ; i++) {
-      data.append("fPacks", oFiles[i]);
-    }
-    for (let i = 0 ; i < bFiles.length ; i++) {
-      data.append("fBlocks", bFiles[i]);
-    }
-    if(bFiles.length == 0) data.append("fBlocks", '');
-    for (let i = 0 ; i < fFiles.length ; i++) {
-      data.append("fFaults", fFiles[i]);
-    }
-    if (fFiles.length == 0) data.append("fFaults", '');
+    let sendDate = initialDate.substr(8, 2) + '/' + initialDate.substr(5, 2) + '/' + initialDate.substr(0, 4);
     if (!props.isCollapse) {
-      await AlgorithmService.startWeekly(data).then((response) => {
+      await AlgorithmService.startWeekly(sendDate).then((response) => {
         console.log('Algorithm executed successfully');
         if (timer >= props.targetTimer*24*60) setTimer(-1);
       }).catch((err) => {
@@ -58,7 +65,7 @@ export const Simulation = (props: ISimulation) => {
       });
     }
     else {
-      await AlgorithmService.startCollapse(data).then((response) => {
+      await AlgorithmService.startCollapse(sendDate).then((response) => {
         console.log('Algorithm executed successfully');
         if (timer >= props.targetTimer*24*60) setTimer(-1);
       }).catch((err) => {
@@ -233,7 +240,7 @@ export const Simulation = (props: ISimulation) => {
                     variant='contained'
                     color='secondary'
                     disabled={timer >= 0}
-                    onClick={() => { if(!props.isCollapse ? oFiles.length == props.targetTimer : oFiles.length == 1) { setTimer(INITIAL_TIMER); } else { toast.error(`Debe subir ${ props.isCollapse ? '1 archivo' : `${ props.targetTimer } archivos`} de pedidos`); } }}
+                    onClick={() => { if(!props.isCollapse ? initialDate : true) { setTimer(INITIAL_TIMER); } else { toast.error(`Debe ingresar una fecha de inicio de simulación`); } }}
                     sx={{ width: '220px' }}
                   >
                     Iniciar simulación
@@ -264,15 +271,18 @@ export const Simulation = (props: ISimulation) => {
                 }
                 <Box>
                   {(timer <= -1) &&
-                    <Box>
-                    <Button
-                      variant='outlined'
-                      color='secondary'
-                      onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
-                      sx={{ width: '220px' }}
-                    >
-                      Subir archivos
-                    </Button>
+                    <Box sx={{ marginTop: 5 }}>
+                      {/* <Button
+                        variant='outlined'
+                        color='secondary'
+                        onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
+                        sx={{ width: '220px' }}
+                      >
+                        Subir archivos
+                      </Button> */}
+                      {!props.isCollapse &&
+                        <TextField required label='Fecha de inicio' type='date' defaultValue='2023-05-27' value={initialDate} onChange={(e) => setInitialDate(e.target?.value)} sx={{ width: '220px' }} />
+                      }
                     </Box>
                   }
                   {timer >= 0 && 

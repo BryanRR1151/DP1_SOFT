@@ -1,39 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { OrderState, PanelType, TBlockage, TBlockageError, TOrder, TOrderError } from '../types/types';
 import { Typography, TextField, Button, Box } from '@mui/material';
+import BlockageService from '../services/BlockageService';
+import functions from '../utils/functions';
+import { toast } from 'react-toastify';
 
 interface IBlockagesForm {
   blockage: TBlockage|undefined;
   type: PanelType;
   handlePanel: (open: boolean) => void;
   handleDeselect: () => void;
+  loadBlockages: () => void;
 }
 
 const defaultOrder: TBlockage = {
-  initialDate: '',
-  finishDate: '',
-  blockNode: { x: 0, y: 0 }
+  start: '',
+  end: '',
+  node: { x: 0, y: 0 }
 }
 
-export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect }: IBlockagesForm) => {
+export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect, loadBlockages }: IBlockagesForm) => {
   const [data, setData] = useState<TBlockage>( blockage ?? defaultOrder );
-  const [error, setError] = useState<TBlockageError>({ initialDate: false, finishDate: false, x: false, y: false });
+  const [error, setError] = useState<TBlockageError>({ start: false, end: false, x: false, y: false });
 
   useEffect(() => {
     setData( blockage ?? defaultOrder );
   }, [blockage]);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async(e: any) => {
       e.preventDefault()
-      let newError: TBlockageError = { initialDate: false, finishDate: false, x: false, y: false };
       
-      if (data.initialDate > data.finishDate) {
-        newError.finishDate = true;
+      let newError: TBlockageError = { start: false, end: false, x: false, y: false };
+      
+      if (data.start > data.end) {
+        newError.end = true;
       }
-      if (!data.blockNode.x || (data.blockNode.x < 0 || data.blockNode.x > 70)) {
+      if (!data.node.x || (data.node.x < 0 || data.node.x > 70)) {
         newError.x = true;
       }
-      if (!data.blockNode.y || (data.blockNode.y < 0 || data.blockNode.y > 50)) {
+      if (!data.node.y || (data.node.y < 0 || data.node.y > 50)) {
         newError.y = true;
       }
 
@@ -44,6 +49,27 @@ export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect }: I
 
       handlePanel(false);
       handleDeselect();
+
+      if (data.id) {
+        let dataSend = { ...data, start: functions.dateToInt(data.start).toString(), end: functions.dateToInt(data.end).toString() };
+        await BlockageService.editBlockage(dataSend).then((response) => {
+          loadBlockages();
+          toast.success(`Registro editado exitosamente`);
+        }).catch((err) => {
+          console.log(err);
+          toast.error(`Sucedió un error, intente de nuevo`);
+        })
+      }
+      else {
+        let dataSend = { ...data, start: functions.dateToInt(data.start).toString(), end: functions.dateToInt(data.end).toString() };
+        await BlockageService.insertBlockage(dataSend).then((response) => {
+          loadBlockages();
+          toast.success(`Registro creado exitosamente`);
+        }).catch((err) => {
+          console.log(err);
+          toast.error(`Sucedió un error, intente de nuevo`);
+        })
+      }
   }
     
   return ( 
@@ -65,48 +91,48 @@ export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect }: I
         }
         <TextField 
           label="Fecha inicial"
-          onChange={(e: any) => setData({ ...data, initialDate: e.target?.value })}
+          onChange={(e: any) => setData({ ...data, start: e.target?.value })}
           required
           variant="outlined"
           color="secondary"
           type="date"
           sx={{mb: 3}}
           fullWidth
-          value={data.initialDate}
-          error={error.initialDate}
+          value={data.start.replaceAll('/', '-')}
+          error={error.start}
         />
         <TextField 
           label="Fecha de fin"
-          onChange={(e: any) => setData({ ...data, finishDate: e.target?.value })}
+          onChange={(e: any) => setData({ ...data, end: e.target?.value })}
           required
           variant="outlined"
           color="secondary"
           type="date"
           sx={{mb: 3}}
           fullWidth
-          value={data.finishDate}
-          error={error.finishDate}
+          value={data.end.replaceAll('/', '-')}
+          error={error.end}
         />
         <TextField 
           label="Posicion X"
-          onChange={(e: any) => setData({ ...data, blockNode: { ...data.blockNode, x: e.target?.value } })}
+          onChange={(e: any) => setData({ ...data, node: { ...data.node, x: e.target?.value } })}
           required
           variant="outlined"
           color="secondary"
           type="number"
-          value={data.blockNode.x}
+          value={data.node.x}
           error={error.x}
           fullWidth
           sx={{mb: 3}}
         />
         <TextField 
           label="Posicion Y"
-          onChange={(e: any) => setData({ ...data, blockNode: { ...data.blockNode, y: e.target?.value } })}
+          onChange={(e: any) => setData({ ...data, node: { ...data.node, y: e.target?.value } })}
           required
           variant="outlined"
           color="secondary"
           type="number"
-          value={data.blockNode.y}
+          value={data.node.y}
           error={error.y}
           fullWidth
           sx={{mb: 3}}
