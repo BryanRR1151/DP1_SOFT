@@ -10,7 +10,6 @@ export const MainLayout = () => {
   return (
     <>
       <Box sx={{ display: 'flex' }}>
-        <Topbar />
         <Box
           component="nav"
           sx={{
@@ -23,12 +22,11 @@ export const MainLayout = () => {
           component="main"
           sx={{
             flexGrow: 1,
-            paddingTop: '55px',
             width: `calc(100%-${sizeConfigs.sidebar.width})`,
-            minHeight: '100vh', 
             backgroundColor: colorConfigs.mainBg,
             marginRight: '-8px',
-            marginLeft: '-10px'
+            marginLeft: '-10px',
+            marginTop: '-10px'
           }}
         >
           <Outlet />

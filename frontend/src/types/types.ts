@@ -63,8 +63,9 @@ export const panelStyles = {
     padding: 0
   } as const,
   panelOpen: {
-    width: 400,
-    padding: 3
+    width: 350,
+    padding: 1,
+    paddingTop: 3
   } as const,
   overlay: {
     position: "fixed",
