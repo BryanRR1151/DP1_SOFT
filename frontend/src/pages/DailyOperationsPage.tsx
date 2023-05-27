@@ -310,36 +310,41 @@ export const DailyOperationsPage = () => {
           <Typography>Visualización</Typography>
       </Breadcrumbs>
 
-      <Container>
+      <Box>
         <Box sx={{ display: 'flex' }}>
           <Box
             sx={{
               padding: 5,
+              paddingTop: 3,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
             }}
           >
-            <Box sx={{ marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex' }}>
               <Box>
-                <Button
-                  variant='contained'
-                  color='secondary'
-                  onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
-                  sx={{}}
-                >
-                  Registrar incidencias
-                </Button>
+                <AnimationGrid 
+                  moment = {apiMoment}
+                  openVehiclePopup={openVehiclePopup}
+                  speed = {1}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
+                <Box>
+                  <Button
+                    variant='contained'
+                    color='secondary'
+                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
+                    sx={{}}
+                  >
+                    Registrar incidencias
+                  </Button>
+                </Box>
               </Box>
             </Box>
-            <AnimationGrid 
-              moment = {apiMoment}
-              openVehiclePopup={openVehiclePopup}
-              speed = {1}
-            />
           </Box>
         </Box>
-      </Container> 
+      </Box> 
         <Box
           sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
           display="flex"
@@ -380,7 +385,7 @@ export const DailyOperationsPage = () => {
                       sx={{marginLeft: 2,mb: 3}}
                     />
                   </Box>
-                  <Box sx={{width:343, height:65}}>
+                  <Box sx={{width:294, height:65}}>
                     <Select 
                       
                       defaultValue={options[0]}

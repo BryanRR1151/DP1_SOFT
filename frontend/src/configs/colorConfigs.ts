@@ -23,7 +23,7 @@ const colorConfigs = {
     depot: 'black',
     pack: 'green',
     block: 'red',
-    route: 'blue'
+    route: 'rgb(255, 195, 66)'
   }
 };
 
