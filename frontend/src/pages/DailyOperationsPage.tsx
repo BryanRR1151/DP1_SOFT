@@ -30,10 +30,10 @@ export const DailyOperationsPage = () => {
     turn: 0,overtime: 0,state: 0,capacity: 0,carry: 0,moved: false,
     pack: null,location: null,route: null,step: 0,movement: null});
   var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
-    fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: []});
+    fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: [],collapsed: false});
   var time = new Date();
   //new Date().getHours()*60+new Date().getMinutes();
-  const seconds = time.getHours()*60*60+time.getMinutes()*60+time.getSeconds();
+  const seconds = Math.trunc(time.getTime()/1000);
   
   const getTodaysBlockages = async() => {
     await AlgorithmService.getBlockages().then((response) => {
@@ -75,8 +75,25 @@ export const DailyOperationsPage = () => {
     await AlgorithmService.planRoutes(count.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
+      vehicles!.forEach( (v)=>{
+        v.movement!.from=v.route!.chroms[0].from;
+        v.movement!.to=v.route!.chroms[0].to;
+        //v.route!.chroms.shift();
+        /*
+        v!.movement!.from!.x=45;
+        v!.movement!.from!.y=30;
+        v!.movement!.to!.x=45;
+        v!.movement!.to!.y=30;*/
+      })
+      apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
+      let packs : TPack[]=[];
+      vehicles.forEach(v => {
+        packs.push(v.pack);
+      });
+      apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
+      setApiMoment(apiMoment);
+      vehicles=[];
       console.log('Routes planned successfully');
-      //setApiMoment(parseApiMoment(response.data));
     }).catch((err) => {
       console.log(err);
     });
@@ -87,7 +104,7 @@ export const DailyOperationsPage = () => {
     if(count==0 && !started){
       started = true;
       apiMoment=data.moment;
-      setApiMoment(apiMoment);
+      //setApiMoment(apiMoment);
       //getTodaysBlockages();
       /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
         ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
@@ -100,9 +117,6 @@ export const DailyOperationsPage = () => {
         v.route.chroms.shift();
       })*/
       initiateAlgorithm();
-      //planTheRoutes();
-      //vehicles=routesData;
-      //setVehicles(vehicles);
     }
   }, []);
   
@@ -169,24 +183,24 @@ export const DailyOperationsPage = () => {
       setCount(count);
       time = new Date();
       planTheRoutes();
+      /*
       vehicles!.forEach( (v)=>{
         v!.movement!.from!.x=45;
         v!.movement!.from!.y=30;
         v!.movement!.to!.x=45;
         v!.movement!.to!.y=30;
       })
-      apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
-      /*setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
+      apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);setApiMoment({min: apiMoment!.min,ordersDelivered: apiMoment!.ordersDelivered,
         ordersLeft: apiMoment!.ordersLeft,fleetCapacity: apiMoment!.fleetCapacity,
         activeVehicles: apiMoment!.activeVehicles.concat(vehicles),
-        activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});*/
+        activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});
       let packs : TPack[]=[];
       vehicles.forEach(v => {
         packs.push(v.pack);
       });
       apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
       setApiMoment(apiMoment);
-      vehicles=[];
+      vehicles=[];*/
           
     }, 1000);
   }, []);
@@ -225,7 +239,7 @@ export const DailyOperationsPage = () => {
         activeVehicles: newVehicles,
         activePacks: apiMoment!.activePacks,activeBlockages: apiMoment!.activeBlockages});*/
       //every minute
-    }, 5000);
+    }, 1000);
   }, []);
 
   useEffect(() => {
@@ -326,7 +340,7 @@ export const DailyOperationsPage = () => {
                 <AnimationGrid 
                   moment = {apiMoment}
                   openVehiclePopup={openVehiclePopup}
-                  speed = {1}
+                  speed = {1/1}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
