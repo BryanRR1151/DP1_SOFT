@@ -144,7 +144,6 @@ export const DailyOperationsPage = () => {
     setOpenPanel(true);
     setTypePanel(PanelType.vehicleInfo);
     setVehicle(vehicle);
-    console.log(vehicle);
   }
 
   
@@ -162,6 +161,7 @@ export const DailyOperationsPage = () => {
 
   
   const completePackage = async(vehicle: TVehicle) => {
+    console.log('completing vehicle '+vehicle.id);
     await AlgorithmService.completePack(vehicle.id).then((response) => {
       console.log(response.data);
       vehicle.route!.chroms = parseVehicle(response.data)!.route!.chroms;
