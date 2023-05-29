@@ -23,12 +23,14 @@ export const DailyOperationsPage = () => {
   var [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
   var [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<String>(" ");
   var [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
+  var [isVehicleEnRoute, setIsVehicleEnRoute] = useState<boolean>(false);
   var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
   const [bFiles, setBFiles] = useState<any[]>([]);
-  const [selected, setSelected] = useState<String>("TI1");
+  var [selected, setSelected] = useState<String>("TI1");
+  var [selectedVehicleType, setSelectedVehicleType] = useState<String>("Aut");
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
-  const [vehicle, setVehicle] = useState<TVehicle|undefined>({id: 0,type: VehicleType.auto,speed: 0,cost: 0,
+  const [vehicle, setVehicle] = useState<TVehicle|undefined>({id: 0, code: "",type: VehicleType.auto,speed: 0,cost: 0,
     turn: 0,overtime: 0,state: 0,capacity: 0,carry: 0,moved: false,
     pack: null,location: null,route: null,step: 0,movement: null});
   var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
@@ -223,9 +225,15 @@ export const DailyOperationsPage = () => {
       saveNeedsToBeDisabled = true;
       vehicleCodeErrorMessage = "El código debe ser mayor que 0";
     }else{
-      vehicleCodeError = false;
-      saveNeedsToBeDisabled = false;
-      vehicleCodeErrorMessage = " ";
+      if(apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"))==undefined){
+        vehicleCodeError = true;
+        saveNeedsToBeDisabled = true;
+        vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
+      }else{
+        vehicleCodeError = false;
+        saveNeedsToBeDisabled = false;
+        vehicleCodeErrorMessage = " ";
+      }
     }
     setVehicleCodeError(vehicleCodeError);
     setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
@@ -242,9 +250,14 @@ export const DailyOperationsPage = () => {
     { value: VehicleType.moto, label: 'Mot' }
   ]
 
-  const handleChange = (selectedOption: typeof options[0]) => {
-    setSelected(selectedOption.value);
-    console.log(`Option selected:`, selectedOption);
+  const handleIncidentTypeChange = (selectedOption: typeof options[0]) => {
+    selected=selectedOption.value;
+    console.log(`Option selected:`, selected);
+  };
+
+  const handleVehicleTypeChange = (selectedOption: typeof vehicleOptions[0]) => {
+    selectedVehicleType=selectedOption.label;
+    console.log(`Option selected:`, selected);
   };
 
   return (
@@ -321,6 +334,7 @@ export const DailyOperationsPage = () => {
                       isSearchable = {false}
                       name = "vehicle options"
                       options={vehicleOptions} 
+                      onChange={handleVehicleTypeChange}
                       //onChange={handleChange}
                     />
                   </Box>
@@ -346,7 +360,7 @@ export const DailyOperationsPage = () => {
                     isSearchable = {true}
                     name = "incident type"
                     options={options} 
-                    onChange={handleChange}
+                    onChange={handleIncidentTypeChange}
                   />
                 </Box>
                 <Button disabled={saveNeedsToBeDisabled} variant="contained" color="secondary" type="submit">Guardar</Button>
@@ -364,7 +378,7 @@ export const DailyOperationsPage = () => {
         {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&
           <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles del vehiculo:</Typography>
-            <Typography sx={{marginBottom: 2}}><b>Tipo: </b>{vehicle.type}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Tipo: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
@@ -407,7 +421,7 @@ export const DailyOperationsPage = () => {
                     isSearchable = {true}
                     name = "incident type"
                     options={options} 
-                    onChange={handleChange}
+                    onChange={handleIncidentTypeChange}
                   />
                 </Box>
                 <Button variant="contained" color="secondary" type="submit">Guardar</Button>
@@ -415,7 +429,7 @@ export const DailyOperationsPage = () => {
           </Box>
         }
       </Box>
-      {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
+      {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); saveNeedsToBeDisabled=true;}}/>}
       <ToastContainer />
     </>
   )

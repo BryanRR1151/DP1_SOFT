@@ -17,6 +17,7 @@ export enum VehicleType {
 
 export type TVehicle = {
   id: number;
+  code?: String;
   type: VehicleType;
   speed: number;
   cost: number;
