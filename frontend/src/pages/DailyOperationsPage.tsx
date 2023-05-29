@@ -18,7 +18,7 @@ import { TBlockage } from "../test/movements";
 export const DailyOperationsPage = () => {
 
   var [vehicles, setVehicles] = useState<TVehicle[]>([]);
-  const [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
+  var [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
   var [count, setCount] = useState(0);
   var [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
   var [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<String>(" ");
@@ -47,7 +47,8 @@ export const DailyOperationsPage = () => {
     });
 
     await AlgorithmService.getBlockages().then((response) => {
-      setTodaysBlockages(response.data);
+      todaysBlockages=response.data
+      setTodaysBlockages(todaysBlockages);
       console.log('Blockages retrieved successfully');
     }).catch((err) => {
       console.log(err);
@@ -67,6 +68,35 @@ export const DailyOperationsPage = () => {
   }
 
   const planTheRoutes = async() => {
+    let blockagesToAdd : TBlockage[]=[];
+    let currentTime = Math.trunc(time.getTime()/1000)-time.getSeconds();
+    todaysBlockages.forEach(b => {
+      if(b.start==currentTime){
+        blockagesToAdd.push(b);
+        AlgorithmService.setBlockages(currentTime.toString()).then((response) => {
+          let vehiclesToBeFixed : TVehicle[]=response.data;
+          vehiclesToBeFixed.forEach(v => {
+            apiMoment!.activeVehicles.find(av=>av.id==v.id)!.route!.chroms=v.route!.chroms;
+          });
+          console.log('Blockages set successfully');
+        }).catch((err) => {
+          console.log(err);
+        });
+      }
+      if(b.end==currentTime){
+        let index = apiMoment!.activeBlockages.indexOf(b);
+        if(index!=-1){
+          apiMoment!.activeBlockages.splice(index,1);
+          AlgorithmService.setBlockages(currentTime.toString()).then(() => {
+            console.log('Blockages removed successfully');
+          }).catch((err) => {
+            console.log(err);
+          });
+        }
+      }
+    });
+    apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
+
     await AlgorithmService.planRoutes(count.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
@@ -81,7 +111,7 @@ export const DailyOperationsPage = () => {
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
       let packs : TPack[]=[];
       vehicles.forEach(v => {
-        packs.push(v.pack);
+        packs.push(v.pack!);
       });
       apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
       setApiMoment(apiMoment);
@@ -111,7 +141,7 @@ export const DailyOperationsPage = () => {
             return null;
           }else{
             //notify package has been delivered
-            apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack),1);
+            apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
             AlgorithmService.completePack(v.id).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
               v.location!.destination=true;
@@ -164,10 +194,10 @@ export const DailyOperationsPage = () => {
     setInterval(() => {
       let blockagesToAdd : TBlockage[]=[];
       todaysBlockages.forEach(b => {
-        if(b.start==time.getHours()*60+time.getMinutes()){
+        if(b.start==Math.trunc(time.getTime()/1000)-time.getSeconds()){
           blockagesToAdd.push(b);
         }
-        if(b.end==time.getHours()*60+time.getMinutes()){
+        if(b.end==Math.trunc(time.getTime()/1000)-time.getSeconds()){
           let index = apiMoment!.activeBlockages.indexOf(b);
           if(index!=-1){
             apiMoment!.activeBlockages.splice(index,1);
@@ -177,7 +207,7 @@ export const DailyOperationsPage = () => {
       apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
       setApiMoment(apiMoment);
       //every minute
-    }, 60000);
+    }, 10000000);
   }, []);
 
   

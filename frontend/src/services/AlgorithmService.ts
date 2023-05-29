@@ -37,6 +37,10 @@ const getPacks = () => {
   return axios.get(`http://localhost:8080/listarPedidos`)
 }
 
+const setBlockages = (time: String) => {
+  return axios.get(`http://localhost:8080/SetBlockages?time=${ time }`)
+}
+
 const insertPack = (pack: TPack) => {
   return axios.post('http://localhost:8080/insertarPedido', pack);
 };
@@ -50,5 +54,6 @@ export default {
   completePack,
   getBlockages,
   insertPack,
-  getPacks
+  getPacks,
+  setBlockages
 };
