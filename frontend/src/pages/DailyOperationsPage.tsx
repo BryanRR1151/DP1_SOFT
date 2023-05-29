@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
 import Select, { GroupBase } from 'react-select'
+import { ToastContainer, toast } from 'react-toastify';
 import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, TextField } from '@mui/material';
 import { TMoment, TMovement, TPack, TSolution, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
@@ -19,6 +20,10 @@ export const DailyOperationsPage = () => {
   var [vehicles, setVehicles] = useState<TVehicle[]>([]);
   const [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
   var [count, setCount] = useState(0);
+  var [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
+  var [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<String>(" ");
+  var [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
+  var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
   const [bFiles, setBFiles] = useState<any[]>([]);
   const [selected, setSelected] = useState<String>("TI1");
   const [openPanel, setOpenPanel] = useState<boolean>(false);
@@ -176,7 +181,13 @@ export const DailyOperationsPage = () => {
   
 
   const handleSubmit = (e: any) => {
-    e.preventDefault()/*
+    e.preventDefault()
+    if(vehicleCodeValue<=0){
+      vehicleCodeError = true;
+    }else{
+      vehicleCodeError = false;
+    }
+    /*
     let newError: TOrderError = { quantity: false, term: false, x: false, y: false };
     
     if (!data.quantity || data.quantity <= 0) {
@@ -196,12 +207,29 @@ export const DailyOperationsPage = () => {
       setError(newError);
       return;
     }
-
     handlePanel(false);
-    handleDeselect();*/
+    handleDeselect();
+    */
 }
   const onFileChange = (updatedList: any[], type: string) => {
     setBFiles(updatedList);
+  }
+
+  const handleVehicleCodeChange = (formVehicleCode: number) => {
+    vehicleCodeValue=formVehicleCode;
+    setVehicleCodeValue(vehicleCodeValue);
+    if(vehicleCodeValue<=0){
+      vehicleCodeError = true;
+      saveNeedsToBeDisabled = true;
+      vehicleCodeErrorMessage = "El código debe ser mayor que 0";
+    }else{
+      vehicleCodeError = false;
+      saveNeedsToBeDisabled = false;
+      vehicleCodeErrorMessage = " ";
+    }
+    setVehicleCodeError(vehicleCodeError);
+    setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
+    setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
   }
 
   const options = [
@@ -210,8 +238,8 @@ export const DailyOperationsPage = () => {
     { value: 'TI3', label: 'TI3' }
   ]
   const vehicleOptions = [
-    { value: 'at', label: 'Aut' },
-    { value: 'mot', label: 'Mot' }
+    { value: VehicleType.auto, label: 'Aut' },
+    { value: VehicleType.moto, label: 'Mot' }
   ]
 
   const handleChange = (selectedOption: typeof options[0]) => {
@@ -270,71 +298,125 @@ export const DailyOperationsPage = () => {
           </Box>
         </Box>
       </Box> 
-        <Box
-          sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
-          display="flex"
-          flexDirection="column"
-        >
-          {typePanel == PanelType.simulationFiles ?
-            <Box sx={{height:500,paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
-              <Box>
-                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
-                <form autoComplete="off" onSubmit={handleSubmit}> 
+      <Box
+        sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
+        display="flex"
+        flexDirection="column"
+      >
+        {typePanel == PanelType.simulationFiles ?
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+            <Box>
+              <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+              <form autoComplete="off" onSubmit={handleSubmit}> 
+                <Box
+                  display="flex"
+                  flexDirection="row"
+                  sx={{}}
+                >
                   <Box
-                    display="flex"
-                    flexDirection="row"
-                    sx={{}}
+                    sx={{width:130}}
                   >
-                    <Box
-                      sx={{width:120}}
-                    >
-                      <Select 
-                        defaultValue={vehicleOptions[0]}
-                        isSearchable = {false}
-                        name = "vehicle options"
-                        options={vehicleOptions} 
-                        //onChange={handleChange}
-                      />
-                    </Box>
-                    <TextField 
-                      label="Código del vehículo"
-                      //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
-                      required
-                      variant="outlined"
-                      color="secondary"
-                      type="number"
-                      //value={data.term}
-                      //error={error.term}
-                      fullWidth
-                      size="small"
-                      sx={{marginLeft: 2,mb: 3}}
-                    />
-                  </Box>
-                  <Box sx={{width:294, height:65}}>
                     <Select 
-                      
-                      defaultValue={options[0]}
-                      isSearchable = {true}
-                      name = "incident type"
-                      options={options} 
-                      onChange={handleChange}
+                      defaultValue={vehicleOptions[0]}
+                      isSearchable = {false}
+                      name = "vehicle options"
+                      options={vehicleOptions} 
+                      //onChange={handleChange}
                     />
                   </Box>
-                  <Button variant="contained" color="secondary" type="submit">Guardar</Button>
-                </form>
-              </Box>
-              <Box sx={{height:100}}/>
-              <Box > 
-                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar bloqueos:</Typography>
-                <Box>
-                  <DropzoneComponent onFileChange={onFileChange} type={'Blockage'} files={bFiles} />
+                  <TextField 
+                    label="Código del vehículo"
+                    onChange={(e: any) => {handleVehicleCodeChange(e.target?.value)}}
+                    required
+                    variant="outlined"
+                    color="secondary"
+                    type="number"
+                    //value={vehicleCodeValue}
+                    error={vehicleCodeError}
+                    helperText={vehicleCodeErrorMessage}
+                    fullWidth
+                    size="small"
+                    sx={{marginLeft: 2,mb: 3}}
+                  />
                 </Box>
+                <Box sx={{width:294, height:65}}>
+                  <Select 
+                    
+                    defaultValue={options[0]}
+                    isSearchable = {true}
+                    name = "incident type"
+                    options={options} 
+                    onChange={handleChange}
+                  />
+                </Box>
+                <Button disabled={saveNeedsToBeDisabled} variant="contained" color="secondary" type="submit">Guardar</Button>
+              </form>
+            </Box>
+            <Box sx={{height:100}}/>
+            <Box > 
+              <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar bloqueos:</Typography>
+              <Box>
+                <DropzoneComponent onFileChange={onFileChange} type={'Blockage'} files={bFiles} />
               </Box>
-            </Box> : null
-          }
-        </Box>
+            </Box>
+          </Box> : null
+        }
+        {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles del vehiculo:</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Tipo: </b>{vehicle.type}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+              <form autoComplete="off" onSubmit={handleSubmit}> 
+                <Box
+                  display="flex"
+                  flexDirection="row"
+                  sx={{}}
+                >
+                  <Box
+                    sx={{width:130}}
+                  >
+                    <Select 
+                      isDisabled={true}
+                      defaultValue={vehicle.type==VehicleType.auto?vehicleOptions[0]:vehicleOptions[1]}
+                      isSearchable = {false}
+                      name = "vehicle options"
+                      options={vehicleOptions} 
+                      //onChange={handleChange}
+                    />
+                  </Box>
+                  <TextField 
+                    disabled={true}
+                    label="Código del vehículo"
+                    //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+                    required
+                    variant="outlined"
+                    color="secondary"
+                    type="number"
+                    //value={data.term}
+                    fullWidth
+                    size="small"
+                    sx={{marginLeft: 2,mb: 3}}
+                  />
+                </Box>
+                <Box sx={{width:294, height:65}}>
+                  <Select 
+                    
+                    defaultValue={options[0]}
+                    isSearchable = {true}
+                    name = "incident type"
+                    options={options} 
+                    onChange={handleChange}
+                  />
+                </Box>
+                <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+              </form>
+          </Box>
+        }
+      </Box>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); }}/>}
-  
+      <ToastContainer />
     </>
   )
 }/*
