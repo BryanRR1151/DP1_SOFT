@@ -90,7 +90,7 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
-    let newVehicles = apiMoment?.activeVehicles.map((v,index) => {
+    let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
         if(v.route!.chroms.length!=0){
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
@@ -184,35 +184,40 @@ export const DailyOperationsPage = () => {
 
   const handleSubmit = (e: any) => {
     e.preventDefault()
-    if(vehicleCodeValue<=0){
+    let damagedVehicleIndex:number=-1;
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"));
+    if(damagedVehicleIndex==-1){
       vehicleCodeError = true;
+      saveNeedsToBeDisabled = true;
+      vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
+      setVehicleCodeError(vehicleCodeError);
+      setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
+      setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      vehicleCodeError = false;
-    }
-    /*
-    let newError: TOrderError = { quantity: false, term: false, x: false, y: false };
-    
-    if (!data.quantity || data.quantity <= 0) {
-      newError.quantity = true;
-    }
-    if (!data.term || data.quantity <= 0) {
-      newError.term = true;
-    }
-    if (!data.orderNode.x || (data.orderNode.x < 0 || data.orderNode.x > 70)) {
-      newError.x = true;
-    }
-    if (!data.orderNode.y || (data.orderNode.y < 0 || data.orderNode.y > 50)) {
-      newError.y = true;
-    }
+      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
+      setApiMoment(apiMoment);
+      //call falla vehicular service
 
-    if (Object.values(newError).find((e) => e == true)) {
-      setError(newError);
-      return;
     }
-    handlePanel(false);
-    handleDeselect();
-    */
-}
+  }
+  const handleSubmitFromVehicle = (e: any) => {
+    e.preventDefault()
+    let damagedVehicleIndex:number=-1;
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v==vehicle);
+    if(damagedVehicleIndex==-1){
+      vehicleCodeError = true;
+      saveNeedsToBeDisabled = true;
+      vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
+      setVehicleCodeError(vehicleCodeError);
+      setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
+      setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
+    }else{
+      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
+      setApiMoment(apiMoment);
+      //call falla vehicular service
+
+    }
+  }
   const onFileChange = (updatedList: any[], type: string) => {
     setBFiles(updatedList);
   }
@@ -250,14 +255,15 @@ export const DailyOperationsPage = () => {
     { value: VehicleType.moto, label: 'Mot' }
   ]
 
-  const handleIncidentTypeChange = (selectedOption: typeof options[0]) => {
-    selected=selectedOption.value;
+  const handleIncidentTypeChange = (selectedOption: String) => {
+    selected=selectedOption;
     console.log(`Option selected:`, selected);
   };
 
-  const handleVehicleTypeChange = (selectedOption: typeof vehicleOptions[0]) => {
-    selectedVehicleType=selectedOption.label;
-    console.log(`Option selected:`, selected);
+  const handleVehicleTypeChange = (selectedOption: String) => {
+    selectedVehicleType=selectedOption;
+    setSelectedVehicleType(selectedVehicleType);
+    console.log(`Type Option selected:`, selectedVehicleType);
   };
 
   return (
@@ -334,7 +340,7 @@ export const DailyOperationsPage = () => {
                       isSearchable = {false}
                       name = "vehicle options"
                       options={vehicleOptions} 
-                      onChange={handleVehicleTypeChange}
+                      onChange={(e: any) => {handleVehicleTypeChange(e.label)}}
                       //onChange={handleChange}
                     />
                   </Box>
@@ -360,7 +366,7 @@ export const DailyOperationsPage = () => {
                     isSearchable = {true}
                     name = "incident type"
                     options={options} 
-                    onChange={handleIncidentTypeChange}
+                    onChange={(e: any) => {handleIncidentTypeChange(e.value)}}
                   />
                 </Box>
                 <Button disabled={saveNeedsToBeDisabled} variant="contained" color="secondary" type="submit">Guardar</Button>
@@ -376,13 +382,13 @@ export const DailyOperationsPage = () => {
           </Box> : null
         }
         {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&
-          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+          <Box sx={{height: 600, paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles del vehiculo:</Typography>
-            <Typography sx={{marginBottom: 2}}><b>Tipo: </b>{vehicle.code}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
-              <form autoComplete="off" onSubmit={handleSubmit}> 
+              <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 
                 <Box
                   display="flex"
                   flexDirection="row"
@@ -402,13 +408,13 @@ export const DailyOperationsPage = () => {
                   </Box>
                   <TextField 
                     disabled={true}
-                    label="Código del vehículo"
+                    //label="Código del vehículo"
                     //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
                     required
                     variant="outlined"
                     color="secondary"
                     type="number"
-                    //value={data.term}
+                    value={parseInt(vehicle.code!.slice(3))}
                     fullWidth
                     size="small"
                     sx={{marginLeft: 2,mb: 3}}
@@ -421,7 +427,7 @@ export const DailyOperationsPage = () => {
                     isSearchable = {true}
                     name = "incident type"
                     options={options} 
-                    onChange={handleIncidentTypeChange}
+                    onChange={(e: any) => {handleIncidentTypeChange(e.value)}}
                   />
                 </Box>
                 <Button variant="contained" color="secondary" type="submit">Guardar</Button>
@@ -429,7 +435,10 @@ export const DailyOperationsPage = () => {
           </Box>
         }
       </Box>
-      {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); setVehicle(undefined); saveNeedsToBeDisabled=true;}}/>}
+      {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); 
+        setVehicle(undefined); vehicleCodeError=false; setVehicleCodeError(vehicleCodeError); 
+        vehicleCodeErrorMessage=""; setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
+        saveNeedsToBeDisabled=true; setSaveNeedsToBeDisabled(saveNeedsToBeDisabled)}}/>}
       <ToastContainer />
     </>
   )
