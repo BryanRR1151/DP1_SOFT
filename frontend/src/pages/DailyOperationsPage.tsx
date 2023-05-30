@@ -54,7 +54,7 @@ export const DailyOperationsPage = () => {
       console.log(err);
     });
 
-    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+    await AlgorithmService.planRoutes(seconds.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
       console.log('Routes planned successfully');
@@ -97,7 +97,7 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
 
-    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+    await AlgorithmService.planRoutes(seconds.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
       vehicles!.forEach( (v)=>{
@@ -142,7 +142,7 @@ export const DailyOperationsPage = () => {
           }else{
             //notify package has been delivered
             apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
-            AlgorithmService.completePack(v.id).then((response) => {
+            AlgorithmService.completePack(v.id,seconds.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
               v.location!.destination=true;
               v.movement!.from=v.route!.chroms[0].from;
@@ -188,29 +188,15 @@ export const DailyOperationsPage = () => {
       time = new Date();
       planTheRoutes();
     }, 3000);
-  }, []);
+  }, []);  
 
-  useEffect(() => {
-    setInterval(() => {
-      let blockagesToAdd : TBlockage[]=[];
-      todaysBlockages.forEach(b => {
-        if(b.start==Math.trunc(time.getTime()/1000)-time.getSeconds()){
-          blockagesToAdd.push(b);
-        }
-        if(b.end==Math.trunc(time.getTime()/1000)-time.getSeconds()){
-          let index = apiMoment!.activeBlockages.indexOf(b);
-          if(index!=-1){
-            apiMoment!.activeBlockages.splice(index,1);
-          }
-        }
-      });
-      apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
-      setApiMoment(apiMoment);
-      //every minute
-    }, 10000000);
-  }, []);
-
-  
+  const registerFault = async(vehicle: String, fault: String, time: String) => {
+    await AlgorithmService.setFault(vehicle,fault,time).then(() => {
+      console.log('Fault registered successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
 
   const handleSubmit = (e: any) => {
     e.preventDefault()
@@ -227,7 +213,7 @@ export const DailyOperationsPage = () => {
       apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
       setApiMoment(apiMoment);
       //call falla vehicular service
-
+      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,seconds.toString());
     }
   }
   const handleSubmitFromVehicle = (e: any) => {
@@ -245,7 +231,7 @@ export const DailyOperationsPage = () => {
       apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
       setApiMoment(apiMoment);
       //call falla vehicular service
-
+      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,seconds.toString());
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {
@@ -287,6 +273,7 @@ export const DailyOperationsPage = () => {
 
   const handleIncidentTypeChange = (selectedOption: String) => {
     selected=selectedOption;
+    setSelected(selected);
     console.log(`Option selected:`, selected);
   };
 

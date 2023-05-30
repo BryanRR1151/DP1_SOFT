@@ -25,8 +25,8 @@ const planRoutes = (time: String) => {
   return axios.get(`http://localhost:8080/PlanRoutes?time=${ time }`)
 }
 
-const completePack = (idVehicle: number) => {
-  return axios.get(`http://localhost:8080/CompletePack?idVehicle=${ idVehicle }`)
+const completePack = (idVehicle: number, time: String) => {
+  return axios.get(`http://localhost:8080/CompletePack?idVehicle=${ idVehicle }&time=${ time }`)
 }
 
 const getBlockages = () => {
@@ -44,6 +44,11 @@ const setBlockages = (time: String) => {
 const insertPack = (pack: TPack) => {
   return axios.post('http://localhost:8080/insertarPedido', pack);
 };
+
+const setFault = (vehicle: String, fault: String, time: String) => {
+  return axios.get(`http://localhost:8080/SetFault?vehicle=${ vehicle }&fault=${ fault }&time=${ time }`)
+}
+
 export default {
   startWeekly,
   startCollapse,
@@ -55,5 +60,6 @@ export default {
   getBlockages,
   insertPack,
   getPacks,
-  setBlockages
+  setBlockages,
+  setFault
 };
