@@ -26,7 +26,7 @@ export const DailyOperationsPage = () => {
   var [isVehicleEnRoute, setIsVehicleEnRoute] = useState<boolean>(false);
   var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
   const [bFiles, setBFiles] = useState<any[]>([]);
-  var [selected, setSelected] = useState<String>("TI1");
+  var [selected, setSelected] = useState<String>("1");
   var [selectedVehicleType, setSelectedVehicleType] = useState<String>("Aut");
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
@@ -53,14 +53,14 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
-
+    /*
     await AlgorithmService.planRoutes(seconds.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
       console.log('Routes planned successfully');
     }).catch((err) => {
       console.log(err);
-    });
+    });*/
   }
 
   const parseVehicles = (vehicles: TVehicle[]) => {
@@ -69,7 +69,8 @@ export const DailyOperationsPage = () => {
 
   const planTheRoutes = async() => {
     let blockagesToAdd : TBlockage[]=[];
-    let currentTime = Math.trunc(time.getTime()/1000)-time.getSeconds();
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     todaysBlockages.forEach(b => {
       if(b.start==currentTime){
         blockagesToAdd.push(b);
@@ -97,7 +98,8 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
 
-    await AlgorithmService.planRoutes(seconds.toString()).then((response) => {
+    await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
+      console.log(currentTime);
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
       vehicles!.forEach( (v)=>{
@@ -262,9 +264,9 @@ export const DailyOperationsPage = () => {
   }
 
   const options = [
-    { value: 'TI1', label: 'TI1' },
-    { value: 'TI2', label: 'TI2' },
-    { value: 'TI3', label: 'TI3' }
+    { value: "1", label: 'TI1' },
+    { value: "2", label: 'TI2' },
+    { value: "3", label: 'TI3' }
   ]
   const vehicleOptions = [
     { value: VehicleType.auto, label: 'Aut' },
