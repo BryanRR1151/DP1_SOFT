@@ -193,6 +193,7 @@ export const DailyOperationsPage = () => {
   }, []);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
+    console.log(vehicle,fault,time);
     await AlgorithmService.setFault(vehicle,fault,time).then(() => {
       console.log('Fault registered successfully');
     }).catch((err) => {
@@ -233,7 +234,7 @@ export const DailyOperationsPage = () => {
       apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
       setApiMoment(apiMoment);
       //call falla vehicular service
-      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,seconds.toString());
+      registerFault(vehicle?.code,selected,seconds.toString());
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {

@@ -152,7 +152,6 @@ export const AnimationGrid = ({ moment, openVehiclePopup, speed }: IAnimationGri
           moment !== undefined ? moment.activeVehicles.map( (v) => {
             if(v.route!= null && v.route!=undefined){
               return v.route.chroms.map((c)=>{
-                console.log("route visulization enter");
                 let color = colorConfigs.dots.route;
                 return (<div
                   style={{
