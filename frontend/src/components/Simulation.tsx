@@ -55,7 +55,6 @@ export const Simulation = (props: ISimulation) => {
 
   const startAlgorithm = async() => {
     const data = new FormData();
-    console.log(initialDate);
     let sendDate = initialDate.substr(8, 2) + '/' + initialDate.substr(5, 2) + '/' + initialDate.substr(0, 4);
     if (!props.isCollapse) {
       await AlgorithmService.startWeekly(sendDate).then((response) => {
@@ -80,7 +79,6 @@ export const Simulation = (props: ISimulation) => {
       await AlgorithmService.getMoment( timer, speed ).then((response) => {
         let moments: TMoment[] = response.data;
         setApiMoment(parseMoment(moments[0]));
-        console.log(apiMoment);
         setApiMoments(moments);
         if (props.isCollapse) {
           if (moments[0].collapsed && !stopped)  {
