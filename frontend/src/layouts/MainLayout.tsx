@@ -23,11 +23,13 @@ export const MainLayout = () => {
           sx={{
             flexGrow: 1,
             width: `calc(100%-${sizeConfigs.sidebar.width})`,
-            height: 'calc(100vh - 10px)',
+            minHeight: 'calc(100vh - 17px)',
+            height: '100%',
             backgroundColor: colorConfigs.mainBg,
-            marginRight: '-8px',
+            marginRight: '-10px',
             marginLeft: '-10px',
-            marginTop: '-10px'
+            marginTop: '-10px',
+            marginBottom: '-10px'
           }}
         >
           <Outlet />

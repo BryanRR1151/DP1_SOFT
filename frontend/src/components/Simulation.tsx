@@ -11,6 +11,7 @@ import { PanelType, panelStyles } from '../types/types';
 import { FaAmazonPay, FaAngleDown } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import { SimulatedTimer } from '../components/SimulatedTimer';
+import Select, { GroupBase } from 'react-select'
 
 interface ISimulation {
   isCollapse: boolean;
@@ -18,6 +19,16 @@ interface ISimulation {
 }
 
 const INITIAL_TIMER = 0;
+
+const options = [
+  { value: "1", label: 'TI1' },
+  { value: "2", label: 'TI2' },
+  { value: "3", label: 'TI3' }
+]
+const vehicleOptions = [
+  { value: VehicleType.auto, label: 'Aut' },
+  { value: VehicleType.moto, label: 'Mot' }
+]
 
 export const Simulation = (props: ISimulation) => {
   
@@ -27,14 +38,21 @@ export const Simulation = (props: ISimulation) => {
   const [timer, setTimer] = useState(-1);
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
-  const [oFiles, setOFiles] = useState<any[]>([]);
-  const [bFiles, setBFiles] = useState<any[]>([]);
   const [fFiles, setFFiles] = useState<any[]>([]);
   const [vehicle, setVehicle] = useState<TVehicle|undefined>(undefined);
-  const [speed, setSpeed] = useState<number>(8); // 1 = 1 min/seg
-  const [auxCount, setAuxCount] = useState<number>(-1);
+  const [speed, setSpeed] = useState<number>(1); // 1 = 1 min/seg
+  const [auxCount, setAuxCount] = useState<number>(0);
   const [stopped, setStopped] = useState<boolean>(false);
   const [initialDate, setInitialDate] = useState<string>('2023-09-01');
+
+  const [selected, setSelected] = useState<string>("1");
+
+  const [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
+  const [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<string>("");
+  const [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
+  const [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
+  const [selectedVehicleType, setSelectedVehicleType] = useState<string>("Aut");
+
   const interval = useRef<any>(null);
 
   useEffect(() => {
@@ -128,11 +146,14 @@ export const Simulation = (props: ISimulation) => {
     toast.error(`La simulación alcanzó el colapso logístico en el siguiente tiempo: ${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)} (dd/hh/mm)`);
   }
   
-  const handleTimer = (curSpeed: number) => {
+  const handleTimer = () => {
     interval.current = setInterval(() => {
-      setAuxCount((count) => count == curSpeed - 1 ? 0 : count + 1);
+      // if(timer == 2) { 
+      //   setSpeed(8); 
+      //   setAuxCount(-1);
+      // }
       setTimer((count) => count + 1);
-    }, 1000/curSpeed);
+    }, 1000);
   }
 
   useEffect(() => {
@@ -148,22 +169,22 @@ export const Simulation = (props: ISimulation) => {
     }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
-      handleTimer(speed);
+      handleTimer();
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
       getMomentFromAlgorithm();
     }
   }, [timer]);
 
-  // useEffect(() => {
-  //   if (interval.current) {
-  //     clearInterval(interval.current);
-  //     interval.current = setInterval(() => {
-  //       setAuxCount((count) => count == speed - 1 ? 0 : count + 1);
-  //       setTimer((count) => count + 1);
-  //     }, 1000/speed);
-  //   }
-  // }, [speed]);
+  useEffect(() => {
+    if (interval.current) {
+      clearInterval(interval.current);
+      interval.current = setInterval(() => {
+        setAuxCount((count) => count == speed - 1 ? 0 : count + 1);
+        setTimer((count) => count + 1);
+      }, 1000/speed);
+    }
+  }, [speed]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
     setOpenPanel(true);
@@ -203,17 +224,73 @@ export const Simulation = (props: ISimulation) => {
     return moment;
   }
 
-  const onFileChange = (updatedList: any[], type: string) => {
-    if (type == 'Order') {
-      setOFiles(updatedList);
-    }
-    else if (type == 'Blockage') {
-      setBFiles(updatedList);
-    }
-    else if (type == 'Failure') {
-      setFFiles(updatedList);
+  // ---------------- VEHICLE FAILURES ------------------
+
+  const handleVehicleCodeChange = (formVehicleCode: number) => {
+    let code = formVehicleCode;
+    setVehicleCodeValue(code);
+    if(code <= 0) {
+      setVehicleCodeError(true);
+      setSaveNeedsToBeDisabled(true);
+      setVehicleCodeErrorMessage("El código debe ser mayor que 0");
+    } else {
+      if(apiMoment?.activeVehicles.find(v => v.code == selectedVehicleType + formVehicleCode.toString().padStart(3,"0")) == undefined) {
+        setVehicleCodeError(true);
+        setSaveNeedsToBeDisabled(true);
+        setVehicleCodeErrorMessage("El vehículo no se encuentra en ruta");
+      } else {
+        setVehicleCodeError(false);
+        setSaveNeedsToBeDisabled(false);
+        setVehicleCodeErrorMessage("");
+      }
     }
   }
+
+  const handleSubmit = (e: any) => {
+    e.preventDefault()
+    let damagedVehicleIndex = -1;
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code == selectedVehicleType + vehicleCodeValue.toString().padStart(3,"0"));
+    if(damagedVehicleIndex == -1) {
+      setVehicleCodeError(true);
+      setSaveNeedsToBeDisabled(true);
+      setVehicleCodeErrorMessage("El vehículo no se encuentra en ruta");
+    } else {
+      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
+      setApiMoment(apiMoment);
+      // registerFault(selectedVehicleType + vehicleCodeValue.toString().padStart(3,"0"), selected);
+    }
+  }
+
+  const handleVehicleFailure = (e: any, code: String) => {
+    e.preventDefault()
+    let damagedVehicleIndex = -1;
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code == code);
+    if(damagedVehicleIndex == -1) {
+      setVehicleCodeError(true);
+    } else {
+      // let newApiMoments = apiMoments.map((moment: TMoment) => {
+      //   let newMoment = moment; 
+      //   newMoment?.activeVehicles.splice(damagedVehicleIndex, 1);
+      //   return newMoment;
+      // });
+      setVehicleCodeError(false);
+      // setApiMoments(newApiMoments);
+      setOpenPanel(false); 
+      setTypePanel(null); 
+      setVehicle(undefined);
+      registerFault(code, selected);
+    }
+  }
+
+  const registerFault = async(code: String, fault: string) => {
+    await AlgorithmService.manualKill(code, fault).then(() => {
+      toast.success(`Falla ingresada correctamente`);
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  // ----------------------------------------------------
 
   return (
     <>
@@ -260,16 +337,28 @@ export const Simulation = (props: ISimulation) => {
                   </Button>
                 </Box>
                 {(timer >= 0) &&
-                  <Box>
-                    <Button
-                      variant='outlined'
-                      color='secondary'
-                      onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
-                      sx={{ width: '220px' }}
-                    >
-                      Ver detalles
-                    </Button>
-                  </Box>
+                  <>
+                    <Box>
+                      <Button
+                        variant='outlined'
+                        color='secondary'
+                        onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
+                        sx={{ width: '220px' }}
+                      >
+                        Ver detalles
+                      </Button>
+                    </Box>
+                    {/* <Box>
+                      <Button
+                        variant='contained'
+                        color='secondary'
+                        onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
+                        sx={{}}
+                      >
+                        Registrar incidencias
+                      </Button>
+                    </Box> */}
+                  </>
                 }
                 <Box>
                   {(timer <= -1) &&
@@ -291,9 +380,9 @@ export const Simulation = (props: ISimulation) => {
                     <>
                       <Box sx={{ display: 'flex', gap: 5, marginTop: 5 }}>
                         <Box sx={{ gap: 1, borderRadius: 2, display: 'flex', justifyContent: 'space-between', width: '220px'}}>
-                          {/* <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); setAuxCount(-1); }}>x1</Button>
+                          <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); setAuxCount(-1); }}>x1</Button>
                           <Button variant={ speed == 2 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(2); setAuxCount(-1); }}>x2</Button>
-                          <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); setAuxCount(-1); }}>x8</Button> */}
+                          <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); setAuxCount(-1); }}>x8</Button>
                         </Box>
                       </Box>
                       <Box sx={{ marginTop: 5 }}>
@@ -329,57 +418,69 @@ export const Simulation = (props: ISimulation) => {
       >
         {typePanel == PanelType.simulationFiles ?
           <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
-            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Subir archivos para la simulación:</Typography>
-            <Accordion>
-              <AccordionSummary
-                expandIcon={<FaAngleDown />}
-                aria-controls="panel1a-content"
-                id="panel1a-header"
+          <Box>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+            <form autoComplete="off" onSubmit={handleSubmit}> 
+              <Box
+                display="flex"
+                flexDirection="row"
+                sx={{}}
               >
-                <Typography>Pedidos</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box>
-                  <DropzoneComponent onFileChange={onFileChange} type={'Order'} files={oFiles} />
+                <Box
+                  sx={{width:130}}
+                >
+                  <Select 
+                    defaultValue={vehicleOptions[0]}
+                    isSearchable = {false}
+                    name = "vehicle options"
+                    options={vehicleOptions} 
+                    onChange={(e: any) => {setSelectedVehicleType(e.label)}}
+                  />
                 </Box>
-              </AccordionDetails>
-            </Accordion>
-            <Accordion>
-              <AccordionSummary
-                expandIcon={<FaAngleDown />}
-                aria-controls="panel2a-content"
-                id="panel2a-header"
-              >
-                <Typography>Bloqueos</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box>
-                  <DropzoneComponent onFileChange={onFileChange} type={'Blockage'} files={bFiles} />
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-            <Accordion>
-              <AccordionSummary
-                expandIcon={<FaAngleDown />}
-                aria-controls="panel3a-content"
-                id="panel3a-header"
-              >
-                <Typography>Fallas de vehículos</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box>
-                  <DropzoneComponent onFileChange={onFileChange} type={'Failure'} files={fFiles} />
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          </Box> : null
+                <TextField 
+                  label="Código del vehículo"
+                  onChange={(e: any) => {handleVehicleCodeChange(e.target?.value)}}
+                  required
+                  variant="outlined"
+                  color="secondary"
+                  type="number"
+                  error={vehicleCodeError}
+                  helperText={vehicleCodeErrorMessage}
+                  fullWidth
+                  size="small"
+                  sx={{marginLeft: 2,mb: 3}}
+                />
+              </Box>
+              <Box sx={{width:294, height:65}}>
+                <Select 
+                  defaultValue={options[0]}
+                  isSearchable = {true}
+                  name = "incident type"
+                  options={options} 
+                  onChange={(e: any) => {setSelected(e.value)}}
+                />
+              </Box>
+              <Button disabled={saveNeedsToBeDisabled} variant="contained" color="secondary" type="submit">Guardar</Button>
+            </form>
+          </Box>
+        </Box> : null
         }
         {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&
-          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, height: '100%'}}>
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles del vehiculo:</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Tipo: </b>{vehicle.type}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '16px'}}>Registrar incidente:</Typography>
+            <Select 
+              defaultValue={options[0]}
+              isSearchable = {true}
+              options={options} 
+              onChange={(e: any) => {setSelected(e.value)}}
+            />
+            {vehicleCodeError && <Typography sx={{marginBottom: 1, color: 'red'}}>* El vehículo no se encuentra en ruta</Typography>}
+            <Button sx={{marginTop: 2}} variant="contained" color="secondary" type="submit" onClick={(e) => handleVehicleFailure(e, vehicle.code!)}>Guardar</Button>
           </Box>
         }
         {typePanel == PanelType.simulationDetails && apiMoment !== undefined &&

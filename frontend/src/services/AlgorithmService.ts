@@ -49,6 +49,10 @@ const setFault = (vehicle: String, fault: String, time: String) => {
   return axios.get(`http://localhost:8080/SetFault?vehicle=${ vehicle }&fault=${ fault }&time=${ time }`)
 }
 
+const manualKill = (vehicle: String, fault: string) => {
+  return axios.get(`http://localhost:8080/ManualKill?vehicle=${ vehicle }&type=${ fault }`)
+}
+
 export default {
   startWeekly,
   startCollapse,
@@ -61,5 +65,6 @@ export default {
   insertPack,
   getPacks,
   setBlockages,
-  setFault
+  setFault,
+  manualKill
 };
