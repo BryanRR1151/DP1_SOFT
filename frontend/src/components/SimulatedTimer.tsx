@@ -12,7 +12,7 @@ export const SimulatedTimer = ({ min }: ISimulatedTimer) => {
 
   return (
     <Box sx={{display: 'flex'}}>
-      <Typography variant={'h6'}>{`${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)}`}</Typography>
+      <Typography variant={'h6'}>{`${('0'+days).slice(-2)}:${('0'+hours%24).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)}`}</Typography>
       <Typography sx={{marginLeft: '5px', marginTop: '3px'}}>{`(dd/hh/mm)`}</Typography>
     </Box>
   );
