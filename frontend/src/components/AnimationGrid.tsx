@@ -130,7 +130,7 @@ export const AnimationGrid = ({ moment, openVehiclePopup, speed }: IAnimationGri
                           return p.location.x*CELL_SIZE == x && p.location.y*CELL_SIZE == y;
                         }) ? colorConfigs.dots.pack
                             : (moment?.activeBlockages.some((b) => {
-                              return b.node.x*CELL_SIZE == x && b.node.y*CELL_SIZE == y;  
+                              return b.node.x*CELL_SIZE == x && b.node.y*CELL_SIZE == y || b.secondNode.x*CELL_SIZE == x && b.secondNode.y*CELL_SIZE == y;  
                             })) ? colorConfigs.dots.block : colorConfigs.dots.normal))
             return (
               <div
@@ -168,6 +168,21 @@ export const AnimationGrid = ({ moment, openVehiclePopup, speed }: IAnimationGri
             }else{
               return (<></>);
             }
+          }) : null
+        }
+        {
+          moment !== undefined ? moment.activeBlockages.map( (b) => {
+            return (<div
+              style={{
+                position: 'absolute',
+                width: b.node.x - b.secondNode.x == 0 ? 5 : Math.abs(b.node.x - b.secondNode.x)*CELL_SIZE,
+                height: b.node.y - b.secondNode.y == 0 ? 5 : Math.abs(b.node.y - b.secondNode.y)*CELL_SIZE,
+                backgroundColor: colorConfigs.dots.block,
+                //borderRadius: 2,
+                top: b.node.y-b.secondNode.y == 0 ? b.node.y*CELL_SIZE-2.5:(b.node.y<b.secondNode.y?b.node.y*CELL_SIZE:b.secondNode.y*CELL_SIZE),
+                left: b.node.x - b.secondNode.x == 0 ? b.node.x*CELL_SIZE-2.5 : (b.node.x<b.secondNode.x?b.node.x*CELL_SIZE:b.secondNode.x*CELL_SIZE)
+              }}
+            />)
           }) : null
         }
       </div>

@@ -58,6 +58,7 @@ export type TPack = {
 export type TBlockage = {
   id: number;
   node: TNode;
+  secondNode: TNode;
   start: number;
   end: number;
 }

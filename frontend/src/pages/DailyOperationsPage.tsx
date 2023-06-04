@@ -26,7 +26,7 @@ export const DailyOperationsPage = () => {
   var [isVehicleEnRoute, setIsVehicleEnRoute] = useState<boolean>(false);
   var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
   const [bFiles, setBFiles] = useState<any[]>([]);
-  var [selected, setSelected] = useState<String>("TI1");
+  var [selected, setSelected] = useState<String>("1");
   var [selectedVehicleType, setSelectedVehicleType] = useState<String>("Aut");
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
@@ -53,14 +53,14 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
-
-    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+    /*
+    await AlgorithmService.planRoutes(seconds.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
       console.log('Routes planned successfully');
     }).catch((err) => {
       console.log(err);
-    });
+    });*/
   }
 
   const parseVehicles = (vehicles: TVehicle[]) => {
@@ -69,7 +69,8 @@ export const DailyOperationsPage = () => {
 
   const planTheRoutes = async() => {
     let blockagesToAdd : TBlockage[]=[];
-    let currentTime = Math.trunc(time.getTime()/1000)-time.getSeconds();
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     todaysBlockages.forEach(b => {
       if(b.start==currentTime){
         blockagesToAdd.push(b);
@@ -97,7 +98,8 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
 
-    await AlgorithmService.planRoutes(count.toString()).then((response) => {
+    await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
+      console.log(currentTime);
       vehicles=parseVehicles(response.data);
       console.log(vehicles);
       vehicles!.forEach( (v)=>{
@@ -142,7 +144,7 @@ export const DailyOperationsPage = () => {
           }else{
             //notify package has been delivered
             apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
-            AlgorithmService.completePack(v.id).then((response) => {
+            AlgorithmService.completePack(v.id,seconds.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
               v.location!.destination=true;
               v.movement!.from=v.route!.chroms[0].from;
@@ -188,29 +190,16 @@ export const DailyOperationsPage = () => {
       time = new Date();
       planTheRoutes();
     }, 3000);
-  }, []);
+  }, []);  
 
-  useEffect(() => {
-    setInterval(() => {
-      let blockagesToAdd : TBlockage[]=[];
-      todaysBlockages.forEach(b => {
-        if(b.start==Math.trunc(time.getTime()/1000)-time.getSeconds()){
-          blockagesToAdd.push(b);
-        }
-        if(b.end==Math.trunc(time.getTime()/1000)-time.getSeconds()){
-          let index = apiMoment!.activeBlockages.indexOf(b);
-          if(index!=-1){
-            apiMoment!.activeBlockages.splice(index,1);
-          }
-        }
-      });
-      apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
-      setApiMoment(apiMoment);
-      //every minute
-    }, 10000000);
-  }, []);
-
-  
+  const registerFault = async(vehicle: String, fault: String, time: String) => {
+    console.log(vehicle,fault,time);
+    await AlgorithmService.setFault(vehicle,fault,time).then(() => {
+      console.log('Fault registered successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
 
   const handleSubmit = (e: any) => {
     e.preventDefault()
@@ -227,7 +216,7 @@ export const DailyOperationsPage = () => {
       apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
       setApiMoment(apiMoment);
       //call falla vehicular service
-
+      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,seconds.toString());
     }
   }
   const handleSubmitFromVehicle = (e: any) => {
@@ -245,7 +234,7 @@ export const DailyOperationsPage = () => {
       apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
       setApiMoment(apiMoment);
       //call falla vehicular service
-
+      registerFault(vehicle?.code,selected,seconds.toString());
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {
@@ -276,9 +265,9 @@ export const DailyOperationsPage = () => {
   }
 
   const options = [
-    { value: 'TI1', label: 'TI1' },
-    { value: 'TI2', label: 'TI2' },
-    { value: 'TI3', label: 'TI3' }
+    { value: "1", label: 'TI1' },
+    { value: "2", label: 'TI2' },
+    { value: "3", label: 'TI3' }
   ]
   const vehicleOptions = [
     { value: VehicleType.auto, label: 'Aut' },
@@ -287,6 +276,7 @@ export const DailyOperationsPage = () => {
 
   const handleIncidentTypeChange = (selectedOption: String) => {
     selected=selectedOption;
+    setSelected(selected);
     console.log(`Option selected:`, selected);
   };
 
