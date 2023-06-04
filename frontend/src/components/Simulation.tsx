@@ -31,10 +31,10 @@ export const Simulation = (props: ISimulation) => {
   const [bFiles, setBFiles] = useState<any[]>([]);
   const [fFiles, setFFiles] = useState<any[]>([]);
   const [vehicle, setVehicle] = useState<TVehicle|undefined>(undefined);
-  const [speed, setSpeed] = useState<number>(1); // 1 = 1 min/seg
-  const [auxCount, setAuxCount] = useState<number>(0);
+  const [speed, setSpeed] = useState<number>(8); // 1 = 1 min/seg
+  const [auxCount, setAuxCount] = useState<number>(-1);
   const [stopped, setStopped] = useState<boolean>(false);
-  const [initialDate, setInitialDate] = useState<string>('2023-05-27');
+  const [initialDate, setInitialDate] = useState<string>('2023-09-01');
   const interval = useRef<any>(null);
 
   useEffect(() => {
@@ -109,6 +109,7 @@ export const Simulation = (props: ISimulation) => {
     setApiMoment(undefined);
     clearInterval(interval.current);
     setTimer(-2);
+    setAuxCount(-1);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
     }).catch((err) => {
@@ -127,10 +128,11 @@ export const Simulation = (props: ISimulation) => {
     toast.error(`La simulación alcanzó el colapso logístico en el siguiente tiempo: ${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)} (dd/hh/mm)`);
   }
   
-  const handleTimer = () => {
+  const handleTimer = (curSpeed: number) => {
     interval.current = setInterval(() => {
+      setAuxCount((count) => count == curSpeed - 1 ? 0 : count + 1);
       setTimer((count) => count + 1);
-    }, 1000);
+    }, 1000/curSpeed);
   }
 
   useEffect(() => {
@@ -146,22 +148,22 @@ export const Simulation = (props: ISimulation) => {
     }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
-      handleTimer();
+      handleTimer(speed);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
       getMomentFromAlgorithm();
     }
   }, [timer]);
 
-  useEffect(() => {
-    if (interval.current) {
-      clearInterval(interval.current);
-      interval.current = setInterval(() => {
-        setAuxCount((count) => count == speed - 1 ? 0 : count + 1);
-        setTimer((count) => count + 1);
-      }, 1000/speed);
-    }
-  }, [speed]);
+  // useEffect(() => {
+  //   if (interval.current) {
+  //     clearInterval(interval.current);
+  //     interval.current = setInterval(() => {
+  //       setAuxCount((count) => count == speed - 1 ? 0 : count + 1);
+  //       setTimer((count) => count + 1);
+  //     }, 1000/speed);
+  //   }
+  // }, [speed]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
     setOpenPanel(true);
@@ -281,7 +283,7 @@ export const Simulation = (props: ISimulation) => {
                         Subir archivos
                       </Button> */}
                       {!props.isCollapse &&
-                        <TextField required label='Fecha de inicio' type='date' defaultValue='2023-05-27' value={initialDate} onChange={(e) => setInitialDate(e.target?.value)} sx={{ width: '220px' }} />
+                        <TextField required label='Fecha de inicio' type='date' value={initialDate} onChange={(e) => setInitialDate(e.target?.value)} sx={{ width: '220px' }} />
                       }
                     </Box>
                   }
@@ -289,9 +291,9 @@ export const Simulation = (props: ISimulation) => {
                     <>
                       <Box sx={{ display: 'flex', gap: 5, marginTop: 5 }}>
                         <Box sx={{ gap: 1, borderRadius: 2, display: 'flex', justifyContent: 'space-between', width: '220px'}}>
-                          <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); setAuxCount(-1); }}>x1</Button>
+                          {/* <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); setAuxCount(-1); }}>x1</Button>
                           <Button variant={ speed == 2 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(2); setAuxCount(-1); }}>x2</Button>
-                          <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); setAuxCount(-1); }}>x8</Button>
+                          <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); setAuxCount(-1); }}>x8</Button> */}
                         </Box>
                       </Box>
                       <Box sx={{ marginTop: 5 }}>
