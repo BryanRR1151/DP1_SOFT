@@ -40,8 +40,8 @@ export const Simulation = (props: ISimulation) => {
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
   const [fFiles, setFFiles] = useState<any[]>([]);
   const [vehicle, setVehicle] = useState<TVehicle|undefined>(undefined);
-  const [speed, setSpeed] = useState<number>(1); // 1 = 1 min/seg
-  const [auxCount, setAuxCount] = useState<number>(0);
+  const [speed, setSpeed] = useState<number>(8); // 1 = 1 min/seg
+  const [auxCount, setAuxCount] = useState<number>(-1);
   const [stopped, setStopped] = useState<boolean>(false);
   const [initialDate, setInitialDate] = useState<string>('2023-09-01');
 
@@ -94,7 +94,7 @@ export const Simulation = (props: ISimulation) => {
 
   const getMomentFromAlgorithm = async() => {
     if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
-      await AlgorithmService.getMoment( timer, speed ).then((response) => {
+      await AlgorithmService.getMoment( timer, speed - 1).then((response) => {
         let moments: TMoment[] = response.data;
         setApiMoment(parseMoment(moments[0]));
         setApiMoments(moments);
@@ -124,9 +124,11 @@ export const Simulation = (props: ISimulation) => {
   }
 
   const stopSimulation = async() => {
-    setApiMoment(undefined);
     clearInterval(interval.current);
+    setApiMoment(undefined);
+    setApiMoments([]);
     setTimer(-2);
+    setSpeed(0);
     setAuxCount(-1);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
@@ -146,14 +148,11 @@ export const Simulation = (props: ISimulation) => {
     toast.error(`La simulación alcanzó el colapso logístico en el siguiente tiempo: ${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)} (dd/hh/mm)`);
   }
   
-  const handleTimer = () => {
+  const handleTimer = (curSpeed: number) => {
     interval.current = setInterval(() => {
-      // if(timer == 2) { 
-      //   setSpeed(8); 
-      //   setAuxCount(-1);
-      // }
+      setAuxCount((count) => count == curSpeed - 1 ? 0 : count + 1);
       setTimer((count) => count + 1);
-    }, 1000);
+    }, 1000/curSpeed);
   }
 
   useEffect(() => {
@@ -169,7 +168,7 @@ export const Simulation = (props: ISimulation) => {
     }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
-      handleTimer();
+      handleTimer(speed);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
       getMomentFromAlgorithm();
