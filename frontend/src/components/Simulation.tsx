@@ -40,8 +40,8 @@ export const Simulation = (props: ISimulation) => {
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
   const [fFiles, setFFiles] = useState<any[]>([]);
   const [vehicle, setVehicle] = useState<TVehicle|undefined>(undefined);
-  const [speed, setSpeed] = useState<number>(8); // 1 = 1 min/seg
-  const [auxCount, setAuxCount] = useState<number>(-1);
+  const [speed, setSpeed] = useState<number>(1); // 1 = 1 min/seg
+  const [auxCount, setAuxCount] = useState<number>(0);
   const [stopped, setStopped] = useState<boolean>(false);
   const [initialDate, setInitialDate] = useState<string>('2023-09-01');
 
@@ -93,9 +93,12 @@ export const Simulation = (props: ISimulation) => {
   }
 
   const getMomentFromAlgorithm = async() => {
+    console.log(timer);
+    console.log(auxCount);
     if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
-      await AlgorithmService.getMoment( timer, speed - 1).then((response) => {
+      await AlgorithmService.getMoment( timer, speed ).then((response) => {
         let moments: TMoment[] = response.data;
+        console.log(moments);
         setApiMoment(parseMoment(moments[0]));
         setApiMoments(moments);
         if (props.isCollapse) {
@@ -128,8 +131,8 @@ export const Simulation = (props: ISimulation) => {
     setApiMoment(undefined);
     setApiMoments([]);
     setTimer(-2);
-    setSpeed(0);
-    setAuxCount(-1);
+    setSpeed(1);
+    setAuxCount(0);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
     }).catch((err) => {
@@ -141,18 +144,19 @@ export const Simulation = (props: ISimulation) => {
     const minutes = Math.floor(timer);
     const hours = Math.floor(timer / 60);
     const days = Math.floor(hours / 24);
-    setApiMoment(undefined);
     clearInterval(interval.current);
-    setStopped(false);
+    setApiMoment(undefined);
+    setApiMoments([]);
     setTimer(-2);
+    setSpeed(1);
+    setAuxCount(0);
     toast.error(`La simulación alcanzó el colapso logístico en el siguiente tiempo: ${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)} (dd/hh/mm)`);
   }
   
-  const handleTimer = (curSpeed: number) => {
+  const handleTimer = () => {
     interval.current = setInterval(() => {
-      setAuxCount((count) => count == curSpeed - 1 ? 0 : count + 1);
       setTimer((count) => count + 1);
-    }, 1000/curSpeed);
+    }, 1000);
   }
 
   useEffect(() => {
@@ -168,7 +172,11 @@ export const Simulation = (props: ISimulation) => {
     }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
-      handleTimer(speed);
+      handleTimer();
+    }
+    if (timer == 8) {
+      setSpeed(8); 
+      setAuxCount(-1);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
       getMomentFromAlgorithm();
@@ -176,6 +184,7 @@ export const Simulation = (props: ISimulation) => {
   }, [timer]);
 
   useEffect(() => {
+    if(speed == 1 && timer < 0) return;
     if (interval.current) {
       clearInterval(interval.current);
       interval.current = setInterval(() => {
