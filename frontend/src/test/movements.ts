@@ -32,6 +32,8 @@ export type TVehicle = {
   route?: TSolution | null;
   step: number;
   movement: TMovement | null;
+  broken?: boolean;
+  resumeAt?: number;
 }
 
 export type TSolution = {

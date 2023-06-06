@@ -109,6 +109,7 @@ export const DailyOperationsPage = () => {
         v!.movement!.from!.y=30;
         v!.movement!.to!.x=45;
         v!.movement!.to!.y=30;
+        v.broken=false;
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
       let packs : TPack[]=[];
@@ -123,37 +124,39 @@ export const DailyOperationsPage = () => {
       console.log(err);
     });
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
-        if(v.route!.chroms.length!=0){
-          v.movement!.from!.x=v.movement!.to!.x;
-          v.movement!.from!.y=v.movement!.to!.y;
-          if(v.movement!.from!.x < v.route!.chroms[0].to.x){
-            v.movement!.to!.x=v.movement!.from!.x+v.speed/60;
-          }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
-            v.movement!.to!.x=v.movement!.from!.x-v.speed/60;
-          }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
-            v.movement!.to!.y=v.movement!.from!.y+v.speed/60;
-          }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
-            v.movement!.to!.y=v.movement!.from!.y-v.speed/60;
-          }
-          if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
-            v.route!.chroms.shift();
-          }
-        }else{
-          if(v.location!.destination==true){
-            return null;
-          }else{
-            //notify package has been delivered
-            apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
-            AlgorithmService.completePack(v.id,seconds.toString()).then((response) => {
-              v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
-              v.location!.destination=true;
-              v.movement!.from=v.route!.chroms[0].from;
-              v.movement!.to=v.route!.chroms[0].to;
+        if(v.broken==false){
+          if(v.route!.chroms.length!=0){
+            v.movement!.from!.x=v.movement!.to!.x;
+            v.movement!.from!.y=v.movement!.to!.y;
+            if(v.movement!.from!.x < v.route!.chroms[0].to.x){
+              v.movement!.to!.x=v.movement!.from!.x+v.speed/60;
+            }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
+              v.movement!.to!.x=v.movement!.from!.x-v.speed/60;
+            }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
+              v.movement!.to!.y=v.movement!.from!.y+v.speed/60;
+            }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
+              v.movement!.to!.y=v.movement!.from!.y-v.speed/60;
+            }
+            if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
               v.route!.chroms.shift();
-              console.log('Package completed successfully');
-            }).catch((err) => {
-              console.log(err);
-            });
+            }
+          }else{
+            if(v.location!.destination==true){
+              return null;
+            }else{
+              //notify package has been delivered
+              apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
+              AlgorithmService.completePack(v.id,seconds.toString()).then((response) => {
+                v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+                v.location!.destination=true;
+                v.movement!.from=v.route!.chroms[0].from;
+                v.movement!.to=v.route!.chroms[0].to;
+                v.route!.chroms.shift();
+                console.log('Package completed successfully');
+              }).catch((err) => {
+                console.log(err);
+              });
+            }
           }
         }
         return v;
@@ -189,7 +192,7 @@ export const DailyOperationsPage = () => {
       setCount(count);
       time = new Date();
       planTheRoutes();
-    }, 3000);
+    }, 10000);
   }, []);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
@@ -231,10 +234,12 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
-      setApiMoment(apiMoment);
+      apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
+      apiMoment!.activeVehicles[damagedVehicleIndex].route!.chroms=[];
+      //apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
+      //setApiMoment(apiMoment);
       //call falla vehicular service
-      registerFault(vehicle?.code,selected,seconds.toString());
+      //registerFault(vehicle!.code!,selected,seconds.toString());
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {
@@ -277,13 +282,11 @@ export const DailyOperationsPage = () => {
   const handleIncidentTypeChange = (selectedOption: String) => {
     selected=selectedOption;
     setSelected(selected);
-    console.log(`Option selected:`, selected);
   };
 
   const handleVehicleTypeChange = (selectedOption: String) => {
     selectedVehicleType=selectedOption;
     setSelectedVehicleType(selectedVehicleType);
-    console.log(`Type Option selected:`, selectedVehicleType);
   };
 
   return (
@@ -318,7 +321,7 @@ export const DailyOperationsPage = () => {
                 <AnimationGrid 
                   moment = {apiMoment}
                   openVehiclePopup={openVehiclePopup}
-                  speed = {1/3}
+                  speed = {1/10}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
@@ -407,51 +410,55 @@ export const DailyOperationsPage = () => {
             <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
-            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
-              <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  sx={{}}
-                >
+            {vehicle.broken==false&&
+              <Box>
+                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+                <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 
                   <Box
-                    sx={{width:130}}
+                    display="flex"
+                    flexDirection="row"
+                    sx={{}}
                   >
-                    <Select 
-                      isDisabled={true}
-                      defaultValue={vehicle.type==VehicleType.auto?vehicleOptions[0]:vehicleOptions[1]}
-                      isSearchable = {false}
-                      name = "vehicle options"
-                      options={vehicleOptions} 
-                      //onChange={handleChange}
+                    <Box
+                      sx={{width:130}}
+                    >
+                      <Select 
+                        isDisabled={true}
+                        defaultValue={vehicle.type==VehicleType.auto?vehicleOptions[0]:vehicleOptions[1]}
+                        isSearchable = {false}
+                        name = "vehicle options"
+                        options={vehicleOptions} 
+                        //onChange={handleChange}
+                      />
+                    </Box>
+                    <TextField 
+                      disabled={true}
+                      //label="Código del vehículo"
+                      //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+                      required
+                      variant="outlined"
+                      color="secondary"
+                      type="number"
+                      value={parseInt(vehicle.code!.slice(3))}
+                      fullWidth
+                      size="small"
+                      sx={{marginLeft: 2,mb: 3}}
                     />
                   </Box>
-                  <TextField 
-                    disabled={true}
-                    //label="Código del vehículo"
-                    //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
-                    required
-                    variant="outlined"
-                    color="secondary"
-                    type="number"
-                    value={parseInt(vehicle.code!.slice(3))}
-                    fullWidth
-                    size="small"
-                    sx={{marginLeft: 2,mb: 3}}
-                  />
-                </Box>
-                <Box sx={{width:294, height:65}}>
-                  <Select 
-                    
-                    defaultValue={options[0]}
-                    isSearchable = {true}
-                    name = "incident type"
-                    options={options} 
-                    onChange={(e: any) => {handleIncidentTypeChange(e.value)}}
-                  />
-                </Box>
-                <Button variant="contained" color="secondary" type="submit">Guardar</Button>
-              </form>
+                  <Box sx={{width:294, height:65}}>
+                    <Select 
+                      
+                      defaultValue={options[0]}
+                      isSearchable = {true}
+                      name = "incident type"
+                      options={options} 
+                      onChange={(e: any) => {handleIncidentTypeChange(e.value)}}
+                    />
+                  </Box>
+                  <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+                </form>
+              </Box>
+              }
           </Box>
         }
       </Box>
