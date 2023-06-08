@@ -99,9 +99,7 @@ export const DailyOperationsPage = () => {
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
 
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
-      console.log(currentTime);
       vehicles=parseVehicles(response.data);
-      console.log(vehicles);
       vehicles!.forEach( (v)=>{
         //v.movement!.from=v.route!.chroms[0].from;
         //v.movement!.to=v.route!.chroms[0].from;
@@ -187,12 +185,15 @@ export const DailyOperationsPage = () => {
   
   //should activate every time there's a new pack
   useEffect(() => {
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       count=count+60;
       setCount(count);
       time = new Date();
       planTheRoutes();
     }, 10000);
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {

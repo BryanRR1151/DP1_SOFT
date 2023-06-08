@@ -19,6 +19,16 @@ const defaultOrder: TOrder = {
 }
 
 export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrdersForm) => {
+  const [disabledIdCustomer, setDisabledIdCustomer] = useState<boolean>(false);
+  const [disabledQuantity, setDisabledQuantity] = useState<boolean>(false);
+  const [disabledTerm, setDisabledTerm] = useState<boolean>(false);
+  const [disabledX, setDisabledX] = useState<boolean>(false);
+  const [disabledY, setDisabledY] = useState<boolean>(false);
+  const [errorMessageIdCustomer, setErrorMessageIdCustomer] = useState<String>(" ");
+  const [errorMessageQuantity, setErrorMessageQuantity] = useState<String>(" ");
+  const [errorMessageTerm, setErrorMessageTerm] = useState<String>(" ");
+  const [errorMessageX, setErrorMessageX] = useState<String>(" ");
+  const [errorMessageY, setErrorMessageY] = useState<String>(" ");
   const [data, setData] = useState<TOrder>( order ?? defaultOrder );
   const [error, setError] = useState<TOrderError>({ idCustomer: false, quantity: false, term: false, x: false, y: false });
   var [packToSend, setPackToSend] = useState<TPack>({id: 0, idCustomer: 0, originalTime: 0, deadline: 0,
@@ -34,6 +44,36 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
     }).catch((err) => {
       console.log(err);
     });
+  }
+
+  const setErrorQuantity = (booleanValue:boolean , stringValue:String) => {
+    setErrorMessageQuantity(stringValue);
+    setDisabledQuantity(booleanValue);
+    setError({idCustomer: error.idCustomer, quantity: booleanValue, term: error.term, x: error.x, y: error.y});
+  }
+
+  const setErrorIdCustomer = (booleanValue:boolean , stringValue:String) => {
+    setErrorMessageIdCustomer(stringValue);
+    setDisabledIdCustomer(booleanValue);
+    setError({idCustomer: booleanValue, quantity: error.quantity, term: error.term, x: error.x, y: error.y});
+  }
+
+  const setErrorTerm = (booleanValue:boolean , stringValue:String) => {
+    setErrorMessageTerm(stringValue);
+    setDisabledTerm(booleanValue);
+    setError({idCustomer: error.idCustomer, quantity: error.quantity, term: booleanValue, x: error.x, y: error.y});
+  }
+
+  const setErrorX = (booleanValue:boolean , stringValue:String) => {
+    setErrorMessageX(stringValue);
+    setDisabledX(booleanValue);
+    setError({idCustomer: error.idCustomer, quantity: error.quantity, term: error.term, x: booleanValue, y: error.y});
+  }
+
+  const setErrorY = (booleanValue:boolean , stringValue:String) => {
+    setErrorMessageY(stringValue);
+    setDisabledY(booleanValue);
+    setError({idCustomer: error.idCustomer, quantity: error.quantity, term: error.term, x: error.x, y: booleanValue});
   }
 
   const handleSubmit = (e: any) => {
@@ -68,7 +108,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
       packToSend.deadline=data.term*60*60;
       packToSend.location.x=data.orderNode.x;
       packToSend.location.y=data.orderNode.y;
-      packToSend.originalTime=new Date().getHours()*60+new Date().getMinutes();
+      //packToSend.originalTime=new Date().getHours()*60+new Date().getMinutes();
       packToSend.unassigned=data.quantity;
       registerPack(packToSend);
   }
@@ -92,7 +132,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
         }
         <TextField 
           label="Cantidad"
-          onChange={(e: any) => setData({ ...data, quantity: e.target?.value })}
+          onChange={(e: any) => {setData({ ...data, quantity: e.target?.value });e.target?.value>0?setErrorQuantity(false," "):setErrorQuantity(true,"Debe ingresar un valor mayor a 0");}}
           required
           variant="outlined"
           color="secondary"
@@ -101,10 +141,11 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
           fullWidth
           value={data.quantity}
           error={error.quantity}
+          helperText={errorMessageQuantity}
         />
         <TextField 
           label="Cliente"
-          onChange={(e: any) => setData({ ...data, idCustomer: e.target?.value })}
+          onChange={(e: any) => {setData({ ...data, idCustomer: e.target?.value });e.target?.value>0?setErrorIdCustomer(false," "):setErrorIdCustomer(true,"Debe ingresar un valor mayor a 0");}}
           required
           variant="outlined"
           color="secondary"
@@ -113,10 +154,11 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
           fullWidth
           value={data.idCustomer}
           error={error.idCustomer}
+          helperText={errorMessageIdCustomer}
         />
         <TextField 
           label="Plazo (Horas)"
-          onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+          onChange={(e: any) => {setData({ ...data, term: e.target?.value });e.target?.value>0?setErrorTerm(false," "):setErrorTerm(true,"Debe ingresar un valor mayor a 0");}}
           required
           variant="outlined"
           color="secondary"
@@ -125,10 +167,11 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
           error={error.term}
           fullWidth
           sx={{mb: 3}}
+          helperText={errorMessageTerm}
         />
         <TextField 
           label="Posicion X"
-          onChange={(e: any) => setData({ ...data, orderNode: { ...data.orderNode, x: e.target?.value } })}
+          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, x: e.target?.value } });e.target?.value>0?setErrorX(false," "):setErrorX(true,"Debe ingresar un valor mayor a 0");}}
           required
           variant="outlined"
           color="secondary"
@@ -137,10 +180,11 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
           error={error.x}
           fullWidth
           sx={{mb: 3}}
+          helperText={errorMessageX}
         />
         <TextField 
           label="Posicion Y"
-          onChange={(e: any) => setData({ ...data, orderNode: { ...data.orderNode, y: e.target?.value } })}
+          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, y: e.target?.value } });e.target?.value>0?setErrorY(false," "):setErrorY(true,"Debe ingresar un valor mayor a 0");}}
           required
           variant="outlined"
           color="secondary"
@@ -149,6 +193,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
           error={error.y}
           fullWidth
           sx={{mb: 3}}
+          helperText={errorMessageY}
         />
         {(type == PanelType.edit) &&
           <TextField 
@@ -163,7 +208,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
             disabled={true}
           />
         }
-        <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+        <Button variant="contained" color="secondary" type="submit" disabled={disabledIdCustomer||disabledQuantity||disabledTerm||disabledX||disabledY}>Guardar</Button>
       </form>
     </Box>
   );

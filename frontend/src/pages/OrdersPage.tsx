@@ -40,7 +40,7 @@ export const OrdersPage = () => {
   }
 
   const handleDelete = (e: any, params: any) => {
-
+    deletePack(params.row);
   }
 
   const handlePanel = (open: boolean) => {
@@ -55,14 +55,22 @@ export const OrdersPage = () => {
     return packs;
   }
 
+  const deletePack = async(order: TOrder) => {
+    await AlgorithmService.deletePack(order.id!).then((response) => {
+      console.log('Pack deleted successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
   const getPackList = async() => {
     await AlgorithmService.getPacks().then((response) => {
       packsToShow = parsePacks(response.data);
       setPacksToShow(parsePacks(response.data));
       rowsToShow = [];
       packsToShow.forEach(p => {
-        let temporaryOrder: TOrder = {order:p.id.toString(), id: p.id, registerDate:p.time.toString(),
-          quantity: p.demand, term: p.deadline, orderNode: {x:p.location.x,y:p.location.y}}
+        let temporaryOrder: TOrder = {order:p.id.toString(), idCustomer: p.idCustomer, id: p.id, registerDate:p.time.toString(),
+          quantity: p.demand, term: p.deadline, orderNode: {x:p.location.x,y:p.location.y}, state:p.fullfilled==0?OrderState.pending:p.fullfilled==p.demand?OrderState.fullfiled:OrderState.active}
           rowsToShow.push(temporaryOrder)
       });
       setRowsToShow(rowsToShow);
@@ -80,10 +88,12 @@ export const OrdersPage = () => {
     }
   }, []);
   useEffect(() => {
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       getPackList();
-      //every minute
-    }, 10000);
+    }, 1000);
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
  /*
   const testRows: TOrder[] = [
@@ -128,15 +138,15 @@ export const OrdersPage = () => {
       minWidth: 100
     },
     {
-      field: 'registerDate',
-      headerName: 'Fecha de registro',
-      minWidth: 150
+      field: 'idCustomer',
+      headerName: 'Cliente',
+      minWidth: 100
     },
     {
       field: 'term',
-      headerName: 'Plazo',
-      valueGetter: (params: any) => `${(params.value/60)/60} horas`,
-      minWidth: 150
+      headerName: 'Fecha Límite',
+      valueGetter: (params: any) => `${new Date(params.value*1000).toLocaleString('en-GB')/*.getDay()/*+"/"+new Date(params.value*1000).getMonth()+"/"+new Date(params.value*1000).getFullYear()+", "+new Date(params.value*1000).getHours()*/}`,
+      minWidth: 200
     },
     {
       field: 'orderNode',
@@ -171,7 +181,7 @@ export const OrdersPage = () => {
       type: 'actions',
       minWidth: 50,
       getActions: (params: GridRowParams) => [
-        <GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
+        //<GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
         <GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
     }
@@ -216,15 +226,6 @@ export const OrdersPage = () => {
                 onClick={(event) => setIsOpenPanel(true) }
               >
                 Nuevo
-              </Button>
-              <Button
-                variant='outlined'
-                color='secondary'
-                sx={{
-                  marginLeft: 2
-                }}
-              >
-                Filtrar
               </Button>
             </Box>
             <DataGrid rows={rowsToShow} columns={columns} />
