@@ -122,46 +122,57 @@ export const DailyOperationsPage = () => {
       console.log(err);
     });
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
-        if(v.broken==false){
-          if(v.route!.chroms.length!=0){
-            v.movement!.from!.x=v.movement!.to!.x;
-            v.movement!.from!.y=v.movement!.to!.y;
-            if(v.movement!.from!.x < v.route!.chroms[0].to.x){
-              v.movement!.to!.x=v.movement!.from!.x+v.speed/60;
-            }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
-              v.movement!.to!.x=v.movement!.from!.x-v.speed/60;
-            }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
-              v.movement!.to!.y=v.movement!.from!.y+v.speed/60;
-            }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
-              v.movement!.to!.y=v.movement!.from!.y-v.speed/60;
-            }
-            if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
-              v.route!.chroms.shift();
-            }
-          }else{
-            if(v.location!.destination==true){
-              return null;
-            }else{
-              //notify package has been delivered
-              apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
-              AlgorithmService.completePack(v.id,seconds.toString()).then((response) => {
-                v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
-                v.location!.destination=true;
-                v.movement!.from=v.route!.chroms[0].from;
-                v.movement!.to=v.route!.chroms[0].to;
-                v.route!.chroms.shift();
-                console.log('Package completed successfully');
-              }).catch((err) => {
-                console.log(err);
-              });
-            }
+      console.log(v);
+      if(v.route!.chroms.length!=0){
+        if(v.broken==false || v.movement!.to!.x != v.route!.chroms[0].from.x || v.movement!.to!.y != v.route!.chroms[0].from.y){
+          v.movement!.from!.x=v.movement!.to!.x;
+          v.movement!.from!.y=v.movement!.to!.y;
+          if(v.movement!.from!.x < v.route!.chroms[0].to.x){
+            v.movement!.to!.x=v.movement!.from!.x+v.speed/60;
+          }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
+            v.movement!.to!.x=v.movement!.from!.x-v.speed/60;
+          }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
+            v.movement!.to!.y=v.movement!.from!.y+v.speed/60;
+          }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
+            v.movement!.to!.y=v.movement!.from!.y-v.speed/60;
           }
+          if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
+            v.route!.chroms.shift();
+          }
+        }else{
+          v.movement!.from!.x=v.movement!.to!.x;
+          v.movement!.from!.y=v.movement!.to!.y;
+          v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+          v.route!.chroms=[];
+          apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
         }
-        return v;
-      });
-      newVehicles = newVehicles!.filter((value)=>value!=null);
-      apiMoment!.activeVehicles=newVehicles;
-      setApiMoment(apiMoment);
+      }else{
+        if(!v.broken){
+          if(v.location!.destination==true){
+            return null;
+          }else{
+            //notify package has been delivered
+            apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
+            AlgorithmService.completePack(v.id,seconds.toString()).then((response) => {
+              v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+              v.location!.destination=true;
+              v.movement!.from=v.route!.chroms[0].from;
+              v.movement!.to=v.route!.chroms[0].to;
+              v.route!.chroms.shift();
+              console.log('Package completed successfully');
+            }).catch((err) => {
+              console.log(err);
+            });
+          }
+        }else if(v.resumeAt==Math.trunc(new Date().getTime()/1000)){
+          return null;
+        }
+      }
+      return v;
+    });
+    newVehicles = newVehicles!.filter((value)=>value!=null);
+    apiMoment!.activeVehicles=newVehicles;
+    setApiMoment(apiMoment);
   }
 
   var started = false;
@@ -217,9 +228,11 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
-      setApiMoment(apiMoment);
+      apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
+      //apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
+      //setApiMoment(apiMoment);
       //call falla vehicular service
+      setOpenPanel(false);
       registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,seconds.toString());
     }
   }
@@ -236,11 +249,12 @@ export const DailyOperationsPage = () => {
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
       apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
-      apiMoment!.activeVehicles[damagedVehicleIndex].route!.chroms=[];
+      //apiMoment!.activeVehicles[damagedVehicleIndex].route!.chroms=[];
       //apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
       //setApiMoment(apiMoment);
       //call falla vehicular service
-      //registerFault(vehicle!.code!,selected,seconds.toString());
+      setOpenPanel(false);
+      registerFault(vehicle!.code!,selected,seconds.toString());
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {
@@ -255,14 +269,21 @@ export const DailyOperationsPage = () => {
       saveNeedsToBeDisabled = true;
       vehicleCodeErrorMessage = "El código debe ser mayor que 0";
     }else{
-      if(apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"))==undefined){
+      let foundVehicle = apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"));
+      if(foundVehicle==undefined){
         vehicleCodeError = true;
         saveNeedsToBeDisabled = true;
         vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
       }else{
-        vehicleCodeError = false;
-        saveNeedsToBeDisabled = false;
-        vehicleCodeErrorMessage = " ";
+        if(foundVehicle!.broken){
+          vehicleCodeError = true;
+          saveNeedsToBeDisabled = true;
+          vehicleCodeErrorMessage = "El vehículo ya está averiado";
+        }else{
+          vehicleCodeError = false;
+          saveNeedsToBeDisabled = false;
+          vehicleCodeErrorMessage = " ";
+        }
       }
     }
     setVehicleCodeError(vehicleCodeError);

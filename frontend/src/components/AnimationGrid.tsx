@@ -42,8 +42,24 @@ const Car = ({ vehicle, openVehiclePopup, speed }: CarProps) => {
             }}
           >
             {vehicle.type == VehicleType.auto ?
+              vehicle.movement!.from!.x == vehicle.movement!.to!.x && vehicle.movement!.from!.y == vehicle.movement!.to!.y?
               <FaCarSide
                 size={15}
+                color="red"
+                sx={{
+                  cursor: 'pointer'
+                }}
+              /> :
+              <FaCarSide
+                size={15}
+                sx={{
+                  cursor: 'pointer'
+                }}
+              /> :
+              vehicle.movement!.from!.x == vehicle.movement!.to!.x && vehicle.movement!.from!.y == vehicle.movement!.to!.y?
+              <FaMotorcycle
+                size={15}
+                color= "red"
                 sx={{
                   cursor: 'pointer'
                 }}
