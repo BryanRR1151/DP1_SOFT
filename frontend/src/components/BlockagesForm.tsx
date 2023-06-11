@@ -16,7 +16,8 @@ interface IBlockagesForm {
 const defaultOrder: TBlockage = {
   start: '',
   end: '',
-  node: { x: 0, y: 0 }
+  node: { x: 0, y: 0 },
+  secondNode: {x:0,y:0}
 }
 
 export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect, loadBlockages }: IBlockagesForm) => {

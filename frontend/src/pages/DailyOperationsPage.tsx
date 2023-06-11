@@ -121,8 +121,10 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
+    let temporaryVehicles:TVehicle[]=[];
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
       console.log(v);
+      let shouldBeAddedToVehicles:boolean=true;
       if(v.route!.chroms.length!=0){
         if(v.broken==false || v.movement!.to!.x != v.route!.chroms[0].from.x || v.movement!.to!.y != v.route!.chroms[0].from.y){
           v.movement!.from!.x=v.movement!.to!.x;
@@ -149,6 +151,7 @@ export const DailyOperationsPage = () => {
       }else{
         if(!v.broken){
           if(v.location!.destination==true){
+            shouldBeAddedToVehicles=false;
             return null;
           }else{
             //notify package has been delivered
@@ -165,13 +168,17 @@ export const DailyOperationsPage = () => {
             });
           }
         }else if(v.resumeAt==Math.trunc(new Date().getTime()/1000)){
+          shouldBeAddedToVehicles=false;
           return null;
         }
+      }
+      if(shouldBeAddedToVehicles){
+        temporaryVehicles.push(v);
       }
       return v;
     });
     newVehicles = newVehicles!.filter((value)=>value!=null);
-    apiMoment!.activeVehicles=newVehicles;
+    apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
   }
 
@@ -201,7 +208,7 @@ export const DailyOperationsPage = () => {
       setCount(count);
       time = new Date();
       planTheRoutes();
-    }, 10000);
+    }, 3000);
     return () => {
       clearInterval(intervalId);
     };
@@ -343,7 +350,7 @@ export const DailyOperationsPage = () => {
                 <AnimationGrid 
                   moment = {apiMoment}
                   openVehiclePopup={openVehiclePopup}
-                  speed = {1/10}
+                  speed = {1/3}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>

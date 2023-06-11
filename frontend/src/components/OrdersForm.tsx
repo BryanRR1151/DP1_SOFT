@@ -103,7 +103,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
 
       handlePanel(false);
       handleDeselect();
-      packToSend.idCustomer=data.idCustomer;
+      packToSend.idCustomer=data.idCustomer!;
       packToSend.demand=data.quantity;
       packToSend.deadline=data.term*60*60;
       packToSend.location.x=data.orderNode.x;
