@@ -63,6 +63,11 @@ export type TBlockage = {
   end: number;
 }
 
+export type TFinish = {
+  type: number;
+  message: string;
+}
+
 export type TMoment = {
   min: number;
   ordersDelivered: number;
@@ -71,5 +76,6 @@ export type TMoment = {
   activeVehicles: TVehicle[];
   activePacks: TPack[];
   activeBlockages: TBlockage[];
-  collapsed: boolean;
+  collapse?: boolean;
+  // finish: TFinish;
 }
