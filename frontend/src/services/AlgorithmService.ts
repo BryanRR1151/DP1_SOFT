@@ -53,6 +53,10 @@ const manualKill = (vehicle: String, fault: string) => {
   return axios.get(`http://localhost:8080/ManualKill?vehicle=${ vehicle }&type=${ fault }`)
 }
 
+const deletePack = (id: number) => {
+  return axios.post(`http://localhost:8080/eliminarPedido?id=${id}`);
+}
+
 export default {
   startWeekly,
   startCollapse,
@@ -66,5 +70,6 @@ export default {
   getPacks,
   setBlockages,
   setFault,
-  manualKill
+  manualKill,
+  deletePack
 };

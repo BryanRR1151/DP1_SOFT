@@ -37,6 +37,7 @@ export type TOrderError = {
 export type TBlockage = {
   id?: number;
   node: TNode;
+  secondNode: TNode;
   start: string;
   end: string;
 }

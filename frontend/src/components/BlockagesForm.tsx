@@ -114,7 +114,7 @@ export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect, loa
           error={error.end}
         />
         <TextField 
-          label="Posicion X"
+          label="Nodo inicial - Posicion X"
           onChange={(e: any) => setData({ ...data, node: { ...data.node, x: e.target?.value } })}
           required
           variant="outlined"
@@ -126,7 +126,31 @@ export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect, loa
           sx={{mb: 3}}
         />
         <TextField 
-          label="Posicion Y"
+          label="Nodo inicial - Posicion Y"
+          onChange={(e: any) => setData({ ...data, node: { ...data.node, y: e.target?.value } })}
+          required
+          variant="outlined"
+          color="secondary"
+          type="number"
+          value={data.node.y}
+          error={error.y}
+          fullWidth
+          sx={{mb: 3}}
+        />
+        <TextField 
+          label="Nodo final - Posicion X"
+          onChange={(e: any) => setData({ ...data, node: { ...data.node, x: e.target?.value } })}
+          required
+          variant="outlined"
+          color="secondary"
+          type="number"
+          value={data.node.x}
+          error={error.x}
+          fullWidth
+          sx={{mb: 3}}
+        />
+        <TextField 
+          label="Nodo final - Posicion Y"
           onChange={(e: any) => setData({ ...data, node: { ...data.node, y: e.target?.value } })}
           required
           variant="outlined"

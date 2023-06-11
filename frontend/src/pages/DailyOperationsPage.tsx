@@ -99,9 +99,7 @@ export const DailyOperationsPage = () => {
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
 
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
-      console.log(currentTime);
       vehicles=parseVehicles(response.data);
-      console.log(vehicles);
       vehicles!.forEach( (v)=>{
         //v.movement!.from=v.route!.chroms[0].from;
         //v.movement!.to=v.route!.chroms[0].from;
@@ -109,6 +107,7 @@ export const DailyOperationsPage = () => {
         v!.movement!.from!.y=30;
         v!.movement!.to!.x=45;
         v!.movement!.to!.y=30;
+        v.broken=false;
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
       let packs : TPack[]=[];
@@ -123,7 +122,9 @@ export const DailyOperationsPage = () => {
       console.log(err);
     });
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
-        if(v.route!.chroms.length!=0){
+      console.log(v);
+      if(v.route!.chroms.length!=0){
+        if(v.broken==false || v.movement!.to!.x != v.route!.chroms[0].from.x || v.movement!.to!.y != v.route!.chroms[0].from.y){
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
           if(v.movement!.from!.x < v.route!.chroms[0].to.x){
@@ -139,6 +140,14 @@ export const DailyOperationsPage = () => {
             v.route!.chroms.shift();
           }
         }else{
+          v.movement!.from!.x=v.movement!.to!.x;
+          v.movement!.from!.y=v.movement!.to!.y;
+          v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+          v.route!.chroms=[];
+          apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
+        }
+      }else{
+        if(!v.broken){
           if(v.location!.destination==true){
             return null;
           }else{
@@ -155,12 +164,15 @@ export const DailyOperationsPage = () => {
               console.log(err);
             });
           }
+        }else if(v.resumeAt==Math.trunc(new Date().getTime()/1000)){
+          return null;
         }
-        return v;
-      });
-      newVehicles = newVehicles!.filter((value)=>value!=null);
-      apiMoment!.activeVehicles=newVehicles;
-      setApiMoment(apiMoment);
+      }
+      return v;
+    });
+    newVehicles = newVehicles!.filter((value)=>value!=null);
+    apiMoment!.activeVehicles=newVehicles;
+    setApiMoment(apiMoment);
   }
 
   var started = false;
@@ -184,12 +196,15 @@ export const DailyOperationsPage = () => {
   
   //should activate every time there's a new pack
   useEffect(() => {
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       count=count+60;
       setCount(count);
       time = new Date();
       planTheRoutes();
-    }, 3000);
+    }, 10000);
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
@@ -213,9 +228,11 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
-      setApiMoment(apiMoment);
+      apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
+      //apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
+      //setApiMoment(apiMoment);
       //call falla vehicular service
+      setOpenPanel(false);
       registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,seconds.toString());
     }
   }
@@ -231,10 +248,13 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
-      setApiMoment(apiMoment);
+      apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
+      //apiMoment!.activeVehicles[damagedVehicleIndex].route!.chroms=[];
+      //apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
+      //setApiMoment(apiMoment);
       //call falla vehicular service
-      registerFault(vehicle?.code,selected,seconds.toString());
+      setOpenPanel(false);
+      registerFault(vehicle!.code!,selected,seconds.toString());
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {
@@ -249,14 +269,21 @@ export const DailyOperationsPage = () => {
       saveNeedsToBeDisabled = true;
       vehicleCodeErrorMessage = "El código debe ser mayor que 0";
     }else{
-      if(apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"))==undefined){
+      let foundVehicle = apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"));
+      if(foundVehicle==undefined){
         vehicleCodeError = true;
         saveNeedsToBeDisabled = true;
         vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
       }else{
-        vehicleCodeError = false;
-        saveNeedsToBeDisabled = false;
-        vehicleCodeErrorMessage = " ";
+        if(foundVehicle!.broken){
+          vehicleCodeError = true;
+          saveNeedsToBeDisabled = true;
+          vehicleCodeErrorMessage = "El vehículo ya está averiado";
+        }else{
+          vehicleCodeError = false;
+          saveNeedsToBeDisabled = false;
+          vehicleCodeErrorMessage = " ";
+        }
       }
     }
     setVehicleCodeError(vehicleCodeError);
@@ -277,13 +304,11 @@ export const DailyOperationsPage = () => {
   const handleIncidentTypeChange = (selectedOption: String) => {
     selected=selectedOption;
     setSelected(selected);
-    console.log(`Option selected:`, selected);
   };
 
   const handleVehicleTypeChange = (selectedOption: String) => {
     selectedVehicleType=selectedOption;
     setSelectedVehicleType(selectedVehicleType);
-    console.log(`Type Option selected:`, selectedVehicleType);
   };
 
   return (
@@ -318,7 +343,7 @@ export const DailyOperationsPage = () => {
                 <AnimationGrid 
                   moment = {apiMoment}
                   openVehiclePopup={openVehiclePopup}
-                  speed = {1/3}
+                  speed = {1/10}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
@@ -407,51 +432,55 @@ export const DailyOperationsPage = () => {
             <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
-            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
-              <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  sx={{}}
-                >
+            {vehicle.broken==false&&
+              <Box>
+                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+                <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 
                   <Box
-                    sx={{width:130}}
+                    display="flex"
+                    flexDirection="row"
+                    sx={{}}
                   >
-                    <Select 
-                      isDisabled={true}
-                      defaultValue={vehicle.type==VehicleType.auto?vehicleOptions[0]:vehicleOptions[1]}
-                      isSearchable = {false}
-                      name = "vehicle options"
-                      options={vehicleOptions} 
-                      //onChange={handleChange}
+                    <Box
+                      sx={{width:130}}
+                    >
+                      <Select 
+                        isDisabled={true}
+                        defaultValue={vehicle.type==VehicleType.auto?vehicleOptions[0]:vehicleOptions[1]}
+                        isSearchable = {false}
+                        name = "vehicle options"
+                        options={vehicleOptions} 
+                        //onChange={handleChange}
+                      />
+                    </Box>
+                    <TextField 
+                      disabled={true}
+                      //label="Código del vehículo"
+                      //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
+                      required
+                      variant="outlined"
+                      color="secondary"
+                      type="number"
+                      value={parseInt(vehicle.code!.slice(3))}
+                      fullWidth
+                      size="small"
+                      sx={{marginLeft: 2,mb: 3}}
                     />
                   </Box>
-                  <TextField 
-                    disabled={true}
-                    //label="Código del vehículo"
-                    //onChange={(e: any) => setData({ ...data, term: e.target?.value })}
-                    required
-                    variant="outlined"
-                    color="secondary"
-                    type="number"
-                    value={parseInt(vehicle.code!.slice(3))}
-                    fullWidth
-                    size="small"
-                    sx={{marginLeft: 2,mb: 3}}
-                  />
-                </Box>
-                <Box sx={{width:294, height:65}}>
-                  <Select 
-                    
-                    defaultValue={options[0]}
-                    isSearchable = {true}
-                    name = "incident type"
-                    options={options} 
-                    onChange={(e: any) => {handleIncidentTypeChange(e.value)}}
-                  />
-                </Box>
-                <Button variant="contained" color="secondary" type="submit">Guardar</Button>
-              </form>
+                  <Box sx={{width:294, height:65}}>
+                    <Select 
+                      
+                      defaultValue={options[0]}
+                      isSearchable = {true}
+                      name = "incident type"
+                      options={options} 
+                      onChange={(e: any) => {handleIncidentTypeChange(e.value)}}
+                    />
+                  </Box>
+                  <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+                </form>
+              </Box>
+              }
           </Box>
         }
       </Box>

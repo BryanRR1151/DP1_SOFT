@@ -39,7 +39,7 @@ export const BlockagesPage = () => {
     await BlockageService.getBlockages().then((response) => {
       let items = response.data;
       items = items.map((item: any) => {
-        return { ...item, start: functions.intToDate(item.start), end: functions.intToDate(item.end) }
+        return { ...item, start: new Date(item.start*1000).toLocaleString('en-GB'), end: new Date(item.end*1000).toLocaleString('en-GB') }
       })
       setBlockages(items);
       setLoading(false);
@@ -73,7 +73,7 @@ export const BlockagesPage = () => {
   const handleDeselect = () => {
     setSelected(undefined);
   }
- 
+ /*
   const testRows: TBlockage[] = [
     {
       id: 1,
@@ -94,7 +94,7 @@ export const BlockagesPage = () => {
       node: {x: 30, y: 40} as TNode,
     }
   ];
-
+*/
   const columns: GridColDef[] = [
     {
       field: 'id',
@@ -113,10 +113,16 @@ export const BlockagesPage = () => {
     },
     {
       field: 'node',
-      headerName: 'Lugar',
+      headerName: 'Coordenadas iniciales',
       valueGetter: (params: any) => `X: ${params.value.x}km, Y: ${params.value.y}km`,
       minWidth: 200
-    },
+    },/*
+    {
+      field: 'secondNode',
+      headerName: 'Coordenadas finales',
+      valueGetter: (params: any) => `X: ${params.value.x}km, Y: ${params.value.y}km`,
+      minWidth: 200
+    },*/
     // {
     //   field: 'registerDate',
     //   headerName: 'Fecha de registro',
@@ -128,8 +134,7 @@ export const BlockagesPage = () => {
       type: 'actions',
       minWidth: 50,
       getActions: (params: GridRowParams) => [
-        <GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
-        <GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
+        //<GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
     }
   ];
@@ -163,13 +168,6 @@ export const BlockagesPage = () => {
                 onClick={(event) => setIsOpenPanel(true) }
               >
                 Nuevo
-              </Button>
-              <Button
-                variant='outlined'
-                color='secondary'
-                sx={{ marginLeft: 2 }}
-              >
-                Filtrar
               </Button>
             </Box>
             <DataGrid rows={blockages} columns={columns} />
