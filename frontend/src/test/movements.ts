@@ -34,6 +34,7 @@ export type TVehicle = {
   movement: TMovement | null;
   broken?: boolean;
   resumeAt?: number;
+  stopTime?: number;
 }
 
 export type TSolution = {
@@ -66,8 +67,10 @@ export type TBlockage = {
 }
 
 export type TFinish = {
-  type: number;
+  code: number;
   message: string;
+  maxCapacity: number;
+  totalPack: number;
 }
 
 export type TMoment = {
@@ -79,5 +82,6 @@ export type TMoment = {
   activePacks: TPack[];
   activeBlockages: TBlockage[];
   collapse?: boolean;
-  // finish: TFinish;
+  finish?: TFinish;
+  faultVehicles?: TVehicle[];
 }
