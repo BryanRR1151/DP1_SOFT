@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import colorConfigs from '../configs/colorConfigs'
-import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, Input, TextField } from '@mui/material';
+import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, Input, TextField, CircularProgress } from '@mui/material';
 import sizeConfigs from '../configs/sizeConfigs';
 import { AnimationGrid } from '../components/AnimationGrid';
 import { TMoment, TMovement, TVehicle, VehicleType } from '../test/movements';
@@ -46,8 +46,10 @@ export const Simulation = (props: ISimulation) => {
   const [initialDate, setInitialDate] = useState<string>('2023-09-01');
 
   const [selected, setSelected] = useState<string>("1");
-  const [stopType, setStopType] = useState<number>(0);
+  const [stopType, setStopType] = useState<number>(-2);
   const [stopMessage, setStopMessage] = useState<string>("");
+  const [stopMaxCapacity, setStopMaxCapacity] = useState<number>(0);
+  const [stopTotalPacks, setStopTotalPacks] = useState<number>(0);
   const [showResults, setShowResults] = useState<boolean>(false);
   const [lastTimer, setLastTimer] = useState<number>(0);
 
@@ -56,6 +58,9 @@ export const Simulation = (props: ISimulation) => {
   const [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
   const [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("Aut");
+
+  const [faultVehicles, setFaultVehicles] = useState<TVehicle[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const interval = useRef<any>(null);
 
@@ -76,7 +81,6 @@ export const Simulation = (props: ISimulation) => {
   }
 
   const startAlgorithm = async() => {
-    const data = new FormData();
     let sendDate = initialDate.substr(8, 2) + '/' + initialDate.substr(5, 2) + '/' + initialDate.substr(0, 4);
     if (!props.isCollapse) {
       await AlgorithmService.startWeekly(sendDate).then((response) => {
@@ -104,23 +108,46 @@ export const Simulation = (props: ISimulation) => {
     if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
       await AlgorithmService.getMoment( timer, speed ).then((response) => {
         let moments: TMoment[] = response.data;
-        setApiMoment(parseMoment(moments[0]));
+
+        let newMoment = moments[0];
+        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! != timer)];
+        newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
+        setFaultVehicles(newFaultVehicles);
+
+        console.log(newMoment.activeVehicles);
+        console.log(newFaultVehicles);
+
+        setApiMoment(parseMoment(newMoment));
         setApiMoments(moments);
-        if (moments[0].collapse && !stopped)  {
+
+        if (moments[0].finish && !stopped)  {
           setStopped(true);
-          // setStopType(apiMoments[0].finish.type);
-          // setStopMessage(apiMoments[0].finish.message);
+          setStopType(moments[0].finish.code);
+          setStopMessage(moments[0].finish.message);
+          setStopMaxCapacity(moments[0].finish.maxCapacity);
+          setStopTotalPacks(moments[0].finish.totalPack);
         }
       }).catch((err) => {
         console.log(err);
       });
     }
     else {
-      setApiMoment(parseMoment(apiMoments[auxCount]));
-      if (apiMoments[auxCount].collapse && !stopped)  {
+      let newMoment = apiMoments[auxCount];
+      let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! != timer)];
+      newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
+      setFaultVehicles(newFaultVehicles);
+      
+      console.log(newMoment.activeVehicles);
+      console.log(newFaultVehicles);
+
+      setApiMoment(parseMoment(newMoment));
+
+      if (apiMoments[auxCount].finish && !stopped)  {
         setStopped(true);
-        // setStopType(apiMoments[auxCount].finish.type);
-        // setStopMessage(apiMoments[auxCount].finish.message);
+        setStopType(apiMoments[auxCount].finish!.code);
+        setStopMessage(apiMoments[auxCount].finish!.message);
+        setStopMaxCapacity(apiMoments[auxCount].finish!.maxCapacity);
+        setStopTotalPacks(apiMoments[auxCount].finish!.totalPack);
       }
     }
   }
@@ -132,6 +159,7 @@ export const Simulation = (props: ISimulation) => {
     setTimer(-2);
     setSpeed(1);
     setAuxCount(0);
+    setFaultVehicles([]);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
     }).catch((err) => {
@@ -149,23 +177,22 @@ export const Simulation = (props: ISimulation) => {
     setTimer(-2);
     setSpeed(1);
     setAuxCount(0);
-    toast.error(`La simulación alcanzó el colapso logístico en: ${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`);
-    // setStopType(-2);
-    // setShowResults(true);
-    // setLastTimer(timer);
-    // if (stopType != -2) {
-    //   switch(stopType) {
-    //     case(-1):
-    //       toast.error(`Hubo un error: ${stopMessage}`);
-    //       break;
-    //     case(0):
-    //       toast.error(`La simulación alcanzó el colapso logístico en: ${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`);
-    //       break;
-    //     case(1):
-    //       toast.success(`Simulación culminada exitosamente`);
-    //       break;
-    //   }
-    // }
+    setShowResults(true);
+    setLastTimer(timer);
+    setFaultVehicles([]);
+    if (stopType != -2) {
+      switch(stopType) {
+        case(-1):
+          toast.error(`Hubo un error: ${stopMessage}`);
+          break;
+        case(0):
+          toast.error(`La simulación alcanzó el colapso logístico en: ${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`);
+          break;
+        case(1):
+          toast.success(`Simulación culminada exitosamente`);
+          break;
+      }
+    }
   }
   
   const handleTimer = () => {
@@ -190,11 +217,14 @@ export const Simulation = (props: ISimulation) => {
     }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
-      handleTimer();
-    }
-    if (timer == 8) {
-      setSpeed(8); 
-      setAuxCount(-1);
+      setLoading(true);
+      setStopType(-2);
+      setTimeout(() => {
+        handleTimer();
+        setLoading(false);
+        setSpeed(8);
+        setAuxCount(-1);
+      }, 8000);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
       getMomentFromAlgorithm();
@@ -318,6 +348,28 @@ export const Simulation = (props: ISimulation) => {
 
   // ----------------------------------------------------
 
+  const renderSimulationResume = () => {
+    const minutes = Math.floor(lastTimer);
+    const hours = Math.floor(lastTimer / 60);
+    const days = Math.floor(hours / 24);
+
+    return (
+      <>
+       {stopType == 1 || stopType == 0 ?
+        <>
+          <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Resumen de la simulación:</Typography>
+          <Typography sx={{marginBottom: 2}}><b>Tiempo total transcurrido: </b>{`${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`}</Typography>
+          <Typography sx={{marginBottom: 2}}><b>Máxima capacidad de flota alcanzada: </b>{stopMaxCapacity.toFixed(2)}%</Typography>
+          <Typography sx={{marginBottom: 2}}><b>Total de pedidos entregados: </b>{stopTotalPacks}</Typography>
+        </> : stopType == -1 ?
+        <>
+          <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Hubo un error en la simulación. Inténtelo de nuevo</Typography>
+        </> : null
+       }
+      </>
+    )
+  }
+
   return (
     <>
       <Box>
@@ -332,12 +384,20 @@ export const Simulation = (props: ISimulation) => {
             }}
           >
             <Box sx={{ display: 'flex' }}>
-              <Box>
-                <AnimationGrid 
-                  moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
-                  openVehiclePopup={ openVehiclePopup }
-                  speed={ speed }
-                />
+              <Box sx={{ width: '1600px' }}>
+                {!showResults && !loading ?
+                  <AnimationGrid 
+                    moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
+                    openVehiclePopup={ openVehiclePopup }
+                    speed={ speed }
+                  /> : showResults && !loading ?
+                  <Box sx={{ height: '100%' }}>
+                    { renderSimulationResume() }
+                  </Box> : loading ?
+                  <Box sx={{ display: 'flex', width: '100%', justifyContent: 'center', marginTop: '20px' }}>
+                    <CircularProgress />
+                  </Box> : null
+                }
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
                 <Box>
@@ -412,7 +472,7 @@ export const Simulation = (props: ISimulation) => {
                         </Box>
                       </Box>
                       <Box sx={{ marginTop: 5 }}>
-                        <SimulatedTimer min={timer} />
+                        <SimulatedTimer min={timer} initialDate={initialDate} />
                       </Box>
                     </>
                   }
@@ -498,13 +558,17 @@ export const Simulation = (props: ISimulation) => {
             <Typography sx={{marginBottom: 2}}><b>Tipo: </b>{vehicle.type}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
-            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '16px'}}>Registrar incidente:</Typography>
-            <Select 
-              defaultValue={options[0]}
-              isSearchable = {true}
-              options={options} 
-              onChange={(e: any) => {setSelected(e.value)}}
-            />
+            {!vehicle.stopTime &&
+              <>
+                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '16px'}}>Registrar incidente:</Typography>
+                <Select 
+                  defaultValue={options[0]}
+                  isSearchable = {true}
+                  options={options} 
+                  onChange={(e: any) => {setSelected(e.value)}}
+                />
+              </>
+            }
             {vehicleCodeError && <Typography sx={{marginBottom: 1, color: 'red'}}>* El vehículo no se encuentra en ruta</Typography>}
             <Button sx={{marginTop: 2}} variant="contained" color="secondary" type="submit" onClick={(e) => handleVehicleFailure(e, vehicle.code!)}>Guardar</Button>
           </Box>
@@ -512,10 +576,10 @@ export const Simulation = (props: ISimulation) => {
         {typePanel == PanelType.simulationDetails && apiMoment !== undefined &&
           <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles de la simulación:</Typography>
-            {timer >= 0 && <SimulatedTimer min={timer} />}
+            {timer >= 0 && <SimulatedTimer min={timer} initialDate={initialDate} />}
             <Typography sx={{marginTop: 2, marginBottom: 2}}><b>Pedidos entregados: </b>{apiMoment.ordersDelivered}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Pedidos restantes: </b>{apiMoment.ordersLeft}</Typography>
-            <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota: </b>{apiMoment.fleetCapacity}%</Typography>
+            <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota: </b>{apiMoment.fleetCapacity.toFixed(2)}%</Typography>
           </Box>
         }
       </Box>
