@@ -46,6 +46,10 @@ export const Simulation = (props: ISimulation) => {
   const [initialDate, setInitialDate] = useState<string>('2023-09-01');
 
   const [selected, setSelected] = useState<string>("1");
+  const [stopType, setStopType] = useState<number>(0);
+  const [stopMessage, setStopMessage] = useState<string>("");
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const [lastTimer, setLastTimer] = useState<number>(0);
 
   const [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
   const [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<string>("");
@@ -93,21 +97,19 @@ export const Simulation = (props: ISimulation) => {
   }
 
   const getMomentFromAlgorithm = async() => {
-    console.log(timer);
-    console.log(auxCount);
+    if (stopped) {
+      stopCollapse();
+      return;
+    }
     if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
       await AlgorithmService.getMoment( timer, speed ).then((response) => {
         let moments: TMoment[] = response.data;
-        console.log(moments);
         setApiMoment(parseMoment(moments[0]));
         setApiMoments(moments);
-        if (props.isCollapse) {
-          if (moments[0].collapsed && !stopped)  {
-            setStopped(true);
-          }
-          if (stopped) {
-            stopCollapse();
-          }
+        if (moments[0].collapse && !stopped)  {
+          setStopped(true);
+          // setStopType(apiMoments[0].finish.type);
+          // setStopMessage(apiMoments[0].finish.message);
         }
       }).catch((err) => {
         console.log(err);
@@ -115,13 +117,10 @@ export const Simulation = (props: ISimulation) => {
     }
     else {
       setApiMoment(parseMoment(apiMoments[auxCount]));
-      if (props.isCollapse) {
-        if (apiMoments[0].collapsed && !stopped)  {
-          setStopped(true);
-        }
-        if (stopped) {
-          stopCollapse();
-        }
+      if (apiMoments[auxCount].collapse && !stopped)  {
+        setStopped(true);
+        // setStopType(apiMoments[auxCount].finish.type);
+        // setStopMessage(apiMoments[auxCount].finish.message);
       }
     }
   }
@@ -150,7 +149,23 @@ export const Simulation = (props: ISimulation) => {
     setTimer(-2);
     setSpeed(1);
     setAuxCount(0);
-    toast.error(`La simulación alcanzó el colapso logístico en el siguiente tiempo: ${('0'+days).slice(-2)}:${('0'+hours).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)} (dd/hh/mm)`);
+    toast.error(`La simulación alcanzó el colapso logístico en: ${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`);
+    // setStopType(-2);
+    // setShowResults(true);
+    // setLastTimer(timer);
+    // if (stopType != -2) {
+    //   switch(stopType) {
+    //     case(-1):
+    //       toast.error(`Hubo un error: ${stopMessage}`);
+    //       break;
+    //     case(0):
+    //       toast.error(`La simulación alcanzó el colapso logístico en: ${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`);
+    //       break;
+    //     case(1):
+    //       toast.success(`Simulación culminada exitosamente`);
+    //       break;
+    //   }
+    // }
   }
   
   const handleTimer = () => {
@@ -166,9 +181,12 @@ export const Simulation = (props: ISimulation) => {
     }
     if (timer == -1 || timer == -2) return;
     if (timer >= props.targetTimer*24*60 && interval.current) {
-      setApiMoment(undefined);
       clearInterval(interval.current);
+      setApiMoment(undefined);
+      setApiMoments([]);
       setTimer(-2);
+      setSpeed(1);
+      setAuxCount(0);
     }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
@@ -276,13 +294,13 @@ export const Simulation = (props: ISimulation) => {
     if(damagedVehicleIndex == -1) {
       setVehicleCodeError(true);
     } else {
-      // let newApiMoments = apiMoments.map((moment: TMoment) => {
-      //   let newMoment = moment; 
-      //   newMoment?.activeVehicles.splice(damagedVehicleIndex, 1);
-      //   return newMoment;
-      // });
+      let newApiMoments = apiMoments.map((moment: TMoment) => {
+        let newMoment = moment; 
+        newMoment?.activeVehicles.splice(damagedVehicleIndex, 1);
+        return newMoment;
+      });
       setVehicleCodeError(false);
-      // setApiMoments(newApiMoments);
+      setApiMoments(newApiMoments);
       setOpenPanel(false); 
       setTypePanel(null); 
       setVehicle(undefined);
@@ -327,7 +345,7 @@ export const Simulation = (props: ISimulation) => {
                     variant='contained'
                     color='secondary'
                     disabled={timer >= 0}
-                    onClick={() => { if(!props.isCollapse ? initialDate : true) { setTimer(INITIAL_TIMER); } else { toast.error(`Debe ingresar una fecha de inicio de simulación`); } }}
+                    onClick={() => { if(!props.isCollapse ? initialDate : true) { setTimer(INITIAL_TIMER); setShowResults(false); } else { toast.error(`Debe ingresar una fecha de inicio de simulación`); } }}
                     sx={{ width: '220px' }}
                   >
                     Iniciar simulación
