@@ -116,13 +116,13 @@ export const BlockagesPage = () => {
       headerName: 'Coordenadas iniciales',
       valueGetter: (params: any) => `X: ${params.value.x}km, Y: ${params.value.y}km`,
       minWidth: 200
-    },/*
+    },
     {
       field: 'secondNode',
       headerName: 'Coordenadas finales',
       valueGetter: (params: any) => `X: ${params.value.x}km, Y: ${params.value.y}km`,
       minWidth: 200
-    },*/
+    },
     // {
     //   field: 'registerDate',
     //   headerName: 'Fecha de registro',
