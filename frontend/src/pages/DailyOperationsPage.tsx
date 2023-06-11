@@ -34,7 +34,7 @@ export const DailyOperationsPage = () => {
     turn: 0,overtime: 0,state: 0,capacity: 0,carry: 0,moved: false,
     pack: null,location: null,route: null,step: 0,movement: null});
   var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
-    fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: [],collapsed: false});
+    fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: [],collapse: false});
   var time = new Date();
   //new Date().getHours()*60+new Date().getMinutes();
   const seconds = Math.trunc(time.getTime()/1000);
