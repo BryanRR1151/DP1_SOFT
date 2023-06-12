@@ -22,7 +22,7 @@ export const WeekSimulationPage = () => {
           <Typography>Simulación semanal</Typography>
       </Breadcrumbs>
 
-      <Simulation isCollapse={ false } targetTimer={ 7 } />
+      <Simulation isCollapse={ false } targetTimer={ 365 } />
     </>
   )
 }
