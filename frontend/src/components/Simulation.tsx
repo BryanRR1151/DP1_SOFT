@@ -224,7 +224,7 @@ export const Simulation = (props: ISimulation) => {
         setLoading(false);
         setSpeed(8);
         setAuxCount(-1);
-      }, 8000);
+      }, 3000);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
       getMomentFromAlgorithm();

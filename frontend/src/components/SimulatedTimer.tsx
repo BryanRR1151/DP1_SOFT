@@ -23,7 +23,7 @@ export const SimulatedTimer = ({ min, initialDate }: ISimulatedTimer) => {
         <Typography sx={{marginLeft: '5px', marginTop: '3px'}}>{`(dd/hh/mm)`}</Typography>
       </Box>
       <Typography variant={'h6'} sx={{marginTop: '10px'}}>Día:</Typography>
-      <Typography sx={{marginTop: '5px'}}>{moment([ad, md, dd]).add(days, 'days').format('DD/MM/YYYY')}</Typography>
+      <Typography sx={{marginTop: '5px'}}>{moment([ad, Number(md)-1, dd]).add(days, 'days').format('DD/MM/YYYY')}</Typography>
     </>
   );
 }
