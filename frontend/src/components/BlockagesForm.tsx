@@ -4,6 +4,7 @@ import { Typography, TextField, Button, Box } from '@mui/material';
 import BlockageService from '../services/BlockageService';
 import functions from '../utils/functions';
 import { toast } from 'react-toastify';
+import { Any } from 'react-spring';
 
 interface IBlockagesForm {
   blockage: TBlockage|undefined;
@@ -23,6 +24,10 @@ const defaultOrder: TBlockage = {
 export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect, loadBlockages }: IBlockagesForm) => {
   const [data, setData] = useState<TBlockage>( blockage ?? defaultOrder );
   const [error, setError] = useState<TBlockageError>({ start: false, end: false, x: false, y: false });
+  var [dateStart, setDateStart] = useState<String>("2023-06-13")
+  var [dateEnd, setDateEnd] = useState<String>("2023-07-13")
+  var [timeStart, setTimeStart] = useState<String>("01:00")
+  var [timeEnd, setTimeEnd] = useState<String>("23:00")
 
   useEffect(() => {
     setData( blockage ?? defaultOrder );
@@ -72,6 +77,26 @@ export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect, loa
         })
       }
   }
+
+  const handleStartTimeChange = (time:String) => {
+    timeStart=time;
+    setTimeStart(timeStart);
+  }
+
+  const handleStartDateChange = (time:String) => {
+    dateStart=time;
+    setDateStart(dateStart);
+  }
+
+  const handleEndTimeChange = (time:String) => {
+    timeEnd=time;
+    setTimeEnd(timeEnd);
+  }
+
+  const handleEndDateChange = (time:String) => {
+    dateEnd=time;
+    setDateEnd(dateEnd);
+  }
     
   return ( 
     <Box sx={{ paddingLeft: 3.5, paddingRight: 3.5 }}>
@@ -90,30 +115,56 @@ export const BlockagesForm = ({ blockage, type, handlePanel, handleDeselect, loa
             disabled={true}
           />
         }
-        <TextField 
-          label="Fecha inicial"
-          onChange={(e: any) => setData({ ...data, start: e.target?.value })}
-          required
-          variant="outlined"
-          color="secondary"
-          type="date"
-          sx={{mb: 3}}
-          fullWidth
-          value={data.start.replaceAll('/', '-')}
-          error={error.start}
-        />
-        <TextField 
-          label="Fecha de fin"
-          onChange={(e: any) => setData({ ...data, end: e.target?.value })}
-          required
-          variant="outlined"
-          color="secondary"
-          type="date"
-          sx={{mb: 3}}
-          fullWidth
-          value={data.end.replaceAll('/', '-')}
-          error={error.end}
-        />
+        <Box display="flex" flexDirection="row">
+          <TextField 
+            label="Fecha inicial"
+            onChange={(e:any)=>handleStartTimeChange(e.target.value)}
+            required
+            variant="outlined"
+            color="secondary"
+            type="date"
+            sx={{mb: 3}}
+            fullWidth
+            value={dateStart}
+            error={error.start}
+          />
+          <TextField 
+            onChange={(e:any)=>handleStartDateChange(e.target.value)}
+            required
+            variant="outlined"
+            color="secondary"
+            type="time"
+            sx={{mb: 3}}
+            fullWidth
+            value={timeStart}
+            error={error.start}
+          />
+        </Box>
+        <Box display="flex" flexDirection="row">
+          <TextField 
+            label="Fecha final"
+            onChange={(e:any)=>handleEndTimeChange(e.target.value)}
+            required
+            variant="outlined"
+            color="secondary"
+            type="date"
+            sx={{mb: 3}}
+            fullWidth
+            value={dateEnd}
+            error={error.start}
+          />
+          <TextField 
+            onChange={(e:any)=>handleEndDateChange(e.target.value)}
+            required
+            variant="outlined"
+            color="secondary"
+            type="time"
+            sx={{mb: 3}}
+            fullWidth
+            value={timeEnd}
+            error={error.start}
+          />
+        </Box>
         <TextField 
           label="Nodo inicial - Posicion X"
           onChange={(e: any) => setData({ ...data, node: { ...data.node, x: e.target?.value } })}
