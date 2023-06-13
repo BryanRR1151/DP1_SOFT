@@ -6,6 +6,7 @@ import movementData from './movementDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
+import BlockageService from '../services/BlockageService';
 import Select, { GroupBase } from 'react-select'
 import { ToastContainer, toast } from 'react-toastify';
 import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, TextField } from '@mui/material';
@@ -13,10 +14,14 @@ import { TMoment, TMovement, TPack, TSolution, TVehicle, VehicleType } from '../
 import AlgorithmService from '../services/AlgorithmService';
 import { PanelType, panelStyles } from "../types/types";
 import { DropzoneComponent } from "../components/DropzoneComponent";
+import Dropzone from 'react-dropzone'
 import { TBlockage } from "../test/movements";
+import { TBlockage as registerBlockageType }  from '../types/types';
 
 export const DailyOperationsPage = () => {
 
+  var [fileBlockages, setFileBlockages] = useState<registerBlockageType[][]>([]);
+  var [mouseOver, setMouseOver] = useState<boolean>(false);
   var [vehicles, setVehicles] = useState<TVehicle[]>([]);
   var [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
   var [count, setCount] = useState(0);
@@ -25,7 +30,7 @@ export const DailyOperationsPage = () => {
   var [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
   var [isVehicleEnRoute, setIsVehicleEnRoute] = useState<boolean>(false);
   var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
-  const [bFiles, setBFiles] = useState<any[]>([]);
+  var [bFiles, setBFiles] = useState<any[]>([]);
   var [selected, setSelected] = useState<String>("1");
   var [selectedVehicleType, setSelectedVehicleType] = useState<String>("Aut");
   const [openPanel, setOpenPanel] = useState<boolean>(false);
@@ -265,7 +270,9 @@ export const DailyOperationsPage = () => {
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {
-    setBFiles(updatedList);
+    bFiles = updatedList;
+    console.log(bFiles);
+    setBFiles(bFiles);
   }
 
   const handleVehicleCodeChange = (formVehicleCode: number) => {
@@ -317,6 +324,73 @@ export const DailyOperationsPage = () => {
     selectedVehicleType=selectedOption;
     setSelectedVehicleType(selectedVehicleType);
   };
+
+  const handleBlockageSubmit = (e:any) => {
+    e.preventDefault();
+    fileBlockages.forEach(f => {
+      f.forEach(b => {
+        insertBlockage(b);
+      });
+    });
+    fileBlockages=[];
+  }
+
+  const handleDrop = (acceptedFiles : any) => {
+    mouseOver=!mouseOver;
+    setMouseOver(mouseOver);
+  }
+
+  const insertBlockage = async(blockage: registerBlockageType) => {
+    await BlockageService.insertBlockage(blockage).then((response) => {
+      toast.success(`Registros creados exitosamente`);
+    }).catch((err) => {
+      console.log(err);
+      toast.error(`Sucedió un error, intente de nuevo`);
+    })
+  }
+
+  const readFile = (files: File[]) => {
+    fileBlockages=[];
+    files.forEach(f => {
+      var reader = new FileReader();
+      reader.onloadend = async (e) => { 
+        let blockages : registerBlockageType[]=[];
+        var text = e!.target!.result!.toString();
+        let lines = text!.split('\n');
+        lines.pop();
+        lines.forEach(l => {
+          let start = new Date(parseInt(f.name.substring(0,4)),
+            parseInt(f.name.substring(4,6))-1,parseInt(l.substring(0,2)),
+            parseInt(l.substring(3,5)),parseInt(l.substring(6,8))).getTime();
+          let end = new Date(parseInt(f.name.substring(0,4)),
+            parseInt(f.name.substring(4,6))-1,parseInt(l.substring(9,11)),
+            parseInt(l.substring(12,14)),parseInt(l.substring(15,17))).getTime();
+          let coordinates = l.substring(18,l.length-1).split(',');
+          for(let i=0;i<coordinates.length-2;i+=2){
+            let blockage : registerBlockageType = {id:0,node:{x:parseInt(coordinates[i]),y:parseInt(coordinates[i+1])},
+              secondNode:{x:parseInt(coordinates[i+2]),y:parseInt(coordinates[i+3])},
+              start:Math.trunc(start/1000).toString(),end:Math.trunc(end/1000).toString()};
+            blockages.push(blockage);
+          }
+        });
+        fileBlockages.push(blockages);
+        setFileBlockages(fileBlockages);
+      };
+      reader.readAsText(f);
+    });
+    
+  }
+
+  function nameValidator(file:File) {
+    if (file.name.length > 4) {
+      return {
+        code: "name-too-large",
+        message: `Name is larger than ${4} characters`
+      };
+    }
+  
+    return null
+  }
 
   return (
     <>
@@ -424,13 +498,44 @@ export const DailyOperationsPage = () => {
                 <Button disabled={saveNeedsToBeDisabled} variant="contained" color="secondary" type="submit">Guardar</Button>
               </form>
             </Box>
-            <Box sx={{height:100}}/>
-            <Box > 
-              <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar bloqueos:</Typography>
-              <Box>
-                <DropzoneComponent onFileChange={onFileChange} type={'Blockage'} files={bFiles} />
+            <Box sx={{height:60}}/>
+            <form autoComplete="off" onSubmit={handleBlockageSubmit}> 
+              <Box sx={{height:200}}> 
+                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar bloqueos:</Typography>
+                <Box>
+                <Dropzone 
+                  onDrop={acceptedFiles => {readFile(acceptedFiles)}}
+                  accept={{'text/plain': ['.txt']}}
+                  >
+                  {({getRootProps, getInputProps}) => (
+                    <section>
+                      <div {...getRootProps({
+                        style:{flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '20px',
+                          borderWidth: 2,
+                          borderRadius: 15,
+                          borderColor: '#7d7d7d',
+                          borderStyle: 'dashed',
+                          backgroundColor: '#fafafa',
+                          color: '#262626',
+                          textAlign:'center',
+                          outline: 'none',
+                          cursor:'pointer',
+                          transition: 'border .24s ease-in-out'}
+                        })}>
+                        <input {...getInputProps()} />
+                        <p>Arrastra y suelta los archivos o haz click para seleccionar</p>
+                      </div>
+                    </section>
+                  )}
+                </Dropzone>
+                </Box>
               </Box>
-            </Box>
+              <Button disabled={false} variant="contained" color="secondary" type="submit">Guardar</Button>
+            </form>
           </Box> : null
         }
         {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&
