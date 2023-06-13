@@ -437,13 +437,31 @@ export const DailyOperationsPage = () => {
   }
 
   function nameValidator(file:File) {
-    if (file.name.length > 4) {
+    if (file.name.length != 20) {
       return {
-        code: "name-too-large",
-        message: `Name is larger than ${4} characters`
+        code: "wrong-size",
+        message: `Name is not ${20} characters`
       };
     }
-  
+    if (file.name.substring(6,16)!='bloqueadas'){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    if (parseInt(file.name.substring(0,4))<2023){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    if (parseInt(file.name.substring(4,6))<1 || parseInt(file.name.substring(4,6))>12){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+
     return null
   }
 
@@ -561,6 +579,7 @@ export const DailyOperationsPage = () => {
                 <Dropzone 
                   onDrop={acceptedFiles => {readFile(acceptedFiles)}}
                   accept={{'text/plain': ['.txt']}}
+                  validator={nameValidator}
                   >
                   {({getRootProps, getInputProps}) => (
                     <section>
@@ -569,20 +588,21 @@ export const DailyOperationsPage = () => {
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          padding: '20px',
+                          padding: fileBlockages.length==0?'22.5px':'35px',
                           borderWidth: 2,
                           borderRadius: 15,
-                          borderColor: '#7d7d7d',
+                          borderColor: fileBlockages.length==0?'#7d7d7d':'#03bf00',
                           borderStyle: 'dashed',
                           backgroundColor: '#fafafa',
-                          color: '#262626',
+                          color: fileBlockages.length==0?'#262626':'#03bf00',
                           textAlign:'center',
                           outline: 'none',
                           cursor:'pointer',
-                          transition: 'border .24s ease-in-out'}
+                          transition: 'border .24s ease-in-out',
+                          height:fileBlockages.length==0?70:45}
                         })}>
                         <input {...getInputProps()} />
-                        <p>Arrastra y suelta los archivos o haz click para seleccionar</p>
+                        {fileBlockages.length==0?<p>Arrastra y suelta los archivos o haz click para seleccionar</p>:<p>{fileBlockages.length} archivo(s) ingresados</p>}
                       </div>
                     </section>
                   )}
@@ -654,7 +674,8 @@ export const DailyOperationsPage = () => {
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); 
         setVehicle(undefined); vehicleCodeError=false; setVehicleCodeError(vehicleCodeError); 
         vehicleCodeErrorMessage=""; setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
-        saveNeedsToBeDisabled=true; setSaveNeedsToBeDisabled(saveNeedsToBeDisabled)}}/>}
+        saveNeedsToBeDisabled=true; setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
+        fileBlockages=[]; setFileBlockages(fileBlockages);}}/>}
       <ToastContainer />
     </>
   )
