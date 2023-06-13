@@ -333,6 +333,7 @@ export const DailyOperationsPage = () => {
       });
     });
     fileBlockages=[];
+    setFileBlockages(fileBlockages);
   }
 
   const handleDrop = (acceptedFiles : any) => {
