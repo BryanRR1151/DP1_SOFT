@@ -132,6 +132,20 @@ export const DailyOperationsPage = () => {
     let blockagesToAdd : TBlockage[]=[];
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+    let updatedPackFromFileArray : TPack[] = [];
+    filePackages.forEach(p => {
+      if(p.originalTime==currentTime){
+        AlgorithmService.insertPack(p).then((response) => {
+          console.log('Package inserted successfully');
+        }).catch((err) => {
+          console.log(err);
+        });
+      }else{
+        updatedPackFromFileArray.push(p);
+      }
+    });
+    filePackages = updatedPackFromFileArray;
+    setFilePackages(filePackages);
     todaysBlockages.forEach(b => {
       if(b.start==currentTime){
         blockagesToAdd.push(b);
@@ -269,7 +283,7 @@ export const DailyOperationsPage = () => {
       setCount(count);
       time = new Date();
       planTheRoutes();
-    }, 5000);
+    }, 60000);
     return () => {
       clearInterval(intervalId);
     };
@@ -383,11 +397,19 @@ export const DailyOperationsPage = () => {
 
   const handleBlockageSubmit = (e:any) => {
     e.preventDefault();
+    let errors = false;
     fileBlockages.forEach(f => {
       f.forEach(b => {
-        insertBlockage(b);
+        insertBlockage(b).catch((err) => {
+          errors = true;
+        });
       });
     });
+    if(errors){
+      toast.error(`Sucedió un error, intente de nuevo`);
+    }else{
+      toast.success(`Bloqueos registrados exitosamente`);
+    }
     fileBlockages=[];
     setFileBlockages(fileBlockages);
     setOpenPanel(false); 
@@ -407,19 +429,31 @@ export const DailyOperationsPage = () => {
     e.preventDefault();
     filePackages=temporaryFilePackages;
     setFilePackages(filePackages);
-  }
-
-  const handleDrop = (acceptedFiles : any) => {
-    mouseOver=!mouseOver;
-    setMouseOver(mouseOver);
+    if(filePackages.length>0){
+      toast.success(`Pedidos encolados exitosamente`);
+      setOpenPanel(false); 
+      setTypePanel(null); 
+      setVehicle(undefined); 
+      vehicleCodeError=false; 
+      setVehicleCodeError(vehicleCodeError); 
+      vehicleCodeErrorMessage=""; 
+      setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
+      saveNeedsToBeDisabled=true; 
+      setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
+      fileBlockages=[]; 
+      setFileBlockages(fileBlockages);
+      temporaryFilePackages=[];
+      setTemporaryFilePackages(temporaryFilePackages);
+    }else{
+      toast.error(`Sucedió un error, intente de nuevo`);
+    }
   }
 
   const insertBlockage = async(blockage: registerBlockageType) => {
     await BlockageService.insertBlockage(blockage).then((response) => {
-      toast.success(`Registros creados exitosamente`);
+      console.log(`Bloqueo creado exitosamente`);
     }).catch((err) => {
       console.log(err);
-      toast.error(`Sucedió un error, intente de nuevo`);
     })
   }
 
@@ -464,11 +498,10 @@ export const DailyOperationsPage = () => {
         let lines = text!.split('\n');
         lines.pop();
         lines.forEach(l => {
-          let lineTime = new Date();
           let details = l.substring(6,l.length-1).split(',');
           let pack : TPack = {id:0,idCustomer:parseInt(details[3]),time:0,fullfilled:0,
             originalTime:Math.trunc(new Date(parseInt(files[0].name.substring(6,10)),
-              parseInt(files[0].name.substring(10,12)),
+              parseInt(files[0].name.substring(10,12))-1,
               parseInt(files[0].name.substring(12,14)),
               parseInt(l.substring(0,2)),
               parseInt(l.substring(3,5))).getTime()/1000),deadline:parseInt(details[4])*60*60,
@@ -476,6 +509,7 @@ export const DailyOperationsPage = () => {
             unassigned:parseInt(details[2])};
             temporaryFilePackages.push(pack);
         });
+        setTemporaryFilePackages(temporaryFilePackages);
         console.log(temporaryFilePackages);
       };
       reader.readAsText(files[0]);
@@ -604,7 +638,7 @@ export const DailyOperationsPage = () => {
                 <AnimationGrid 
                   moment = {apiMoment}
                   openVehiclePopup={openVehiclePopup}
-                  speed = {1/5}
+                  speed = {1/60}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
@@ -764,29 +798,29 @@ export const DailyOperationsPage = () => {
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          padding: filePackages.length==0?'22.5px':'35px',
+                          padding: temporaryFilePackages.length==0?'22.5px':'35px',
                           borderWidth: 2,
                           borderRadius: 15,
-                          borderColor: filePackages.length==0?'#7d7d7d':'#03bf00',
+                          borderColor: temporaryFilePackages.length==0?'#7d7d7d':'#03bf00',
                           borderStyle: 'dashed',
                           backgroundColor: '#fafafa',
-                          color: filePackages.length==0?'#262626':'#03bf00',
+                          color: temporaryFilePackages.length==0?'#262626':'#03bf00',
                           textAlign:'center',
                           outline: 'none',
                           cursor:'pointer',
                           transition: 'border .24s ease-in-out',
-                          height:filePackages.length==0?70:45}
+                          height:temporaryFilePackages.length==0?70:45}
                         })}>
                         <input {...getInputProps()} />
-                        {filePackages.length==0?<p>Arrastra y suelta los archivos o haz click para seleccionar</p>:<p>Archivo ingresado</p>}
-                        {filePackages.length==0?<em>(Solo se acepta 1 archivo)</em>:<></>}
+                        {temporaryFilePackages.length==0?<p>Arrastra y suelta los archivos o haz click para seleccionar</p>:<p>Archivo ingresado</p>}
+                        {temporaryFilePackages.length==0?<em>(Solo se acepta 1 archivo)</em>:<></>}
                       </div>
                     </section>
                   )}
                 </Dropzone>
                 </Box>
               </Box>
-              <Button disabled={filePackages.length==0?true:false} variant="contained" color="secondary" type="submit">Guardar</Button>
+              <Button disabled={temporaryFilePackages.length==0?true:false} variant="contained" color="secondary" type="submit">Guardar</Button>
             </form>
           </Box> : null
         }
@@ -852,7 +886,8 @@ export const DailyOperationsPage = () => {
         setVehicle(undefined); vehicleCodeError=false; setVehicleCodeError(vehicleCodeError); 
         vehicleCodeErrorMessage=""; setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
         saveNeedsToBeDisabled=true; setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
-        fileBlockages=[]; setFileBlockages(fileBlockages);}}/>}
+        fileBlockages=[]; setFileBlockages(fileBlockages);
+        temporaryFilePackages=[]; setTemporaryFilePackages(temporaryFilePackages);}}/>}
       <ToastContainer />
     </>
   )
