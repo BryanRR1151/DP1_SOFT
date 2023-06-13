@@ -51,17 +51,64 @@ export const DailyOperationsPage = () => {
       console.log(err);
     });
 
-    await AlgorithmService.getBlockages().then((response) => {
+    await BlockageService.getBlockages().then((response) => {
+      console.log(response);
       todaysBlockages=response.data
       setTodaysBlockages(todaysBlockages);
       console.log('Blockages retrieved successfully');
+      console.log(todaysBlockages);
     }).catch((err) => {
       console.log(err);
     });
+    let blockagesToAdd : TBlockage[]=[];
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+    todaysBlockages.forEach(b => {
+      if(b.start<=currentTime && b.end>=currentTime){
+        blockagesToAdd.push(b);
+        AlgorithmService.setBlockages(currentTime.toString()).then((response) => {
+          console.log('Blockages set successfully');
+        }).catch((err) => {
+          console.log(err);
+        });
+      }
+    });
+    apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
+    setApiMoment(apiMoment);
     /*
-    await AlgorithmService.planRoutes(seconds.toString()).then((response) => {
+    await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
-      console.log(vehicles);
+      vehicles!.forEach( (v)=>{
+        v!.movement!.from!.x=45;
+        v!.movement!.from!.y=30;
+        v!.movement!.to!.x=45;
+        v!.movement!.to!.y=30;
+        v.broken=false;
+      })
+      apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
+      let packs : TPack[]=[];
+      vehicles.forEach(v => {
+        packs.push(v.pack!);
+      });
+      apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
+      vehicles=[];
+      apiMoment?.activeVehicles.forEach(v => {
+        v.movement!.from!.x=v.movement!.to!.x;
+          v.movement!.from!.y=v.movement!.to!.y;
+          if(v.movement!.from!.x < v.route!.chroms[0].to.x){
+            v.movement!.to!.x=v.movement!.from!.x+v.speed/60;
+          }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
+            v.movement!.to!.x=v.movement!.from!.x-v.speed/60;
+          }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
+            v.movement!.to!.y=v.movement!.from!.y+v.speed/60;
+          }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
+            v.movement!.to!.y=v.movement!.from!.y-v.speed/60;
+          }
+          if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
+            v.route!.chroms.shift();
+          }
+      })
+      setApiMoment(apiMoment);
       console.log('Routes planned successfully');
     }).catch((err) => {
       console.log(err);
@@ -73,6 +120,13 @@ export const DailyOperationsPage = () => {
   }
 
   const planTheRoutes = async() => {
+    await BlockageService.getBlockages().then((response) => {
+      todaysBlockages=response.data
+      setTodaysBlockages(todaysBlockages);
+      console.log('Blockages retrieved successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
     let blockagesToAdd : TBlockage[]=[];
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
@@ -213,7 +267,7 @@ export const DailyOperationsPage = () => {
       setCount(count);
       time = new Date();
       planTheRoutes();
-    }, 3000);
+    }, 5000);
     return () => {
       clearInterval(intervalId);
     };
@@ -425,7 +479,7 @@ export const DailyOperationsPage = () => {
                 <AnimationGrid 
                   moment = {apiMoment}
                   openVehiclePopup={openVehiclePopup}
-                  speed = {1/3}
+                  speed = {1/5}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>

@@ -37,6 +37,7 @@ export const BlockagesPage = () => {
 
   const loadBlockages = async() => {
     await BlockageService.getBlockages().then((response) => {
+      console.log(response);
       let items = response.data;
       items = items.map((item: any) => {
         return { ...item, start: new Date(item.start*1000).toLocaleString('en-GB'), end: new Date(item.end*1000).toLocaleString('en-GB') }
