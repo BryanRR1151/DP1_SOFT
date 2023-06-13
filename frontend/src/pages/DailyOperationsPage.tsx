@@ -21,6 +21,8 @@ import { TBlockage as registerBlockageType }  from '../types/types';
 export const DailyOperationsPage = () => {
 
   var [fileBlockages, setFileBlockages] = useState<registerBlockageType[][]>([]);
+  var [filePackages, setFilePackages] = useState<TPack[]>([]);
+  var [temporaryFilePackages, setTemporaryFilePackages] = useState<TPack[]>([]);
   var [mouseOver, setMouseOver] = useState<boolean>(false);
   var [vehicles, setVehicles] = useState<TVehicle[]>([]);
   var [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
@@ -388,6 +390,23 @@ export const DailyOperationsPage = () => {
     });
     fileBlockages=[];
     setFileBlockages(fileBlockages);
+    setOpenPanel(false); 
+    setTypePanel(null); 
+    setVehicle(undefined); 
+    vehicleCodeError=false; 
+    setVehicleCodeError(vehicleCodeError); 
+    vehicleCodeErrorMessage=""; 
+    setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
+    saveNeedsToBeDisabled=true; 
+    setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
+    fileBlockages=[]; 
+    setFileBlockages(fileBlockages);
+  }
+
+  const handlePackageFileSubmit = (e:any) => {
+    e.preventDefault();
+    filePackages=temporaryFilePackages;
+    setFilePackages(filePackages);
   }
 
   const handleDrop = (acceptedFiles : any) => {
@@ -436,6 +455,33 @@ export const DailyOperationsPage = () => {
     
   }
 
+  const readPackageFile = (files: File[]) => {
+    if(files.length==1){
+      var reader = new FileReader();
+      reader.onloadend = async (e) => { 
+        temporaryFilePackages=[];
+        var text = e!.target!.result!.toString();
+        let lines = text!.split('\n');
+        lines.pop();
+        lines.forEach(l => {
+          let lineTime = new Date();
+          let details = l.substring(6,l.length-1).split(',');
+          let pack : TPack = {id:0,idCustomer:parseInt(details[3]),time:0,fullfilled:0,
+            originalTime:Math.trunc(new Date(parseInt(files[0].name.substring(6,10)),
+              parseInt(files[0].name.substring(10,12)),
+              parseInt(files[0].name.substring(12,14)),
+              parseInt(l.substring(0,2)),
+              parseInt(l.substring(3,5))).getTime()/1000),deadline:parseInt(details[4])*60*60,
+            demand:parseInt(details[2]),location:{x:parseInt(details[0]),y:parseInt(details[1])},
+            unassigned:parseInt(details[2])};
+            temporaryFilePackages.push(pack);
+        });
+        console.log(temporaryFilePackages);
+      };
+      reader.readAsText(files[0]);
+    }
+  }
+
   function nameValidator(file:File) {
     if (file.name.length != 20) {
       return {
@@ -456,6 +502,67 @@ export const DailyOperationsPage = () => {
       };
     }
     if (parseInt(file.name.substring(4,6))<1 || parseInt(file.name.substring(4,6))>12){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+
+    return null
+  }
+
+  function nameValidatorForPackages(file:File) {
+    if (file.name.length != 18) {
+      return {
+        code: "wrong-size",
+        message: `Name is not ${20} characters`
+      };
+    }
+    if (file.name.substring(0,6)!='pedido'){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    if (parseInt(file.name.substring(6,10))<2023){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    let month = parseInt(file.name.substring(10,12));
+    if (month<1 || month>12){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    let day = parseInt(file.name.substring(12,14));
+    if(day<1 || day>31){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    if((month==4 || month==6 || month==9 || month==11)&&day>30){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    if((month==2)&&day>28){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    if(month != (new Date().getMonth())+1){
+      return {
+        code: "wrong-format",
+        message: `Name doesn't follow the format`
+      };
+    }
+    if(day != new Date().getDate()){
       return {
         code: "wrong-format",
         message: `Name doesn't follow the format`
@@ -511,6 +618,31 @@ export const DailyOperationsPage = () => {
                     Registrar incidencias
                   </Button>
                 </Box>
+                <Box>
+                  <Button
+                    variant='contained'
+                    color='secondary'
+                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.create) }}
+                    sx={{width:192}}
+                  >
+                    Carga de pedidos con archivo
+                  </Button>
+                </Box>
+                <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
+                    <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
+                    <Box sx={{ display: 'flex' }}>
+                      <Typography>Depósito:</Typography>
+                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.depot, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+                    </Box>
+                    <Box sx={{ display: 'flex' }}>
+                      <Typography>Punto de entrega:</Typography>
+                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.pack, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+                    </Box>
+                    <Box sx={{ display: 'flex' }}>
+                      <Typography>Bloqueo:</Typography>
+                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.block, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+                    </Box>
+                  </Box>
               </Box>
             </Box>
           </Box>
@@ -609,7 +741,52 @@ export const DailyOperationsPage = () => {
                 </Dropzone>
                 </Box>
               </Box>
-              <Button disabled={false} variant="contained" color="secondary" type="submit">Guardar</Button>
+              <Button disabled={fileBlockages.length==0?true:false} variant="contained" color="secondary" type="submit">Guardar</Button>
+            </form>
+          </Box> : null
+        }
+        {typePanel == PanelType.create ?
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+            <form autoComplete="off" onSubmit={handlePackageFileSubmit}> 
+              <Box sx={{height:200}}> 
+                <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar pedidos:</Typography>
+                <Box>
+                <Dropzone 
+                  onDrop={acceptedFiles => {readPackageFile(acceptedFiles)}}
+                  maxFiles={1}
+                  accept={{'text/plain': ['.txt']}}
+                  validator={nameValidatorForPackages}
+                  >
+                  {({getRootProps, getInputProps}) => (
+                    <section>
+                      <div {...getRootProps({
+                        style:{flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: filePackages.length==0?'22.5px':'35px',
+                          borderWidth: 2,
+                          borderRadius: 15,
+                          borderColor: filePackages.length==0?'#7d7d7d':'#03bf00',
+                          borderStyle: 'dashed',
+                          backgroundColor: '#fafafa',
+                          color: filePackages.length==0?'#262626':'#03bf00',
+                          textAlign:'center',
+                          outline: 'none',
+                          cursor:'pointer',
+                          transition: 'border .24s ease-in-out',
+                          height:filePackages.length==0?70:45}
+                        })}>
+                        <input {...getInputProps()} />
+                        {filePackages.length==0?<p>Arrastra y suelta los archivos o haz click para seleccionar</p>:<p>Archivo ingresado</p>}
+                        {filePackages.length==0?<em>(Solo se acepta 1 archivo)</em>:<></>}
+                      </div>
+                    </section>
+                  )}
+                </Dropzone>
+                </Box>
+              </Box>
+              <Button disabled={filePackages.length==0?true:false} variant="contained" color="secondary" type="submit">Guardar</Button>
             </form>
           </Box> : null
         }
