@@ -3,6 +3,7 @@ import { OrderState, PanelType, TOrder, TOrderError } from '../types/types';
 import { Typography, TextField, Button, Box } from '@mui/material';
 import { TPack } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
+import { toast } from 'react-toastify';
 
 interface IOrdersForm {
   order: TOrder|undefined;
@@ -19,9 +20,9 @@ const defaultOrder: TOrder = {
 }
 
 export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrdersForm) => {
-  const [disabledIdCustomer, setDisabledIdCustomer] = useState<boolean>(false);
-  const [disabledQuantity, setDisabledQuantity] = useState<boolean>(false);
-  const [disabledTerm, setDisabledTerm] = useState<boolean>(false);
+  const [disabledIdCustomer, setDisabledIdCustomer] = useState<boolean>(true);
+  const [disabledQuantity, setDisabledQuantity] = useState<boolean>(true);
+  const [disabledTerm, setDisabledTerm] = useState<boolean>(true);
   const [disabledX, setDisabledX] = useState<boolean>(false);
   const [disabledY, setDisabledY] = useState<boolean>(false);
   const [errorMessageIdCustomer, setErrorMessageIdCustomer] = useState<String>(" ");
@@ -40,9 +41,11 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
 
   const registerPack = async(pack: TPack) => {
     await AlgorithmService.insertPack(pack).then((response) => {
-      console.log('Package inserted successfully');
+      toast.success(`Pedido registrado exitosamente`);
+      handlePanel(false);
     }).catch((err) => {
       console.log(err);
+      toast.error(`Sucedió un error, intente de nuevo`);
     });
   }
 
@@ -89,10 +92,10 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
       if (!data.term || data.quantity <= 0) {
         newError.term = true;
       }
-      if (!data.orderNode.x || (data.orderNode.x < 0 || data.orderNode.x > 70)) {
+      if (!data.orderNode.x || (data.orderNode.x < 0 || data.orderNode.x > 69)) {
         newError.x = true;
       }
-      if (!data.orderNode.y || (data.orderNode.y < 0 || data.orderNode.y > 50)) {
+      if (!data.orderNode.y || (data.orderNode.y < 0 || data.orderNode.y > 49)) {
         newError.y = true;
       }
 
@@ -171,7 +174,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
         />
         <TextField 
           label="Posicion X"
-          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, x: e.target?.value } });e.target?.value>0?setErrorX(false," "):setErrorX(true,"Debe ingresar un valor mayor a 0");}}
+          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, x: e.target?.value } });e.target?.value>=0&&e.target?.value<=69?setErrorX(false," "):setErrorX(true,"Debe ingresar un valor entre 0 y 69");}}
           required
           variant="outlined"
           color="secondary"
@@ -184,7 +187,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
         />
         <TextField 
           label="Posicion Y"
-          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, y: e.target?.value } });e.target?.value>0?setErrorY(false," "):setErrorY(true,"Debe ingresar un valor mayor a 0");}}
+          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, y: e.target?.value } });e.target?.value>=0&&e.target?.value<=49?setErrorY(false," "):setErrorY(true,"Debe ingresar un valor entre 0 y 49");}}
           required
           variant="outlined"
           color="secondary"
