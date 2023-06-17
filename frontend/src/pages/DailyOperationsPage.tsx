@@ -20,17 +20,15 @@ import { TBlockage as registerBlockageType }  from '../types/types';
 
 export const DailyOperationsPage = () => {
 
+  var [started, setStarted] = useState<boolean>(false);
   var [fileBlockages, setFileBlockages] = useState<registerBlockageType[][]>([]);
   var [filePackages, setFilePackages] = useState<TPack[]>([]);
   var [temporaryFilePackages, setTemporaryFilePackages] = useState<TPack[]>([]);
-  var [mouseOver, setMouseOver] = useState<boolean>(false);
   var [vehicles, setVehicles] = useState<TVehicle[]>([]);
   var [todaysBlockages, setTodaysBlockages] = useState<TBlockage[]>([]);
-  var [count, setCount] = useState(0);
   var [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
   var [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<String>(" ");
   var [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
-  var [isVehicleEnRoute, setIsVehicleEnRoute] = useState<boolean>(false);
   var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
   var [bFiles, setBFiles] = useState<any[]>([]);
   var [selected, setSelected] = useState<String>("1");
@@ -42,9 +40,14 @@ export const DailyOperationsPage = () => {
     pack: null,location: null,route: null,step: 0,movement: null});
   var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
     fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: [],collapse: false});
-  var time = new Date();
-  //new Date().getHours()*60+new Date().getMinutes();
-  const seconds = Math.trunc(time.getTime()/1000);
+
+  const registerPackage = async(pack:TPack)=>{
+    await AlgorithmService.insertPack(pack).then((response) => {
+      console.log('Package inserted successfully');
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
 
   const initiateAlgorithm = async() => {
     await AlgorithmService.initDaily().then(() => {
@@ -132,6 +135,7 @@ export const DailyOperationsPage = () => {
     let blockagesToAdd : TBlockage[]=[];
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+    /*
     let updatedPackFromFileArray : TPack[] = [];
     filePackages.forEach(p => {
       if(p.originalTime==currentTime){
@@ -146,6 +150,7 @@ export const DailyOperationsPage = () => {
     });
     filePackages = updatedPackFromFileArray;
     setFilePackages(filePackages);
+    */
     todaysBlockages.forEach(b => {
       if(b.start==currentTime){
         blockagesToAdd.push(b);
@@ -231,7 +236,7 @@ export const DailyOperationsPage = () => {
           }else{
             //notify package has been delivered
             apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
-            AlgorithmService.completePack(v.id,seconds.toString()).then((response) => {
+            AlgorithmService.completePack(v.id,currentTime.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
               v.location!.destination=true;
               v.movement!.from=v.route!.chroms[0].from;
@@ -256,15 +261,15 @@ export const DailyOperationsPage = () => {
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
   }
-
-  var started = false;
+  
   useEffect(() => {
-    if(count==0 && !started){
+    if(!started){
       started = true;
+      setStarted(true);
       apiMoment=data.moment;
       initiateAlgorithm();
     }
-  }, []);
+  }, [apiMoment,started]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
     setOpenPanel(true);
@@ -279,15 +284,28 @@ export const DailyOperationsPage = () => {
   //should activate every time there's a new pack
   useEffect(() => {
     const intervalId = setInterval(() => {
-      count=count+60;
-      setCount(count);
-      time = new Date();
       planTheRoutes();
     }, 60000);
     return () => {
       clearInterval(intervalId);
     };
-  }, []);  
+  }, [filePackages]);  
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      let fullTime = new Date();
+      let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+      console.log(filePackages);
+      filePackages.forEach(fp => {
+        if(fp.originalTime==currentTime){
+          registerPackage(fp);
+        }
+      });
+    }, 5000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [filePackages]);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
     console.log(vehicle,fault,time);
@@ -300,6 +318,8 @@ export const DailyOperationsPage = () => {
 
   const handleSubmit = (e: any) => {
     e.preventDefault()
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     let damagedVehicleIndex:number=-1;
     damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"));
     if(damagedVehicleIndex==-1){
@@ -315,11 +335,13 @@ export const DailyOperationsPage = () => {
       //setApiMoment(apiMoment);
       //call falla vehicular service
       setOpenPanel(false);
-      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,seconds.toString());
+      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
     }
   }
   const handleSubmitFromVehicle = (e: any) => {
     e.preventDefault()
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     let damagedVehicleIndex:number=-1;
     damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v==vehicle);
     if(damagedVehicleIndex==-1){
@@ -336,7 +358,7 @@ export const DailyOperationsPage = () => {
       //setApiMoment(apiMoment);
       //call falla vehicular service
       setOpenPanel(false);
-      registerFault(vehicle!.code!,selected,seconds.toString());
+      registerFault(vehicle!.code!,selected,currentTime.toString());
     }
   }
   const onFileChange = (updatedList: any[], type: string) => {
@@ -432,6 +454,8 @@ export const DailyOperationsPage = () => {
     if(filePackages.length>0){
       toast.success(`Pedidos encolados exitosamente`);
       setOpenPanel(false); 
+      console.log(filePackages);
+      /*
       setTypePanel(null); 
       setVehicle(undefined); 
       vehicleCodeError=false; 
@@ -444,6 +468,7 @@ export const DailyOperationsPage = () => {
       setFileBlockages(fileBlockages);
       temporaryFilePackages=[];
       setTemporaryFilePackages(temporaryFilePackages);
+      */
     }else{
       toast.error(`Sucedió un error, intente de nuevo`);
     }
@@ -510,7 +535,6 @@ export const DailyOperationsPage = () => {
             temporaryFilePackages.push(pack);
         });
         setTemporaryFilePackages(temporaryFilePackages);
-        console.log(temporaryFilePackages);
       };
       reader.readAsText(files[0]);
     }
