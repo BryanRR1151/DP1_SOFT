@@ -7,15 +7,16 @@ import BlockageService from '../services/BlockageService';
 import Select, { GroupBase } from 'react-select'
 import { ToastContainer, toast } from 'react-toastify';
 import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, TextField } from '@mui/material';
-import { TMoment, TMovement, TPack, TSolution, TVehicle, VehicleType } from '../test/movements';
+import { TMoment, TBlockage, TPack, DailyPackDetail, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
 import { PanelType, panelStyles } from "../types/types";
 import Dropzone from 'react-dropzone'
-import { TBlockage } from "../test/movements";
 import { TBlockage as registerBlockageType }  from '../types/types';
+import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
 
 export const DailyOperationsPage = () => {
 
+  var [dailyPackDetails, setDailyPackDetails] = useState<DailyPackDetail[]>([]);
   var [started, setStarted] = useState<boolean>(false);
   var [fileBlockages, setFileBlockages] = useState<registerBlockageType[][]>([]);
   var [filePackages, setFilePackages] = useState<TPack[]>([]);
@@ -65,7 +66,7 @@ export const DailyOperationsPage = () => {
       }
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
-    
+    /*
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       console.log(response.data);
       vehicles=parseVehicles(response.data);
@@ -104,6 +105,7 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
+    */
   }
 
   const parseVehicles = (vehicles: TVehicle[]) => {
@@ -167,9 +169,30 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
 
+    dailyPackDetails.forEach(dpd => {
+      dpd.secondsLeft-=6;
+    });
+
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
+
+        let foundDailyPackDetail = dailyPackDetails.find(p=>p.id==v!.pack!.id);
+        if(foundDailyPackDetail==undefined){
+          let dailyPackDetail : DailyPackDetail;
+          dailyPackDetail = {id:v!.pack!.id, x:v.pack!.location.x, y:v.pack!.location.y, 
+            secondsLeft:parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0)),
+            carAmount:v.type==VehicleType.auto?1:0, bikeAmount:v.type==VehicleType.moto?1:0};
+          dailyPackDetails.push(dailyPackDetail);
+        }else{
+          v.type==VehicleType.auto?foundDailyPackDetail.carAmount+=1:foundDailyPackDetail.bikeAmount+=1;
+          console.log()
+          let newSecondsLeft = parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0));
+          if(newSecondsLeft > foundDailyPackDetail.secondsLeft){
+            foundDailyPackDetail.secondsLeft = newSecondsLeft;
+          }
+        }
+
         v!.movement!.from!.x=45;
         v!.movement!.from!.y=30;
         v!.movement!.to!.x=45;
@@ -219,6 +242,15 @@ export const DailyOperationsPage = () => {
             shouldBeAddedToVehicles=false;
             return null;
           }else{
+
+            let dailyPackDetailIndex = dailyPackDetails.findIndex(dpd => dpd.id == v.pack?.id);
+            v.type==VehicleType.auto?dailyPackDetails[dailyPackDetailIndex].carAmount-=1
+              :dailyPackDetails[dailyPackDetailIndex].bikeAmount-=1;
+            if(dailyPackDetails[dailyPackDetailIndex].carAmount==0 
+              && dailyPackDetails[dailyPackDetailIndex].bikeAmount==0){
+              dailyPackDetails.splice(dailyPackDetailIndex,1);
+            }
+
             //notify package has been delivered
             apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
             AlgorithmService.completePack(v.id,currentTime.toString()).then((response) => {
@@ -245,6 +277,7 @@ export const DailyOperationsPage = () => {
     newVehicles = newVehicles!.filter((value)=>value!=null);
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
+    setDailyPackDetails(dailyPackDetails);
   }
   
   useEffect(() => {
@@ -301,6 +334,12 @@ export const DailyOperationsPage = () => {
       apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
       setOpenPanel(false);
       registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
+      
+      if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
+        apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
+          dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
+          :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+      }
     }
   }
   const handleSubmitFromVehicle = (e: any) => {
@@ -320,6 +359,12 @@ export const DailyOperationsPage = () => {
       apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
       setOpenPanel(false);
       registerFault(vehicle!.code!,selected,currentTime.toString());
+
+      if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
+        apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
+          dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
+          :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+      }
     }
   }
 
@@ -571,6 +616,62 @@ export const DailyOperationsPage = () => {
     return null
   }
 
+  const getCards = () => {
+    const rows = dailyPackDetails.map((dpd, index) => (
+      <div style={{height:150}}>
+      <div
+        key={index}
+        style={{ flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '5px',
+        borderWidth: 2,
+        borderRadius: 10,
+        borderColor: '#7d7d7d',
+        borderStyle: 'solid',
+        backgroundColor: '#fafafa',
+        textAlign:'start',
+        outline: 'none',
+        height:110,
+      width:260}}
+      >
+        <div className="card-body">
+        <div
+        key={index}
+        style={{ width:238,
+        alignItems: 'start',
+        padding: '10px',
+        borderWidth: 2,
+        borderRadius: 10,
+        borderColor: '#7d7d7d',
+        borderStyle: 'solid',
+        backgroundColor: '#fafafa',
+        textAlign:'center',
+        outline: 'none',
+        height:20}}
+      >
+          <Typography>Id: {dpd.id}  |  x: {dpd.x} km, y: {dpd.y} km</Typography>
+          </div>
+          <div style={{padding: '10px', alignItems: 'center', textAlign:'center'}}>
+            <Typography>Tiempo estimado: {Math.trunc(dpd.secondsLeft/60)} min</Typography>
+            <div style={{height: 10}}></div>
+            <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', textAlign:'center'}}>
+              <div style={{width:40}}></div>
+              <FaCarSide size={20} color="black"/>
+              <Typography>: {dpd.carAmount}</Typography>
+              <div style={{width:75}}></div>
+              <FaMotorcycle size={20}/>
+              <Typography>: {dpd.bikeAmount}</Typography>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    ));
+    return rows;
+  };
+
   return (
     <>
       <Breadcrumbs 
@@ -625,6 +726,16 @@ export const DailyOperationsPage = () => {
                     sx={{width:192}}
                   >
                     Carga de pedidos con archivo
+                  </Button>
+                </Box>
+                <Box>
+                  <Button
+                    variant='contained'
+                    color='secondary'
+                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
+                    sx={{width:192}}
+                  >
+                    Detalles
                   </Button>
                 </Box>
                 <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
@@ -787,6 +898,14 @@ export const DailyOperationsPage = () => {
               </Box>
               <Button disabled={temporaryFilePackages.length==0?true:false} variant="contained" color="secondary" type="submit">Guardar</Button>
             </form>
+          </Box> : null
+        }
+        {typePanel == PanelType.simulationDetails ?
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Pedidos activos:</Typography>
+            <Box sx={{height:600, overflowY: 'auto'}}> 
+                {getCards()}
+            </Box>
           </Box> : null
         }
         {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&

@@ -85,3 +85,12 @@ export type TMoment = {
   finish?: TFinish;
   faultVehicles?: TVehicle[];
 }
+
+export type DailyPackDetail = {
+  id: number;
+  x: number;
+  y: number;
+  secondsLeft: number;
+  carAmount: number;
+  bikeAmount: number;
+}
