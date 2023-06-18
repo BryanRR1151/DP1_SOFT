@@ -228,7 +228,10 @@ export const OrdersPage = () => {
                 Nuevo
               </Button>
             </Box>
-            <DataGrid rows={rowsToShow} columns={columns} />
+            <div style={{ height:'578px', width: '100%' }}>
+            <DataGrid rows={rowsToShow} columns={columns} autoHeight={false}
+            initialState={{pagination: { paginationModel: { pageSize: 9 } }}}/>
+            </div>
 
           </Box>
         </Container>

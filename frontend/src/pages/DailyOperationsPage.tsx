@@ -41,14 +41,6 @@ export const DailyOperationsPage = () => {
   var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
     fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: [],collapse: false});
 
-  const registerPackage = async(pack:TPack)=>{
-    await AlgorithmService.insertPack(pack).then((response) => {
-      console.log('Package inserted successfully');
-    }).catch((err) => {
-      console.log(err);
-    });
-  }
-
   const initiateAlgorithm = async() => {
     await AlgorithmService.initDaily().then(() => {
       console.log('Algorithm initiated successfully');
@@ -80,7 +72,7 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
     setApiMoment(apiMoment);
-    /*
+    
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
@@ -117,7 +109,7 @@ export const DailyOperationsPage = () => {
       console.log('Routes planned successfully');
     }).catch((err) => {
       console.log(err);
-    });*/
+    });
   }
 
   const parseVehicles = (vehicles: TVehicle[]) => {
@@ -135,22 +127,25 @@ export const DailyOperationsPage = () => {
     let blockagesToAdd : TBlockage[]=[];
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
-    /*
+    
     let updatedPackFromFileArray : TPack[] = [];
+    console.log(currentTime);
+    console.log(filePackages);
     filePackages.forEach(p => {
       if(p.originalTime==currentTime){
         AlgorithmService.insertPack(p).then((response) => {
           console.log('Package inserted successfully');
         }).catch((err) => {
+          updatedPackFromFileArray.push(p);
           console.log(err);
         });
-      }else{
+      }else if(p.originalTime>currentTime){
         updatedPackFromFileArray.push(p);
       }
     });
     filePackages = updatedPackFromFileArray;
     setFilePackages(filePackages);
-    */
+    
     todaysBlockages.forEach(b => {
       if(b.start==currentTime){
         blockagesToAdd.push(b);
@@ -289,23 +284,7 @@ export const DailyOperationsPage = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [filePackages]);  
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      let fullTime = new Date();
-      let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
-      console.log(filePackages);
-      filePackages.forEach(fp => {
-        if(fp.originalTime==currentTime){
-          registerPackage(fp);
-        }
-      });
-    }, 5000);
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [filePackages]);  
+  }, [filePackages,apiMoment,todaysBlockages]);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
     console.log(vehicle,fault,time);
@@ -455,7 +434,6 @@ export const DailyOperationsPage = () => {
       toast.success(`Pedidos encolados exitosamente`);
       setOpenPanel(false); 
       console.log(filePackages);
-      /*
       setTypePanel(null); 
       setVehicle(undefined); 
       vehicleCodeError=false; 
@@ -468,7 +446,6 @@ export const DailyOperationsPage = () => {
       setFileBlockages(fileBlockages);
       temporaryFilePackages=[];
       setTemporaryFilePackages(temporaryFilePackages);
-      */
     }else{
       toast.error(`Sucedió un error, intente de nuevo`);
     }
@@ -525,9 +502,9 @@ export const DailyOperationsPage = () => {
         lines.forEach(l => {
           let details = l.substring(6,l.length-1).split(',');
           let pack : TPack = {id:0,idCustomer:parseInt(details[3]),time:0,fullfilled:0,
-            originalTime:Math.trunc(new Date(parseInt(files[0].name.substring(6,10)),
-              parseInt(files[0].name.substring(10,12))-1,
-              parseInt(files[0].name.substring(12,14)),
+            originalTime:Math.trunc(new Date(new Date().getFullYear(),
+              new Date().getMonth(),
+              new Date().getDate(),
               parseInt(l.substring(0,2)),
               parseInt(l.substring(3,5))).getTime()/1000),deadline:parseInt(details[4])*60*60,
             demand:parseInt(details[2]),location:{x:parseInt(details[0]),y:parseInt(details[1])},
@@ -609,18 +586,6 @@ export const DailyOperationsPage = () => {
       };
     }
     if((month==2)&&day>28){
-      return {
-        code: "wrong-format",
-        message: `Name doesn't follow the format`
-      };
-    }
-    if(month != (new Date().getMonth())+1){
-      return {
-        code: "wrong-format",
-        message: `Name doesn't follow the format`
-      };
-    }
-    if(day != new Date().getDate()){
       return {
         code: "wrong-format",
         message: `Name doesn't follow the format`
