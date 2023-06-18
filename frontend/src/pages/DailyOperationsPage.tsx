@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
 import data from './momentDefault.json';
-import returnData from './returnTest.json';
-import routesData from './routesTest.json';
-import movementData from './movementDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
 import colorConfigs from '../configs/colorConfigs'
@@ -13,7 +10,6 @@ import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box
 import { TMoment, TMovement, TPack, TSolution, TVehicle, VehicleType } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
 import { PanelType, panelStyles } from "../types/types";
-import { DropzoneComponent } from "../components/DropzoneComponent";
 import Dropzone from 'react-dropzone'
 import { TBlockage } from "../test/movements";
 import { TBlockage as registerBlockageType }  from '../types/types';
@@ -49,11 +45,9 @@ export const DailyOperationsPage = () => {
     });
 
     await BlockageService.getBlockages().then((response) => {
-      console.log(response);
       todaysBlockages=response.data
       setTodaysBlockages(todaysBlockages);
       console.log('Blockages retrieved successfully');
-      console.log(todaysBlockages);
     }).catch((err) => {
       console.log(err);
     });
@@ -71,9 +65,9 @@ export const DailyOperationsPage = () => {
       }
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
-    setApiMoment(apiMoment);
     
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
+      console.log(response.data);
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
         v!.movement!.from!.x=45;
@@ -93,13 +87,13 @@ export const DailyOperationsPage = () => {
         v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
           if(v.movement!.from!.x < v.route!.chroms[0].to.x){
-            v.movement!.to!.x=v.movement!.from!.x+v.speed/60;
+            v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
           }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
-            v.movement!.to!.x=v.movement!.from!.x-v.speed/60;
+            v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
           }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
-            v.movement!.to!.y=v.movement!.from!.y+v.speed/60;
+            v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
           }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
-            v.movement!.to!.y=v.movement!.from!.y-v.speed/60;
+            v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
           }
           if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
             v.route!.chroms.shift();
@@ -129,14 +123,13 @@ export const DailyOperationsPage = () => {
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     
     let updatedPackFromFileArray : TPack[] = [];
-    console.log(currentTime);
-    console.log(filePackages);
     filePackages.forEach(p => {
       if(p.originalTime==currentTime){
         AlgorithmService.insertPack(p).then((response) => {
-          console.log('Package inserted successfully');
+          toast.success('Pedido registrado exitosamente');
         }).catch((err) => {
           updatedPackFromFileArray.push(p);
+          toast.error('Ocurrió un error al registrar el pedido')
           console.log(err);
         });
       }else if(p.originalTime>currentTime){
@@ -170,14 +163,13 @@ export const DailyOperationsPage = () => {
           });
         }
       }
+      setApiMoment(apiMoment);
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
 
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
-        //v.movement!.from=v.route!.chroms[0].from;
-        //v.movement!.to=v.route!.chroms[0].from;
         v!.movement!.from!.x=45;
         v!.movement!.from!.y=30;
         v!.movement!.to!.x=45;
@@ -190,7 +182,6 @@ export const DailyOperationsPage = () => {
         packs.push(v.pack!);
       });
       apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
-      setApiMoment(apiMoment);
       vehicles=[];
       console.log('Routes planned successfully');
     }).catch((err) => {
@@ -198,20 +189,19 @@ export const DailyOperationsPage = () => {
     });
     let temporaryVehicles:TVehicle[]=[];
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
-      console.log(v);
       let shouldBeAddedToVehicles:boolean=true;
       if(v.route!.chroms.length!=0){
         if(v.broken==false || v.movement!.to!.x != v.route!.chroms[0].from.x || v.movement!.to!.y != v.route!.chroms[0].from.y){
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
           if(v.movement!.from!.x < v.route!.chroms[0].to.x){
-            v.movement!.to!.x=v.movement!.from!.x+v.speed/60;
+            v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
           }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
-            v.movement!.to!.x=v.movement!.from!.x-v.speed/60;
+            v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
           }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
-            v.movement!.to!.y=v.movement!.from!.y+v.speed/60;
+            v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
           }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
-            v.movement!.to!.y=v.movement!.from!.y-v.speed/60;
+            v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
           }
           if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
             v.route!.chroms.shift();
@@ -280,14 +270,13 @@ export const DailyOperationsPage = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       planTheRoutes();
-    }, 60000);
+    }, 6000);
     return () => {
       clearInterval(intervalId);
     };
   }, [filePackages,apiMoment,todaysBlockages]);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
-    console.log(vehicle,fault,time);
     await AlgorithmService.setFault(vehicle,fault,time).then(() => {
       console.log('Fault registered successfully');
     }).catch((err) => {
@@ -310,9 +299,6 @@ export const DailyOperationsPage = () => {
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
       apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
-      //apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
-      //setApiMoment(apiMoment);
-      //call falla vehicular service
       setOpenPanel(false);
       registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
     }
@@ -332,18 +318,9 @@ export const DailyOperationsPage = () => {
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
       apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
-      //apiMoment!.activeVehicles[damagedVehicleIndex].route!.chroms=[];
-      //apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
-      //setApiMoment(apiMoment);
-      //call falla vehicular service
       setOpenPanel(false);
       registerFault(vehicle!.code!,selected,currentTime.toString());
     }
-  }
-  const onFileChange = (updatedList: any[], type: string) => {
-    bFiles = updatedList;
-    console.log(bFiles);
-    setBFiles(bFiles);
   }
 
   const handleVehicleCodeChange = (formVehicleCode: number) => {
@@ -433,7 +410,6 @@ export const DailyOperationsPage = () => {
     if(filePackages.length>0){
       toast.success(`Pedidos encolados exitosamente`);
       setOpenPanel(false); 
-      console.log(filePackages);
       setTypePanel(null); 
       setVehicle(undefined); 
       vehicleCodeError=false; 
@@ -627,7 +603,7 @@ export const DailyOperationsPage = () => {
                 <AnimationGrid 
                   moment = {apiMoment}
                   openVehiclePopup={openVehiclePopup}
-                  speed = {1/60}
+                  speed = {1/6}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
