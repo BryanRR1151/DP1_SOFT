@@ -114,9 +114,6 @@ export const Simulation = (props: ISimulation) => {
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
 
-        console.log(newMoment.activeVehicles);
-        console.log(newFaultVehicles);
-
         setApiMoment(parseMoment(newMoment));
         setApiMoments(moments);
 
@@ -137,9 +134,6 @@ export const Simulation = (props: ISimulation) => {
       newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
       setFaultVehicles(newFaultVehicles);
       
-      console.log(newMoment.activeVehicles);
-      console.log(newFaultVehicles);
-
       setApiMoment(parseMoment(newMoment));
 
       if (apiMoments[auxCount].finish && !stopped)  {
