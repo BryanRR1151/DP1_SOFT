@@ -373,7 +373,7 @@ export const Simulation = (props: ISimulation) => {
   return (
     <>
       <Box>
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ width:1000 }}>
           <Box
             sx={{
               padding: 5,
@@ -383,7 +383,7 @@ export const Simulation = (props: ISimulation) => {
               justifyContent: 'center',
             }}
           >
-            <Box sx={{ display: 'flex' }}>
+            <Box sx={{ /*display: 'flex'*/display: 'flex' }}>
               <Box sx={{ width: '1600px' }}>
                 {!showResults && !loading ?
                   <AnimationGrid 
@@ -394,7 +394,7 @@ export const Simulation = (props: ISimulation) => {
                   <Box sx={{ height: '100%' }}>
                     { renderSimulationResume() }
                   </Box> : loading ?
-                  <Box sx={{ display: 'flex', width: '100%', justifyContent: 'center', marginTop: '20px' }}>
+                  <Box sx={{ display: 'flex', /*width: '100%'*/width: '840px', justifyContent: 'center', marginTop: '20px' }}>
                     <CircularProgress />
                   </Box> : null
                 }
