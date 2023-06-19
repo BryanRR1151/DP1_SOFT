@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import data from './momentDefault.json';
 import { Link } from 'react-router-dom'
 import { AnimationGrid } from '../components/AnimationGrid';
+import { Space } from 'react-zoomable-ui';
 import colorConfigs from '../configs/colorConfigs'
 import BlockageService from '../services/BlockageService';
 import Select, { GroupBase } from 'react-select'
@@ -687,77 +688,90 @@ export const DailyOperationsPage = () => {
       >
           <Typography>Visualización</Typography>
       </Breadcrumbs>
-
-      <Box>
-        <Box sx={{ display: 'flex' }}>
-          <Box
+        <Box
+          sx={{
+            padding: 5,
+            paddingTop: 3,
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            //backgroundColor:'pink'
+          }}
+        >
+          <Box 
             sx={{
-              padding: 5,
-              paddingTop: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            <Box sx={{ display: 'flex' }}>
-              <Box>
-                <AnimationGrid 
-                  moment = {apiMoment}
-                  openVehiclePopup={openVehiclePopup}
-                  speed = {1/6}
-                />
+              width:'70%',
+              height:600,
+              //backgroundColor:'green'
+            }}>
+              <div style={{ position: 'relative', height: '100%' }}>
+                <Space onCreate={vp => vp.setBounds({ x: [0, 847], y: [0, 600] })}>
+                  <div>
+                    <AnimationGrid 
+                      moment = {apiMoment}
+                      openVehiclePopup={openVehiclePopup}
+                      speed = {1/6}
+                    />
+                  </div>
+                </Space>
+              </div>
+          </Box>
+          <Box 
+            sx={{ 
+              width: '30%',
+              //backgroundColor: 'purple',
+              display: 'flex', 
+              flexDirection: 'column', 
+              marginLeft: '50px', 
+              gap: 1 
+            }}>
+            <Box>
+              <Button
+                variant='contained'
+                color='secondary'
+                onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
+                sx={{}}
+              >
+                Registrar incidencias
+              </Button>
+            </Box>
+            <Box>
+              <Button
+                variant='contained'
+                color='secondary'
+                onClick={() => { setOpenPanel(true); setTypePanel(PanelType.create) }}
+                sx={{width:192}}
+              >
+                Carga de pedidos con archivo
+              </Button>
+            </Box>
+            <Box>
+              <Button
+                variant='contained'
+                color='secondary'
+                onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
+                sx={{width:192}}
+              >
+                Detalles
+              </Button>
+            </Box>
+            <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
+              <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
+              <Box sx={{ display: 'flex' }}>
+                <Typography>Depósito:</Typography>
+                <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.depot, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
-                <Box>
-                  <Button
-                    variant='contained'
-                    color='secondary'
-                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
-                    sx={{}}
-                  >
-                    Registrar incidencias
-                  </Button>
-                </Box>
-                <Box>
-                  <Button
-                    variant='contained'
-                    color='secondary'
-                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.create) }}
-                    sx={{width:192}}
-                  >
-                    Carga de pedidos con archivo
-                  </Button>
-                </Box>
-                <Box>
-                  <Button
-                    variant='contained'
-                    color='secondary'
-                    onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
-                    sx={{width:192}}
-                  >
-                    Detalles
-                  </Button>
-                </Box>
-                <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
-                    <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
-                    <Box sx={{ display: 'flex' }}>
-                      <Typography>Depósito:</Typography>
-                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.depot, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
-                    </Box>
-                    <Box sx={{ display: 'flex' }}>
-                      <Typography>Punto de entrega:</Typography>
-                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.pack, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
-                    </Box>
-                    <Box sx={{ display: 'flex' }}>
-                      <Typography>Bloqueo:</Typography>
-                      <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.block, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
-                    </Box>
-                  </Box>
+              <Box sx={{ display: 'flex' }}>
+                <Typography>Punto de entrega:</Typography>
+                <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.pack, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
+              </Box>
+              <Box sx={{ display: 'flex' }}>
+                <Typography>Bloqueo:</Typography>
+                <div style={{ width: 10, height: 10, backgroundColor: colorConfigs.dots.block, borderRadius: 20, marginTop: 5, marginLeft: 5}}></div>
               </Box>
             </Box>
           </Box>
         </Box>
-      </Box> 
       <Box
         sx={{ ...panelStyles.panel, ...(openPanel && panelStyles.panelOpen) }}
         display="flex"
