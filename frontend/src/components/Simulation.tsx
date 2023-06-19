@@ -236,7 +236,7 @@ export const Simulation = (props: ISimulation) => {
     }
   }, [speed]);
   //appears to fix the jumping back issue
-  //}, [speed]);
+  //}, [speed,timer]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
     setOpenPanel(true);
