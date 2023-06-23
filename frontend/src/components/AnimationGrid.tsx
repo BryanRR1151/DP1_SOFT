@@ -187,7 +187,7 @@ export const AnimationGrid = ({ moment, openVehiclePopup, speed }: IAnimationGri
           }) : null
         }
         {
-          moment !== undefined ? moment.activeBlockages.map( (b) => {
+          moment !== undefined ? moment.activeBlockages.map((b) => {
             return (<div
               style={{
                 position: 'absolute',
