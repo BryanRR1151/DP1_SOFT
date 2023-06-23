@@ -43,7 +43,7 @@ export const Simulation = (props: ISimulation) => {
   const [speed, setSpeed] = useState<number>(1); // 1 = 1 min/seg
   const [auxCount, setAuxCount] = useState<number>(0);
   const [stopped, setStopped] = useState<boolean>(false);
-  const [initialDate, setInitialDate] = useState<string>('2023-09-01');
+  const [initialDate, setInitialDate] = useState<string>('2023-10-01');
 
   const [selected, setSelected] = useState<string>("1");
   const [stopType, setStopType] = useState<number>(-2);
@@ -108,7 +108,6 @@ export const Simulation = (props: ISimulation) => {
     if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
       await AlgorithmService.getMoment( timer, speed ).then((response) => {
         let moments: TMoment[] = response.data;
-
         let newMoment = moments[0];
         let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! != timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
@@ -116,6 +115,7 @@ export const Simulation = (props: ISimulation) => {
 
         setApiMoment(parseMoment(newMoment));
         setApiMoments(moments);
+        if (speed != 1) setAuxCount(1);
 
         if (moments[0].finish && !stopped)  {
           setStopped(true);
@@ -123,6 +123,7 @@ export const Simulation = (props: ISimulation) => {
           setStopMessage(moments[0].finish.message);
           setStopMaxCapacity(moments[0].finish.maxCapacity);
           setStopTotalPacks(moments[0].finish.totalPack);
+          setLastTimer(moments[0].finish.minute);
         }
       }).catch((err) => {
         console.log(err);
@@ -135,6 +136,8 @@ export const Simulation = (props: ISimulation) => {
       setFaultVehicles(newFaultVehicles);
       
       setApiMoment(parseMoment(newMoment));
+      if (auxCount < speed - 1) setAuxCount((count) => count + 1);
+      else setAuxCount(0);
 
       if (apiMoments[auxCount].finish && !stopped)  {
         setStopped(true);
@@ -142,18 +145,20 @@ export const Simulation = (props: ISimulation) => {
         setStopMessage(apiMoments[auxCount].finish!.message);
         setStopMaxCapacity(apiMoments[auxCount].finish!.maxCapacity);
         setStopTotalPacks(apiMoments[auxCount].finish!.totalPack);
+        setLastTimer(apiMoments[auxCount].finish!.minute);
       }
     }
   }
 
   const stopSimulation = async() => {
-    clearInterval(interval.current);
-    setApiMoment(undefined);
-    setApiMoments([]);
-    setTimer(-2);
-    setSpeed(1);
-    setAuxCount(0);
-    setFaultVehicles([]);
+    // clearInterval(interval.current);
+    // setApiMoment(undefined);
+    // setApiMoments([]);
+    // setTimer(-2);
+    // setSpeed(1);
+    // setAuxCount(0);
+    // setFaultVehicles([]);
+    setLoading(true);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
     }).catch((err) => {
@@ -162,9 +167,10 @@ export const Simulation = (props: ISimulation) => {
   }
 
   const stopCollapse = () => {
-    const minutes = Math.floor(timer);
-    const hours = Math.floor(timer / 60);
+    const minutes = Math.floor(lastTimer);
+    const hours = Math.floor(lastTimer / 60);
     const days = Math.floor(hours / 24);
+    setStopped(false);
     clearInterval(interval.current);
     setApiMoment(undefined);
     setApiMoments([]);
@@ -172,18 +178,21 @@ export const Simulation = (props: ISimulation) => {
     setSpeed(1);
     setAuxCount(0);
     setShowResults(true);
-    setLastTimer(timer);
     setFaultVehicles([]);
+    setLoading(false);
     if (stopType != -2) {
       switch(stopType) {
         case(-1):
           toast.error(`Hubo un error: ${stopMessage}`);
           break;
         case(0):
-          toast.error(`La simulación alcanzó el colapso logístico en: ${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`);
+          toast.error(`La simulación alcanzó el colapso logístico en: ${('0'+days).slice(-2)} días, ${('0'+hours%24).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`);
           break;
         case(1):
           toast.success(`Simulación culminada exitosamente`);
+          break;
+        case(2):
+          toast.success(`Simulación detenida exitosamente`);
           break;
       }
     }
@@ -217,8 +226,8 @@ export const Simulation = (props: ISimulation) => {
         handleTimer();
         setLoading(false);
         setSpeed(8);
-        setAuxCount(-1);
-      }, 3000);
+        setAuxCount(0);
+      }, 5000);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
       getMomentFromAlgorithm();
@@ -229,14 +238,12 @@ export const Simulation = (props: ISimulation) => {
     if(speed == 1 && timer < 0) return;
     if (interval.current) {
       clearInterval(interval.current);
+      setAuxCount(0);
       interval.current = setInterval(() => {
-        setAuxCount((count) => count == speed - 1 ? 0 : count + 1);
         setTimer((count) => count + 1);
       }, 1000/speed);
     }
   }, [speed]);
-  //appears to fix the jumping back issue
-  //}, [speed,timer]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
     setOpenPanel(true);
@@ -278,41 +285,6 @@ export const Simulation = (props: ISimulation) => {
 
   // ---------------- VEHICLE FAILURES ------------------
 
-  const handleVehicleCodeChange = (formVehicleCode: number) => {
-    let code = formVehicleCode;
-    setVehicleCodeValue(code);
-    if(code <= 0) {
-      setVehicleCodeError(true);
-      setSaveNeedsToBeDisabled(true);
-      setVehicleCodeErrorMessage("El código debe ser mayor que 0");
-    } else {
-      if(apiMoment?.activeVehicles.find(v => v.code == selectedVehicleType + formVehicleCode.toString().padStart(3,"0")) == undefined) {
-        setVehicleCodeError(true);
-        setSaveNeedsToBeDisabled(true);
-        setVehicleCodeErrorMessage("El vehículo no se encuentra en ruta");
-      } else {
-        setVehicleCodeError(false);
-        setSaveNeedsToBeDisabled(false);
-        setVehicleCodeErrorMessage("");
-      }
-    }
-  }
-
-  const handleSubmit = (e: any) => {
-    e.preventDefault()
-    let damagedVehicleIndex = -1;
-    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code == selectedVehicleType + vehicleCodeValue.toString().padStart(3,"0"));
-    if(damagedVehicleIndex == -1) {
-      setVehicleCodeError(true);
-      setSaveNeedsToBeDisabled(true);
-      setVehicleCodeErrorMessage("El vehículo no se encuentra en ruta");
-    } else {
-      apiMoment?.activeVehicles.splice(damagedVehicleIndex,1);
-      setApiMoment(apiMoment);
-      // registerFault(selectedVehicleType + vehicleCodeValue.toString().padStart(3,"0"), selected);
-    }
-  }
-
   const handleVehicleFailure = (e: any, code: String) => {
     e.preventDefault()
     let damagedVehicleIndex = -1;
@@ -351,16 +323,16 @@ export const Simulation = (props: ISimulation) => {
 
     return (
       <>
-       {stopType == 1 || stopType == 0 ?
+       {
         <>
+          {stopType == -1 &&
+            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Hubo un error en la simulación. Inténtelo de nuevo</Typography>
+          }
           <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Resumen de la simulación:</Typography>
-          <Typography sx={{marginBottom: 2}}><b>Tiempo total transcurrido: </b>{`${('0'+days).slice(-2)} días, ${('0'+hours).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`}</Typography>
+          <Typography sx={{marginBottom: 2}}><b>Tiempo total transcurrido: </b>{`${('0'+days).slice(-2)} días, ${('0'+hours%24).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`}</Typography>
           <Typography sx={{marginBottom: 2}}><b>Máxima capacidad de flota alcanzada: </b>{stopMaxCapacity.toFixed(2)}%</Typography>
           <Typography sx={{marginBottom: 2}}><b>Total de pedidos entregados: </b>{stopTotalPacks}</Typography>
-        </> : stopType == -1 ?
-        <>
-          <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Hubo un error en la simulación. Inténtelo de nuevo</Typography>
-        </> : null
+        </>
        }
       </>
     )
@@ -369,7 +341,7 @@ export const Simulation = (props: ISimulation) => {
   return (
     <>
       <Box>
-        <Box sx={{ width:1000 }}>
+        <Box sx={{ width:'100%' }}>
           <Box
             sx={{
               padding: 5,
@@ -379,29 +351,30 @@ export const Simulation = (props: ISimulation) => {
               justifyContent: 'center',
             }}
           >
-            <Box sx={{ /*display: 'flex'*/display: 'flex' }}>
-              <Box sx={{ width: '1600px' }}>
-                {!showResults && !loading ?
+            <Box sx={{ display: 'flex' }}>
+              <Box sx={{ width: '80%' }}>
+                {!showResults && !loading &&
                   <AnimationGrid 
                     moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
                     openVehiclePopup={ openVehiclePopup }
                     speed={ speed }
-                  /> : showResults && !loading ?
+                  />}
+                {showResults && !loading &&
                   <Box sx={{ height: '100%' }}>
                     { renderSimulationResume() }
-                  </Box> : loading ?
-                  <Box sx={{ display: 'flex', /*width: '100%'*/width: '840px', justifyContent: 'center', marginTop: '20px' }}>
+                  </Box>}
+                {loading &&
+                  <Box sx={{ display: 'flex', width: '100%', justifyContent: 'center', marginTop: '20px' }}>
                     <CircularProgress />
-                  </Box> : null
-                }
+                  </Box>}
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', marginLeft: '50px', gap: 1 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', width: '20%', marginLeft: '50px', gap: 1 }}>
                 <Box>
                   <Button
                     variant='contained'
                     color='secondary'
                     disabled={timer >= 0}
-                    onClick={() => { if(!props.isCollapse ? initialDate : true) { setTimer(INITIAL_TIMER); setShowResults(false); } else { toast.error(`Debe ingresar una fecha de inicio de simulación`); } }}
+                    onClick={() => { if(initialDate) { setTimer(INITIAL_TIMER); setShowResults(false); } else { toast.error(`Debe ingresar una fecha de inicio de simulación`); } }}
                     sx={{ width: '220px' }}
                   >
                     Iniciar simulación
@@ -412,7 +385,7 @@ export const Simulation = (props: ISimulation) => {
                     variant='outlined'
                     color='secondary'
                     onClick={stopSimulation}
-                    disabled={timer <= -1}
+                    disabled={timer <= -1 || loading}
                     sx={{ width: '220px' }}
                   >
                     Detener simulación
@@ -426,50 +399,31 @@ export const Simulation = (props: ISimulation) => {
                         color='secondary'
                         onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
                         sx={{ width: '220px' }}
+                        disabled={loading}
                       >
                         Ver detalles
                       </Button>
                     </Box>
-                    {/* <Box>
-                      <Button
-                        variant='contained'
-                        color='secondary'
-                        onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
-                        sx={{}}
-                      >
-                        Registrar incidencias
-                      </Button>
-                    </Box> */}
                   </>
                 }
                 <Box>
                   {(timer <= -1) &&
                     <Box sx={{ marginTop: 5 }}>
-                      {/* <Button
-                        variant='outlined'
-                        color='secondary'
-                        onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
-                        sx={{ width: '220px' }}
-                      >
-                        Subir archivos
-                      </Button> */}
-                      {
                         <TextField required label='Fecha de inicio' type='date' value={initialDate} onChange={(e) => setInitialDate(e.target?.value)} sx={{ width: '220px' }} />
-                      }
                     </Box>
                   }
-                  {timer >= 0 && 
+                  {timer >= 0 && !loading && 
                     <>
                       <Box sx={{ display: 'flex', gap: 5, marginTop: 5 }}>
                         <Box sx={{ gap: 1, borderRadius: 2, display: 'flex', justifyContent: 'space-between', width: '220px'}}>
-                          <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); setAuxCount(-1); }}>x1</Button>
-                          <Button variant={ speed == 2 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(2); setAuxCount(-1); }}>x2</Button>
-                          <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); setAuxCount(-1); }}>x8</Button>
+                          <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); }}>x1</Button>
+                          <Button variant={ speed == 2 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(2); }}>x2</Button>
+                          <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); }}>x8</Button>
                         </Box>
                       </Box>
-                      <Box sx={{ marginTop: 5 }}>
+                      {!loading && <Box sx={{ marginTop: 5 }}>
                         <SimulatedTimer min={timer} initialDate={initialDate} />
-                      </Box>
+                      </Box>}
                     </>
                   }
                   <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
@@ -498,55 +452,6 @@ export const Simulation = (props: ISimulation) => {
         display="flex"
         flexDirection="column"
       >
-        {typePanel == PanelType.simulationFiles ?
-          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, overflowY: 'auto'}}>
-          <Box>
-            <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
-            <form autoComplete="off" onSubmit={handleSubmit}> 
-              <Box
-                display="flex"
-                flexDirection="row"
-                sx={{}}
-              >
-                <Box
-                  sx={{width:130}}
-                >
-                  <Select 
-                    defaultValue={vehicleOptions[0]}
-                    isSearchable = {false}
-                    name = "vehicle options"
-                    options={vehicleOptions} 
-                    onChange={(e: any) => {setSelectedVehicleType(e.label)}}
-                  />
-                </Box>
-                <TextField 
-                  label="Código del vehículo"
-                  onChange={(e: any) => {handleVehicleCodeChange(e.target?.value)}}
-                  required
-                  variant="outlined"
-                  color="secondary"
-                  type="number"
-                  error={vehicleCodeError}
-                  helperText={vehicleCodeErrorMessage}
-                  fullWidth
-                  size="small"
-                  sx={{marginLeft: 2,mb: 3}}
-                />
-              </Box>
-              <Box sx={{width:294, height:65}}>
-                <Select 
-                  defaultValue={options[0]}
-                  isSearchable = {true}
-                  name = "incident type"
-                  options={options} 
-                  onChange={(e: any) => {setSelected(e.value)}}
-                />
-              </Box>
-              <Button disabled={saveNeedsToBeDisabled} variant="contained" color="secondary" type="submit">Guardar</Button>
-            </form>
-          </Box>
-        </Box> : null
-        }
         {typePanel == PanelType.vehicleInfo && vehicle !== undefined &&
           <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, height: '100%'}}>
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Detalles del vehiculo:</Typography>

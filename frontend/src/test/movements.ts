@@ -71,6 +71,7 @@ export type TFinish = {
   message: string;
   maxCapacity: number;
   totalPack: number;
+  minute: number;
 }
 
 export type TMoment = {
