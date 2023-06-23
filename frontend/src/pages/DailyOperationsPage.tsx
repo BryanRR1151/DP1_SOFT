@@ -53,20 +53,24 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
+    apiMoment!.activeBlockages=[];
     let blockagesToAdd : TBlockage[]=[];
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     todaysBlockages.forEach(b => {
-      if(b.start<=currentTime && b.end>=currentTime){
-        blockagesToAdd.push(b);
+      if(b.start==currentTime || b.end==currentTime){
         AlgorithmService.setBlockages(currentTime.toString()).then((response) => {
           console.log('Blockages set successfully');
         }).catch((err) => {
           console.log(err);
         });
       }
+      if(b.start<=currentTime && b.end>currentTime){
+        blockagesToAdd.push(b);
+      }
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
+    setApiMoment(apiMoment);
     /*
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       console.log(response.data);
@@ -115,7 +119,12 @@ export const DailyOperationsPage = () => {
 
   const planTheRoutes = async() => {
     await BlockageService.getBlockages().then((response) => {
-      todaysBlockages=response.data
+      let newBlockages : TBlockage[] = response.data;
+      newBlockages.forEach(b => {
+        if(todaysBlockages.find(tb=>tb.id==b.id)==undefined){
+          todaysBlockages.push(b);
+        }
+      });
       setTodaysBlockages(todaysBlockages);
       console.log('Blockages retrieved successfully');
     }).catch((err) => {
@@ -143,7 +152,7 @@ export const DailyOperationsPage = () => {
     setFilePackages(filePackages);
     
     todaysBlockages.forEach(b => {
-      if(b.start==currentTime){
+      if(b.start==currentTime && apiMoment!.activeBlockages.find(ab=>ab.id==b.id)==undefined){
         blockagesToAdd.push(b);
         AlgorithmService.setBlockages(currentTime.toString()).then((response) => {
           let vehiclesToBeFixed : TVehicle[]=response.data;
@@ -287,6 +296,7 @@ export const DailyOperationsPage = () => {
       setStarted(true);
       apiMoment=data.moment;
       initiateAlgorithm();
+      console.log(apiMoment.activeBlockages);
     }
   }, [apiMoment,started]);
 
