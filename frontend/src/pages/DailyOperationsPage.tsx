@@ -17,6 +17,7 @@ import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
 
 export const DailyOperationsPage = () => {
 
+  var [mainFrontComponent, setMainFrontComponent] = useState<Boolean>(false);
   var [dailyPackDetails, setDailyPackDetails] = useState<DailyPackDetail[]>([]);
   var [started, setStarted] = useState<boolean>(false);
   var [fileBlockages, setFileBlockages] = useState<registerBlockageType[][]>([]);
@@ -37,9 +38,54 @@ export const DailyOperationsPage = () => {
     turn: 0,overtime: 0,state: 0,capacity: 0,carry: 0,moved: false,
     pack: null,location: null,route: null,step: 0,movement: null});
   var [apiMoment, setApiMoment] = useState<TMoment|undefined>({min: 0,ordersDelivered: 0,ordersLeft: 0,
-    fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: [],collapse: false});
+    fleetCapacity: 0,activeVehicles: [],activePacks: [],activeBlockages: [],collapse: false,faultVehicles:[]});
+
+  const unsetFlag = async() => {
+    await AlgorithmService.setDailyFlag(false).then((response) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
+  }
+
+  useEffect(() => {
+    window.onbeforeunload = () => {
+      if(mainFrontComponent){
+        unsetFlag();
+      };
+    }
+
+    window.addEventListener('beforeunload', (event) => {
+      if(mainFrontComponent){
+        unsetFlag();
+      }
+    });
+
+    return () => {
+      if(mainFrontComponent){
+        unsetFlag();
+        document.removeEventListener('beforeunload', unsetFlag);
+      }
+    };
+  }, []);
 
   const initiateAlgorithm = async() => {
+    await AlgorithmService.getDailyFlag().then((response)=>{
+      console.log(response.data);
+      let dailyFlag : boolean = response.data;
+      if(!dailyFlag){
+        mainFrontComponent = true;
+        setMainFrontComponent(mainFrontComponent);
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+
+    if(!mainFrontComponent){
+      console.log('Theres already a main front');
+      return;
+    }
+
     await AlgorithmService.initDaily().then(() => {
       console.log('Algorithm initiated successfully');
     }).catch((err) => {
@@ -287,6 +333,12 @@ export const DailyOperationsPage = () => {
     newVehicles = newVehicles!.filter((value)=>value!=null);
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
+    console.log(apiMoment);
+    await AlgorithmService.setDailyMoment(apiMoment!).then((response) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
     setDailyPackDetails(dailyPackDetails);
   }
   
@@ -294,11 +346,10 @@ export const DailyOperationsPage = () => {
     if(!started){
       started = true;
       setStarted(true);
-      apiMoment=data.moment;
+      //apiMoment=data.moment;
       initiateAlgorithm();
-      console.log(apiMoment.activeBlockages);
     }
-  }, [apiMoment,started]);
+  }, [apiMoment,started,mainFrontComponent]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
     setOpenPanel(true);
@@ -309,16 +360,48 @@ export const DailyOperationsPage = () => {
   const parseVehicle = (vehicle: TVehicle) => {
     return vehicle;
   }
+
+  const readTheRoutes = async() => {
+    await AlgorithmService.getDailyFlag().then((response) => {
+      let dailyFlag : boolean = response.data;
+      if(!dailyFlag){
+        mainFrontComponent = true;
+        setMainFrontComponent(mainFrontComponent);
+        AlgorithmService.setDailyFlag(true).then((res) => {
+          console.log(res.data);
+        }).catch((error) => {
+          console.log(error);
+        })
+        console.log('Switched to main front');
+        return;
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+
+    await AlgorithmService.getDailyMoment().then((response) => {
+      apiMoment = response.data;
+      setApiMoment(apiMoment);
+      console.log(apiMoment);
+    }).catch((err) => {
+      console.log(err);
+    })
+  }
   
   //should activate every time there's a new pack
   useEffect(() => {
     const intervalId = setInterval(() => {
-      planTheRoutes();
+      if(mainFrontComponent){
+        planTheRoutes();
+      }else{
+        console.log('reading');
+        readTheRoutes();
+      }
     }, 6000);
     return () => {
       clearInterval(intervalId);
     };
-  }, [filePackages,apiMoment,todaysBlockages]);  
+  }, [filePackages,apiMoment,todaysBlockages,mainFrontComponent]);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
     await AlgorithmService.setFault(vehicle,fault,time).then(() => {
@@ -739,7 +822,7 @@ export const DailyOperationsPage = () => {
               <Button
                 variant='contained'
                 color='secondary'
-                onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles) }}
+                onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationFiles)}}
                 sx={{}}
               >
                 Registrar incidencias

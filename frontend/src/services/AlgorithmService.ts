@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { TPack } from '../test/movements';
+import { TMoment, TPack } from '../test/movements';
+import moment from 'moment';
 
 const startWeekly = (initialDate: string) => {
   return axios.get(`http://localhost:8080/StartGenetic?startDate=${ initialDate }`);
@@ -57,6 +58,22 @@ const deletePack = (id: number) => {
   return axios.post(`http://localhost:8080/eliminarPedido?id=${id}`);
 }
 
+const getDailyFlag = () => {
+  return axios.get(`http://localhost:8080/GetDailyFlag`)
+}
+
+const setDailyFlag = (state: boolean) => {
+  return axios.get(`http://localhost:8080/SetDailyFlag?state=${state}`)
+}
+
+const setDailyMoment = (body: TMoment) => {
+  return axios.post('http://localhost:8080/SetMoment', body)
+}
+
+const getDailyMoment = () => {
+  return axios.get(`http://localhost:8080/GetMoment`)
+}
+
 export default {
   startWeekly,
   startCollapse,
@@ -71,5 +88,9 @@ export default {
   setBlockages,
   setFault,
   manualKill,
-  deletePack
+  deletePack,
+  getDailyFlag,
+  setDailyFlag,
+  setDailyMoment,
+  getDailyMoment
 };
