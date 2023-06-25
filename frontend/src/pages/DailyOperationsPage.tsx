@@ -253,7 +253,7 @@ export const DailyOperationsPage = () => {
         v!.movement!.from!.y=30;
         v!.movement!.to!.x=45;
         v!.movement!.to!.y=30;
-        v.broken=false;
+        v.state=1;
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
       let packs : TPack[]=[];
@@ -266,11 +266,12 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
+    console.log(dailyPackDetails);
     let temporaryVehicles:TVehicle[]=[];
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
       let shouldBeAddedToVehicles:boolean=true;
       if(v.route!.chroms.length!=0){
-        if(v.broken==false || v.movement!.to!.x != v.route!.chroms[0].from.x || v.movement!.to!.y != v.route!.chroms[0].from.y){
+        if(v.state==1 || v.movement!.to!.x != v.route!.chroms[0].from.x || v.movement!.to!.y != v.route!.chroms[0].from.y){
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
           if(v.movement!.from!.x < v.route!.chroms[0].to.x){
@@ -293,12 +294,12 @@ export const DailyOperationsPage = () => {
           apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
         }
       }else{
-        if(!v.broken){
+        if(v.state==1){
           if(v.location!.destination==true){
             shouldBeAddedToVehicles=false;
             return null;
           }else{
-
+            
             let dailyPackDetailIndex = dailyPackDetails.findIndex(dpd => dpd.id == v.pack?.id);
             v.type==VehicleType.auto?dailyPackDetails[dailyPackDetailIndex].carAmount-=1
               :dailyPackDetails[dailyPackDetailIndex].bikeAmount-=1;
@@ -340,6 +341,11 @@ export const DailyOperationsPage = () => {
       console.log(err);
     })
     setDailyPackDetails(dailyPackDetails);
+    await AlgorithmService.setDailyPacks(dailyPackDetails).then((response) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
   }
   
   useEffect(() => {
@@ -386,6 +392,13 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     })
+    
+    await AlgorithmService.getDailyPacks().then((response) => {
+      dailyPackDetails = response.data;
+      setDailyPackDetails(dailyPackDetails);
+    }).catch((err) => {
+      console.log(err);
+    })
   }
   
   //should activate every time there's a new pack
@@ -425,7 +438,7 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
+      apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
       setOpenPanel(false);
       registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
       
@@ -450,7 +463,7 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment!.activeVehicles[damagedVehicleIndex].broken=true;
+      apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
       setOpenPanel(false);
       registerFault(vehicle!.code!,selected,currentTime.toString());
 
@@ -476,7 +489,7 @@ export const DailyOperationsPage = () => {
         saveNeedsToBeDisabled = true;
         vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
       }else{
-        if(foundVehicle!.broken){
+        if(foundVehicle!.state==0){
           vehicleCodeError = true;
           saveNeedsToBeDisabled = true;
           vehicleCodeErrorMessage = "El vehículo ya está averiado";
@@ -1021,7 +1034,7 @@ export const DailyOperationsPage = () => {
             <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
-            {vehicle.broken==false&&
+            {vehicle.state==1&&
               <Box>
                 <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
                 <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 

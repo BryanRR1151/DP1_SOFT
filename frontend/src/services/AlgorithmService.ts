@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { TMoment, TPack } from '../test/movements';
+import { DailyPackDetail, TMoment, TPack } from '../test/movements';
 import moment from 'moment';
 
 const startWeekly = (initialDate: string) => {
@@ -74,6 +74,14 @@ const getDailyMoment = () => {
   return axios.get(`http://localhost:8080/GetMoment`)
 }
 
+const setDailyPacks = (body: DailyPackDetail[]) => {
+  return axios.post(`http://localhost:8080/SetDailyPacks`, body)
+}
+
+const getDailyPacks = () => {
+  return axios.get(`http://localhost:8080/GetDailyPacks`)
+}
+ 
 export default {
   startWeekly,
   startCollapse,
@@ -92,5 +100,7 @@ export default {
   getDailyFlag,
   setDailyFlag,
   setDailyMoment,
-  getDailyMoment
+  getDailyMoment,
+  setDailyPacks,
+  getDailyPacks
 };
