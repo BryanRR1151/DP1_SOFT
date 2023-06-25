@@ -72,6 +72,8 @@ export type TFinish = {
   maxCapacity: number;
   totalPack: number;
   minute: number;
+  capacityHourly: number[];
+  packsHourly: number[];
 }
 
 export type TMoment = {
