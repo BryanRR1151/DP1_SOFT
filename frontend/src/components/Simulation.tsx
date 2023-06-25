@@ -44,7 +44,6 @@ export const Simulation = (props: ISimulation) => {
   const [auxCount, setAuxCount] = useState<number>(0);
   const [stopped, setStopped] = useState<boolean>(false);
   const [initialDate, setInitialDate] = useState<string>('2023-10-01');
-
   const [selected, setSelected] = useState<string>("1");
   const [stopType, setStopType] = useState<number>(-2);
   const [stopMessage, setStopMessage] = useState<string>("");
@@ -52,32 +51,29 @@ export const Simulation = (props: ISimulation) => {
   const [stopTotalPacks, setStopTotalPacks] = useState<number>(0);
   const [showResults, setShowResults] = useState<boolean>(false);
   const [lastTimer, setLastTimer] = useState<number>(0);
-
   const [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
-  const [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<string>("");
-  const [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
-  const [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
-  const [selectedVehicleType, setSelectedVehicleType] = useState<string>("Aut");
-
+  const [callFinalMoment, setCallFinalMoment] = useState<boolean>(false);
   const [faultVehicles, setFaultVehicles] = useState<TVehicle[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   const interval = useRef<any>(null);
 
   useEffect(() => {
+    window.addEventListener("beforeunload", function(e){
+      stopAlgorithmOnDismount();
+   }, false);
     return () => {
       stopAlgorithmOnDismount();
     }
   }, [])
 
   const stopAlgorithmOnDismount = async() => {
-    if (timer > 0) {
+    if (interval.current)
       AlgorithmService.kill().then((response) => {
         console.log('Algorithm stopped successfully');
       }).catch((err) => {
         console.log(err);
       });
-    }
   }
 
   const startAlgorithm = async() => {
@@ -105,11 +101,11 @@ export const Simulation = (props: ISimulation) => {
       stopCollapse();
       return;
     }
-    if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
-      await AlgorithmService.getMoment( timer, speed ).then((response) => {
+    if ((auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) || callFinalMoment) {
+      await AlgorithmService.getMoment( !callFinalMoment ? timer : 2147483645, !callFinalMoment ? speed : 1 ).then((response) => {
         let moments: TMoment[] = response.data;
         let newMoment = moments[0];
-        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! != timer)];
+        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
 
@@ -131,7 +127,7 @@ export const Simulation = (props: ISimulation) => {
     }
     else {
       let newMoment = apiMoments[auxCount];
-      let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! != timer)];
+      let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
       newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
       setFaultVehicles(newFaultVehicles);
       
@@ -151,14 +147,8 @@ export const Simulation = (props: ISimulation) => {
   }
 
   const stopSimulation = async() => {
-    // clearInterval(interval.current);
-    // setApiMoment(undefined);
-    // setApiMoments([]);
-    // setTimer(-2);
-    // setSpeed(1);
-    // setAuxCount(0);
-    // setFaultVehicles([]);
     setLoading(true);
+    setCallFinalMoment(true);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
     }).catch((err) => {
@@ -180,6 +170,7 @@ export const Simulation = (props: ISimulation) => {
     setShowResults(true);
     setFaultVehicles([]);
     setLoading(false);
+    setCallFinalMoment(false);
     if (stopType != -2) {
       switch(stopType) {
         case(-1):
@@ -210,14 +201,6 @@ export const Simulation = (props: ISimulation) => {
       return;
     }
     if (timer == -1 || timer == -2) return;
-    if (timer >= props.targetTimer*24*60 && interval.current) {
-      clearInterval(interval.current);
-      setApiMoment(undefined);
-      setApiMoments([]);
-      setTimer(-2);
-      setSpeed(1);
-      setAuxCount(0);
-    }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
       setLoading(true);
