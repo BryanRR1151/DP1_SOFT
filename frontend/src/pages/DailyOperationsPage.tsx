@@ -289,7 +289,7 @@ export const DailyOperationsPage = () => {
         }else{
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
-          v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+          //v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
           v.route!.chroms=[];
           apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
         }
@@ -438,14 +438,17 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
-      setOpenPanel(false);
-      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
-      
-      if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
-        apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
-          dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
-          :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+      if(mainFrontComponent){
+        apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
+        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+        setOpenPanel(false);
+        registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
+        
+        if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
+          apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
+            dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
+            :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+        }
       }
     }
   }
@@ -463,14 +466,17 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
-      setOpenPanel(false);
-      registerFault(vehicle!.code!,selected,currentTime.toString());
+      if(mainFrontComponent){
+        apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
+        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+        setOpenPanel(false);
+        registerFault(vehicle!.code!,selected,currentTime.toString());
 
-      if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
-        apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
-          dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
-          :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+        if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
+          apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
+            dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
+            :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+        }
       }
     }
   }
