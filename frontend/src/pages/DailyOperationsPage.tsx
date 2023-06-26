@@ -8,7 +8,7 @@ import BlockageService from '../services/BlockageService';
 import Select, { GroupBase } from 'react-select'
 import { ToastContainer, toast } from 'react-toastify';
 import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, TextField } from '@mui/material';
-import { TMoment, TBlockage, TPack, DailyPackDetail, TVehicle, VehicleType } from '../test/movements';
+import { TMoment, TBlockage, TPack, DailyPackDetail, TVehicle, VehicleType, DailyFault } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
 import { PanelType, panelStyles } from "../types/types";
 import Dropzone from 'react-dropzone'
@@ -117,46 +117,6 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
     setApiMoment(apiMoment);
-    /*
-    await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
-      console.log(response.data);
-      vehicles=parseVehicles(response.data);
-      vehicles!.forEach( (v)=>{
-        v!.movement!.from!.x=45;
-        v!.movement!.from!.y=30;
-        v!.movement!.to!.x=45;
-        v!.movement!.to!.y=30;
-        v.broken=false;
-      })
-      apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
-      let packs : TPack[]=[];
-      vehicles.forEach(v => {
-        packs.push(v.pack!);
-      });
-      apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
-      vehicles=[];
-      apiMoment?.activeVehicles.forEach(v => {
-        v.movement!.from!.x=v.movement!.to!.x;
-          v.movement!.from!.y=v.movement!.to!.y;
-          if(v.movement!.from!.x < v.route!.chroms[0].to.x){
-            v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
-          }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
-            v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
-          }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
-            v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
-          }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
-            v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
-          }
-          if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
-            v.route!.chroms.shift();
-          }
-      })
-      setApiMoment(apiMoment);
-      console.log('Routes planned successfully');
-    }).catch((err) => {
-      console.log(err);
-    });
-    */
   }
 
   const parseVehicles = (vehicles: TVehicle[]) => {
@@ -164,6 +124,28 @@ export const DailyOperationsPage = () => {
   }
 
   const planTheRoutes = async() => {
+    //get fault list
+    let dailyFaults : DailyFault[] = [];
+    await AlgorithmService.getDailyFaults().then((response) => {
+      dailyFaults = response.data;
+    }).catch((err) => {
+      console.log(err);
+    })
+    dailyFaults.forEach(df => {
+      let foundVehicle = apiMoment!.activeVehicles.find(av => av.id==df.id);
+      if(foundVehicle!=undefined && foundVehicle!.state!=0){
+        foundVehicle!.state=0;
+        foundVehicle!.resumeAt=df.resumeAt;
+        registerFault(foundVehicle!.code!,df.selected,df.currentTime.toString());
+
+        if(foundVehicle!.location?.destination==false){
+          foundVehicle!.type==VehicleType.auto?
+            dailyPackDetails.find(dpd=>dpd.id==foundVehicle!.pack!.id)!.carAmount-=1
+            :dailyPackDetails.find(dpd=>dpd.id==foundVehicle!.pack!.id)!.bikeAmount-=1
+        }
+      }
+    });
+
     await BlockageService.getBlockages().then((response) => {
       let newBlockages : TBlockage[] = response.data;
       newBlockages.forEach(b => {
@@ -180,22 +162,7 @@ export const DailyOperationsPage = () => {
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     
-    let updatedPackFromFileArray : TPack[] = [];
-    filePackages.forEach(p => {
-      if(p.originalTime==currentTime){
-        AlgorithmService.insertPack(p).then((response) => {
-          toast.success('Pedido registrado exitosamente');
-        }).catch((err) => {
-          updatedPackFromFileArray.push(p);
-          toast.error('Ocurrió un error al registrar el pedido')
-          console.log(err);
-        });
-      }else if(p.originalTime>currentTime){
-        updatedPackFromFileArray.push(p);
-      }
-    });
-    filePackages = updatedPackFromFileArray;
-    setFilePackages(filePackages);
+    
     
     todaysBlockages.forEach(b => {
       if(b.start==currentTime && apiMoment!.activeBlockages.find(ab=>ab.id==b.id)==undefined){
@@ -242,7 +209,6 @@ export const DailyOperationsPage = () => {
           dailyPackDetails.push(dailyPackDetail);
         }else{
           v.type==VehicleType.auto?foundDailyPackDetail.carAmount+=1:foundDailyPackDetail.bikeAmount+=1;
-          console.log()
           let newSecondsLeft = parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0));
           if(newSecondsLeft > foundDailyPackDetail.secondsLeft){
             foundDailyPackDetail.secondsLeft = newSecondsLeft;
@@ -266,7 +232,6 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
-    console.log(dailyPackDetails);
     let temporaryVehicles:TVehicle[]=[];
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
       let shouldBeAddedToVehicles:boolean=true;
@@ -313,9 +278,17 @@ export const DailyOperationsPage = () => {
             AlgorithmService.completePack(v.id,currentTime.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
               v.location!.destination=true;
-              v.movement!.from=v.route!.chroms[0].from;
-              v.movement!.to=v.route!.chroms[0].to;
-              v.route!.chroms.shift();
+              v!.movement!.from!.x=v.route!.chroms[0].from.x;
+              v!.movement!.from!.y=v.route!.chroms[0].from.y;
+              if(v.movement!.from!.x < v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
+              }
               console.log('Package completed successfully');
             }).catch((err) => {
               console.log(err);
@@ -334,7 +307,7 @@ export const DailyOperationsPage = () => {
     newVehicles = newVehicles!.filter((value)=>value!=null);
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
-    console.log(apiMoment);
+    console.log(apiMoment?.activeVehicles);
     await AlgorithmService.setDailyMoment(apiMoment!).then((response) => {
       console.log(response.data);
     }).catch((err) => {
@@ -414,7 +387,37 @@ export const DailyOperationsPage = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [filePackages,apiMoment,todaysBlockages,mainFrontComponent]);  
+  }, [apiMoment,todaysBlockages,mainFrontComponent]);  
+
+  const registerFilePacks = async() => {
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+    let updatedPackFromFileArray : TPack[] = [];
+    filePackages.forEach(p => {
+      if(p.originalTime==currentTime){
+        AlgorithmService.insertPack(p).then((response) => {
+          toast.success('Pedido registrado exitosamente');
+        }).catch((err) => {
+          updatedPackFromFileArray.push(p);
+          toast.error('Ocurrió un error al registrar el pedido')
+          console.log(err);
+        });
+      }else if(p.originalTime>currentTime){
+        updatedPackFromFileArray.push(p);
+      }
+    });
+    filePackages = updatedPackFromFileArray;
+    setFilePackages(filePackages);
+  }
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      registerFilePacks();
+    }, 6000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [filePackages]);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
     await AlgorithmService.setFault(vehicle,fault,time).then(() => {
@@ -422,6 +425,14 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
+  }
+
+  const pushDailyFault = async(dailyFault : DailyFault) => {
+    await AlgorithmService.setDailyFault(dailyFault).then((response) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
   }
 
   const handleSubmit = (e: any) => {
@@ -438,10 +449,10 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
+      setOpenPanel(false);
       if(mainFrontComponent){
         apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
         apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
-        setOpenPanel(false);
         registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
         
         if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
@@ -449,6 +460,13 @@ export const DailyOperationsPage = () => {
             dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
             :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
         }
+      }else{
+        let currentTime = Math.trunc(new Date().getTime()/1000);
+        let dailyFault : DailyFault = {id:apiMoment!.activeVehicles[damagedVehicleIndex].id, 
+          selected: selected, currentTime: currentTime,
+          resumeAt:currentTime+(selected=="3"?14400:7200)};
+        //push dailyFault
+        pushDailyFault(dailyFault);
       }
     }
   }
@@ -466,10 +484,10 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
+        setOpenPanel(false);
       if(mainFrontComponent){
         apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
         apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
-        setOpenPanel(false);
         registerFault(vehicle!.code!,selected,currentTime.toString());
 
         if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
@@ -477,6 +495,13 @@ export const DailyOperationsPage = () => {
             dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
             :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
         }
+      }else{
+        let currentTime = Math.trunc(new Date().getTime()/1000);
+        let dailyFault : DailyFault = {id:apiMoment!.activeVehicles[damagedVehicleIndex].id, 
+          selected: selected, currentTime: currentTime,
+          resumeAt:currentTime+(selected=="3"?14400:7200)};
+        //push dailyFault
+        pushDailyFault(dailyFault);
       }
     }
   }
@@ -731,7 +756,7 @@ export const DailyOperationsPage = () => {
 
   const getCards = () => {
     const rows = dailyPackDetails.map((dpd, index) => (
-      <div style={{height:150}}>
+      <div key={index} style={{height:150}}>
       <div
         key={index}
         style={{ flex: 1,
