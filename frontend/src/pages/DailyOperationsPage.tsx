@@ -71,7 +71,6 @@ export const DailyOperationsPage = () => {
 
   const initiateAlgorithm = async() => {
     await AlgorithmService.getDailyFlag().then((response)=>{
-      console.log(response.data);
       let dailyFlag : boolean = response.data;
       if(!dailyFlag){
         mainFrontComponent = true;
@@ -82,7 +81,6 @@ export const DailyOperationsPage = () => {
     });
 
     if(!mainFrontComponent){
-      console.log('Theres already a main front');
       return;
     }
 
@@ -307,7 +305,6 @@ export const DailyOperationsPage = () => {
     newVehicles = newVehicles!.filter((value)=>value!=null);
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
-    console.log(apiMoment?.activeVehicles);
     await AlgorithmService.setDailyMoment(apiMoment!).then((response) => {
       console.log(response.data);
     }).catch((err) => {
@@ -351,17 +348,18 @@ export const DailyOperationsPage = () => {
         }).catch((error) => {
           console.log(error);
         })
-        console.log('Switched to main front');
-        return;
       }
     }).catch((err) => {
       console.log(err);
     });
 
+    if(mainFrontComponent){
+      return;
+    }
+
     await AlgorithmService.getDailyMoment().then((response) => {
       apiMoment = response.data;
       setApiMoment(apiMoment);
-      console.log(apiMoment);
     }).catch((err) => {
       console.log(err);
     })
@@ -380,7 +378,6 @@ export const DailyOperationsPage = () => {
       if(mainFrontComponent){
         planTheRoutes();
       }else{
-        console.log('reading');
         readTheRoutes();
       }
     }, 6000);
