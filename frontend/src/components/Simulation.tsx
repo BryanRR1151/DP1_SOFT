@@ -12,6 +12,17 @@ import { FaAmazonPay, FaAngleDown } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import { SimulatedTimer } from '../components/SimulatedTimer';
 import Select, { GroupBase } from 'react-select'
+import moment from 'moment';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
 interface ISimulation {
   isCollapse: boolean;
@@ -19,6 +30,7 @@ interface ISimulation {
 }
 
 const INITIAL_TIMER = 0;
+const RATIO = 2;
 
 const options = [
   { value: "1", label: 'TI1' },
@@ -29,6 +41,18 @@ const vehicleOptions = [
   { value: VehicleType.auto, label: 'Aut' },
   { value: VehicleType.moto, label: 'Mot' }
 ]
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const barOptionsPacks = { responsive: true, plugins: { legend: { position: 'top' as const }, title: { display: true, text: 'Pedidos entregados por hora' }}};
+const barOptionsCapacity = { responsive: true, plugins: { legend: { position: 'top' as const }, title: { display: true, text: 'Capacidad de la flota por hora' }}};
 
 export const Simulation = (props: ISimulation) => {
   
@@ -44,7 +68,6 @@ export const Simulation = (props: ISimulation) => {
   const [auxCount, setAuxCount] = useState<number>(0);
   const [stopped, setStopped] = useState<boolean>(false);
   const [initialDate, setInitialDate] = useState<string>('2023-10-01');
-
   const [selected, setSelected] = useState<string>("1");
   const [stopType, setStopType] = useState<number>(-2);
   const [stopMessage, setStopMessage] = useState<string>("");
@@ -52,32 +75,34 @@ export const Simulation = (props: ISimulation) => {
   const [stopTotalPacks, setStopTotalPacks] = useState<number>(0);
   const [showResults, setShowResults] = useState<boolean>(false);
   const [lastTimer, setLastTimer] = useState<number>(0);
-
   const [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
-  const [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<string>("");
-  const [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
-  const [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
-  const [selectedVehicleType, setSelectedVehicleType] = useState<string>("Aut");
-
+  const [callFinalMoment, setCallFinalMoment] = useState<boolean>(false);
   const [faultVehicles, setFaultVehicles] = useState<TVehicle[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+
+  const [labels, setLabels] = useState<string[]>([]);
+  const [dataPacks, setDataPacks] = useState<number[]>([]);
+  const [dataCapacity, setDataCapacity] = useState<number[]>([]);
+  const [alter, setAlter] = useState<number>(0);
 
   const interval = useRef<any>(null);
 
   useEffect(() => {
+    window.addEventListener("beforeunload", function(e){
+      stopAlgorithmOnDismount();
+   }, false);
     return () => {
       stopAlgorithmOnDismount();
     }
   }, [])
 
   const stopAlgorithmOnDismount = async() => {
-    if (timer > 0) {
+    if (interval.current)
       AlgorithmService.kill().then((response) => {
         console.log('Algorithm stopped successfully');
       }).catch((err) => {
         console.log(err);
       });
-    }
   }
 
   const startAlgorithm = async() => {
@@ -100,22 +125,39 @@ export const Simulation = (props: ISimulation) => {
     }
   }
 
+  const configureLabels = (finalMin: number) => {
+    const hours = Math.floor(finalMin / 60);
+    const days = Math.floor(hours / 24);
+
+    const dd = initialDate.substr(8, 2);
+    const md = initialDate.substr(5, 2);
+    const ad = initialDate.substr(0, 4);
+    const startTime = '00:00';
+
+    let arr;
+    arr = new Array(hours).fill("").map((_, i) => `${moment([ad, Number(md)-1, dd]).add(i/24, 'days').format('DD/MM/YYYY')} ${moment(startTime, 'HH:mm').add(i, 'hours').format('HH:mm')}`);
+    setLabels(arr)
+  }
+
   const getMomentFromAlgorithm = async() => {
     if (stopped) {
       stopCollapse();
       return;
     }
-    if (auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) {
-      await AlgorithmService.getMoment( timer, speed ).then((response) => {
+    if ((auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) || callFinalMoment) {
+      await AlgorithmService.getMoment( !callFinalMoment ? timer : 2147483645, !callFinalMoment ? speed*RATIO : 1 ).then((response) => {
         let moments: TMoment[] = response.data;
         let newMoment = moments[0];
-        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! != timer)];
+        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
 
         setApiMoment(parseMoment(newMoment));
         setApiMoments(moments);
-        if (speed != 1) setAuxCount(1);
+        if (moments.length < speed*RATIO) {
+          setAlter(moments.length);
+        }
+        if (speed != 1 || (speed == 1 && RATIO > 1)) setAuxCount(1);
 
         if (moments[0].finish && !stopped)  {
           setStopped(true);
@@ -124,6 +166,9 @@ export const Simulation = (props: ISimulation) => {
           setStopMaxCapacity(moments[0].finish.maxCapacity);
           setStopTotalPacks(moments[0].finish.totalPack);
           setLastTimer(moments[0].finish.minute);
+          setDataPacks(moments[0].finish.packsHourly);
+          setDataCapacity(moments[0].finish.capacityHourly);
+          configureLabels(moments[0].finish.minute);
         }
       }).catch((err) => {
         console.log(err);
@@ -131,34 +176,36 @@ export const Simulation = (props: ISimulation) => {
     }
     else {
       let newMoment = apiMoments[auxCount];
-      let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! != timer)];
+      let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
       newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
       setFaultVehicles(newFaultVehicles);
       
       setApiMoment(parseMoment(newMoment));
-      if (auxCount < speed - 1) setAuxCount((count) => count + 1);
-      else setAuxCount(0);
+      if (auxCount < (!alter ? (speed*RATIO - 1) : (alter - 1))) {
+        setAuxCount((count) => count + 1);
+      }
+      else {
+        setAuxCount(0);
+        setAlter(0);
+      }
 
-      if (apiMoments[auxCount].finish && !stopped)  {
+      if (apiMoments[auxCount].finish && !stopped) {
         setStopped(true);
         setStopType(apiMoments[auxCount].finish!.code);
         setStopMessage(apiMoments[auxCount].finish!.message);
         setStopMaxCapacity(apiMoments[auxCount].finish!.maxCapacity);
         setStopTotalPacks(apiMoments[auxCount].finish!.totalPack);
         setLastTimer(apiMoments[auxCount].finish!.minute);
+        setDataPacks(apiMoments[auxCount].finish!.packsHourly);
+        setDataCapacity(apiMoments[auxCount].finish!.capacityHourly);
+        configureLabels(apiMoments[auxCount].finish!.minute);
       }
     }
   }
 
   const stopSimulation = async() => {
-    // clearInterval(interval.current);
-    // setApiMoment(undefined);
-    // setApiMoments([]);
-    // setTimer(-2);
-    // setSpeed(1);
-    // setAuxCount(0);
-    // setFaultVehicles([]);
     setLoading(true);
+    setCallFinalMoment(true);
     await AlgorithmService.kill().then((response) => {
       console.log('Algorithm stopped successfully');
     }).catch((err) => {
@@ -180,6 +227,7 @@ export const Simulation = (props: ISimulation) => {
     setShowResults(true);
     setFaultVehicles([]);
     setLoading(false);
+    setCallFinalMoment(false);
     if (stopType != -2) {
       switch(stopType) {
         case(-1):
@@ -210,14 +258,6 @@ export const Simulation = (props: ISimulation) => {
       return;
     }
     if (timer == -1 || timer == -2) return;
-    if (timer >= props.targetTimer*24*60 && interval.current) {
-      clearInterval(interval.current);
-      setApiMoment(undefined);
-      setApiMoments([]);
-      setTimer(-2);
-      setSpeed(1);
-      setAuxCount(0);
-    }
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
       setLoading(true);
@@ -332,6 +372,32 @@ export const Simulation = (props: ISimulation) => {
           <Typography sx={{marginBottom: 2}}><b>Tiempo total transcurrido: </b>{`${('0'+days).slice(-2)} días, ${('0'+hours%24).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`}</Typography>
           <Typography sx={{marginBottom: 2}}><b>Máxima capacidad de flota alcanzada: </b>{stopMaxCapacity.toFixed(2)}%</Typography>
           <Typography sx={{marginBottom: 2}}><b>Total de pedidos entregados: </b>{stopTotalPacks}</Typography>
+          <Box style={{ width: '100%', overflowX: 'auto' }}>
+            <Bar options={barOptionsPacks} data={{
+              labels,
+              datasets: [
+                {
+                  label: '',
+                  data: dataPacks,
+                  minBarLength: 50,
+                  backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                }
+              ]
+            }} />
+          </Box>
+          <Box style={{ width: '100%', overflowX: 'auto' }}>
+            <Bar options={barOptionsCapacity} data={{
+              labels,
+              datasets: [
+                {
+                  label: '100%',
+                  data: dataCapacity,
+                  minBarLength: 50,
+                  backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                }
+              ]
+            }} />
+          </Box>
         </>
        }
       </>
