@@ -21,15 +21,12 @@ export const MainLayout = () => {
         <Box
           component="main"
           sx={{
+            margin: '-8px',
             flexGrow: 1,
-            width: `calc(100%-${sizeConfigs.sidebar.width})`,
-            minHeight: 'calc(100vh - 17px)',
+            width: `calc(100% - ${sizeConfigs.sidebar.width})`,
+            minHeight: '100vh',
             height: '100%',
-            backgroundColor: colorConfigs.mainBg,
-            marginRight: '-10px',
-            marginLeft: '-10px',
-            marginTop: '-10px',
-            marginBottom: '-10px'
+            backgroundColor: colorConfigs.mainBg
           }}
         >
           <Outlet />

@@ -49,6 +49,10 @@ export type TBlockageError = {
   y: boolean;
 }
 
+export type TUser = {
+  email: string;
+}
+
 export const panelStyles = {
   panel: {
     position: "fixed",

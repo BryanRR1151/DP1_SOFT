@@ -6,6 +6,7 @@ import { WeekSimulationPage } from "../pages/WeekSimulationPage";
 import { DailyOperationsPage } from "../pages/DailyOperationsPage";
 import { BlockagesPage } from "../pages/BlockagesPage";
 import { CollapsePage } from "../pages/CollapsePage";
+import { Login } from "../auth/Login";
 
 type Route = {
   name: string;
