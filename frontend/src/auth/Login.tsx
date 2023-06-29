@@ -20,7 +20,7 @@ export const Login = () => {
     const user: TUser = { email };
     await UserService.loginUser(user).then((response) => {
       signIn({
-        token: '',
+        token: response.data.token,
         expiresIn: 86400,
         tokenType: 'bearer',
         authState: { email: response.data.email, token: response.data.token, name: response.data.nombre ?? '' + " " + response.data.apellido ?? '' }
