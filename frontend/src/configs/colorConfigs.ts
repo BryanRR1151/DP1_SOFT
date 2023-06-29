@@ -18,6 +18,7 @@ const colorConfigs = {
   },
   mainBg: colors.grey['100'],
   secondary: '#E86C00',
+  primary: '#191919',
   dots: {
     normal: 'rgb(231, 231, 231)',
     depot: 'black',

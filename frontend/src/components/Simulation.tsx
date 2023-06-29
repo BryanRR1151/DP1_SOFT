@@ -23,6 +23,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { Space } from 'react-zoomable-ui';
 
 interface ISimulation {
   isCollapse: boolean;
@@ -379,20 +380,20 @@ export const Simulation = (props: ISimulation) => {
                 {
                   label: '',
                   data: dataPacks,
-                  minBarLength: 50,
+                  minBarLength: 20,
                   backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 }
               ]
             }} />
           </Box>
-          <Box style={{ width: '100%', overflowX: 'auto' }}>
+          <Box style={{ width: '1000px', overflowX: 'auto' }}>
             <Bar options={barOptionsCapacity} data={{
               labels,
               datasets: [
                 {
-                  label: '100%',
+                  label: '1000px',
                   data: dataCapacity,
-                  minBarLength: 50,
+                  minBarLength: 20,
                   backgroundColor: 'rgba(53, 162, 235, 0.5)',
                 }
               ]
@@ -420,11 +421,17 @@ export const Simulation = (props: ISimulation) => {
             <Box sx={{ display: 'flex' }}>
               <Box sx={{ width: '80%' }}>
                 {!showResults && !loading &&
-                  <AnimationGrid 
-                    moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
-                    openVehiclePopup={ openVehiclePopup }
-                    speed={ speed }
-                  />}
+                  <div style={{ position: 'relative', height: '100vh' }}>
+                    <Space onCreate={vp => vp.setBounds({ x: [0, 847], y: [0, 600] })}>
+                      <div>
+                        <AnimationGrid 
+                          moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
+                          openVehiclePopup={ openVehiclePopup }
+                          speed={ speed }
+                        />
+                      </div>
+                    </Space>
+                  </div>}
                 {showResults && !loading &&
                   <Box sx={{ height: '100%' }}>
                     { renderSimulationResume() }
