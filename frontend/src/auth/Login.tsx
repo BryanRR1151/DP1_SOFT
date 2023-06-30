@@ -25,7 +25,12 @@ export const Login = () => {
         tokenType: 'bearer',
         authState: { email: response.data.email, token: response.data.token, name: response.data.nombre ?? '' + " " + response.data.apellido ?? '' }
       });
-      navigate('/');
+      console.log(response);
+      if (response.data.email != null){
+        onLoginSuccess();
+        navigate('/');
+      }
+      setError('El usuario no está registrado en el sistema');
     }).catch((err) => {
       console.log(err);
       setError('El usuario no está registrado en el sistema');
