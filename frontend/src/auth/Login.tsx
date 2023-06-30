@@ -27,7 +27,6 @@ export const Login = () => {
       });
       console.log(response);
       if (response.data.email != null){
-        onLoginSuccess();
         navigate('/');
       }
       setError('El usuario no está registrado en el sistema');
