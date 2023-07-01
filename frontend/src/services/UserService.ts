@@ -4,7 +4,7 @@ import { useAuthUser } from 'react-auth-kit';
 import Cookies from 'js-cookie';
 
 const loginUser = (data: TUser) => {
-  return axios.post(`http://localhost:8080/login`, JSON.stringify(data), {
+  return axios.post(`http://localhost:8080/api/login`, JSON.stringify(data), {
     headers: {
       "Accept": 'application/json',
       "Content-Type": "application/json"
@@ -13,7 +13,7 @@ const loginUser = (data: TUser) => {
 }
 
 const logout = (data: TUser) => {
-  return axios.post(`http://localhost:8080/logout`, JSON.stringify(data), {
+  return axios.post(`http://localhost:8080/api/logout`, JSON.stringify(data), {
     headers: {
       "Accept": 'application/json',
       "Content-Type": "application/json"

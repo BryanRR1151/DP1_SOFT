@@ -85,6 +85,8 @@ export const Simulation = (props: ISimulation) => {
   const [dataPacks, setDataPacks] = useState<number[]>([]);
   const [dataCapacity, setDataCapacity] = useState<number[]>([]);
   const [alter, setAlter] = useState<number>(0);
+  const [initTime, setInitTime] = useState<any>();
+  const [finishTime, setFinishTime] = useState<any>();
 
   const interval = useRef<any>(null);
 
@@ -229,6 +231,7 @@ export const Simulation = (props: ISimulation) => {
     setFaultVehicles([]);
     setLoading(false);
     setCallFinalMoment(false);
+    setFinishTime(moment());
     if (stopType != -2) {
       switch(stopType) {
         case(-1):
@@ -268,6 +271,7 @@ export const Simulation = (props: ISimulation) => {
         setLoading(false);
         setSpeed(8);
         setAuxCount(0);
+        setInitTime(moment());
       }, 5000);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
@@ -362,6 +366,12 @@ export const Simulation = (props: ISimulation) => {
     const hours = Math.floor(lastTimer / 60);
     const days = Math.floor(hours / 24);
 
+    const duration = moment.duration(finishTime.diff(initTime));
+
+    const realHours = duration.hours();
+    const realMinutes = duration.minutes();
+    const realSeconds = duration.seconds();
+
     return (
       <>
        {
@@ -370,6 +380,7 @@ export const Simulation = (props: ISimulation) => {
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Hubo un error en la simulación. Inténtelo de nuevo</Typography>
           }
           <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Resumen de la simulación:</Typography>
+          <Typography sx={{marginBottom: 2}}><b>Tiempo real transcurrido: </b>{`${('0'+realHours).slice(-2)} horas, ${('0'+realMinutes).slice(-2)} minutos, ${('0'+realSeconds).slice(-2)} segundos`}</Typography>
           <Typography sx={{marginBottom: 2}}><b>Tiempo total transcurrido: </b>{`${('0'+days).slice(-2)} días, ${('0'+hours%24).slice(-2)} horas, ${('0'+(minutes%60).toString()).slice(-2)} minutos`}</Typography>
           <Typography sx={{marginBottom: 2}}><b>Máxima capacidad de flota alcanzada: </b>{stopMaxCapacity.toFixed(2)}%</Typography>
           <Typography sx={{marginBottom: 2}}><b>Total de pedidos entregados: </b>{stopTotalPacks}</Typography>
@@ -421,17 +432,11 @@ export const Simulation = (props: ISimulation) => {
             <Box sx={{ display: 'flex' }}>
               <Box sx={{ width: '80%' }}>
                 {!showResults && !loading &&
-                  <div style={{ position: 'relative', height: '100vh' }}>
-                    <Space onCreate={vp => vp.setBounds({ x: [0, 847], y: [0, 600] })}>
-                      <div>
-                        <AnimationGrid 
-                          moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
-                          openVehiclePopup={ openVehiclePopup }
-                          speed={ speed }
-                        />
-                      </div>
-                    </Space>
-                  </div>}
+                  <AnimationGrid 
+                    moment={ (timer >= 0 && apiMoment !== undefined) ? apiMoment : undefined}
+                    openVehiclePopup={ openVehiclePopup }
+                    speed={ speed }
+                  />}
                 {showResults && !loading &&
                   <Box sx={{ height: '100%' }}>
                     { renderSimulationResume() }
