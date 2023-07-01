@@ -171,7 +171,10 @@ export const BlockagesPage = () => {
                 Nuevo
               </Button>
             </Box>
-            <DataGrid rows={blockages} columns={columns} />
+            <div style={{ height:'578px', width: '100%' }}>
+            <DataGrid rows={blockages} columns={columns} autoHeight={false}
+            initialState={{pagination: { paginationModel: { pageSize: 9 } }}}/>
+            </div>
           </Box>
         </Container>
         <Box
