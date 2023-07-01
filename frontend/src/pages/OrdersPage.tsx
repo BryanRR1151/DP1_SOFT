@@ -175,6 +175,7 @@ export const OrdersPage = () => {
       },
       minWidth: 150
     },
+    /*
     {
       field: 'actions',
       headerName: '',
@@ -185,6 +186,7 @@ export const OrdersPage = () => {
         //<GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
     }
+    */
   ];
   
   return (

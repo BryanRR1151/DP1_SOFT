@@ -87,11 +87,11 @@ const getDailyPacks = () => {
 }
 
 const setDailyFault = (body : DailyFault) => {
-  return axios.post(`http://localhost:8080/SetDailyFaults`, body)
+  return axios.post(`http://localhost:8080/api/SetDailyFaults`, body)
 }
 
 const getDailyFaults = () => {
-  return axios.get(`http://localhost:8080/GetDailyFaults`)
+  return axios.get(`http://localhost:8080/api/GetDailyFaults`)
 }
  
 export default {
