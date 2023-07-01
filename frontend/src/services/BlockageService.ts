@@ -6,11 +6,11 @@ import Cookies from 'js-cookie'
 const token = '';
 
 const getBlockages = () => {
-  return axios.get(`http://localhost:8080/listarBloqueos`)
+  return axios.get(`http://localhost:8080/api/listarBloqueos`)
 }
 
 const insertBlockage = (data: TBlockage) => {
-  return axios.post(`http://localhost:8080/insertarBloqueo`, JSON.stringify(data), {
+  return axios.post(`http://localhost:8080/api/insertarBloqueo`, JSON.stringify(data), {
     headers: {
       "Accept": 'application/json',
       "Content-Type": "application/json"
@@ -19,7 +19,7 @@ const insertBlockage = (data: TBlockage) => {
 }
 
 const editBlockage = (data: TBlockage) => {
-  return axios.post(`http://localhost:8080/modificarBloqueo`, JSON.stringify(data), {
+  return axios.post(`http://localhost:8080/api/modificarBloqueo`, JSON.stringify(data), {
     headers: {
       "Accept": 'application/json',
       "Content-Type": "application/json"
@@ -28,7 +28,7 @@ const editBlockage = (data: TBlockage) => {
 }
 
 const deleteBlockage = (id: number) => {
-  return axios.post(`http://localhost:8080/eliminarBloqueo?id=${ id }`);
+  return axios.post(`http://localhost:8080/api/eliminarBloqueo?id=${ id }`);
 }
 
 export default {
