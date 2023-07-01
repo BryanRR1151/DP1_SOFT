@@ -16,8 +16,7 @@ const logout = (data: TUser) => {
   return axios.post(`http://localhost:8080/cerrarCesion`, JSON.stringify(data), {
     headers: {
       "Accept": 'application/json',
-      "Content-Type": "application/json",
-      "Authorization": JSON.parse(Cookies.get('_auth_state') ?? '{}').token
+      "Content-Type": "application/json"
     }
   })
 }

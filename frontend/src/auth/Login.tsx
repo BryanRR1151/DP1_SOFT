@@ -1,11 +1,12 @@
 import { Box, Button, Container, TextField, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import colorConfigs from '../configs/colorConfigs';
 import { TUser } from '../types/types';
 import UserService from '../services/UserService';
 import { useSignIn } from 'react-auth-kit'
 import logo from '../assets/logo_black.png';
-import { useNavigate } from 'react-router-dom';
+import { json, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 export const Login = () => {
   const [ email, setEmail ] = useState<string>('');
@@ -13,6 +14,15 @@ export const Login = () => {
 
   const signIn = useSignIn();
   const navigate = useNavigate();
+
+  const redirectSimulation = async() => {
+    navigate('/');
+  }
+
+  useEffect(() => {
+    if (Cookies.get('_auth'))
+      redirectSimulation();
+  }, []);
 
   const submitLogin = async(e: any) => {
     e.preventDefault();
