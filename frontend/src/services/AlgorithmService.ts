@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { DailyPackDetail, TMoment, TPack } from '../test/movements';
+import { DailyFault, DailyPackDetail, TMoment, TPack } from '../test/movements';
 import moment from 'moment';
 import { useAuthUser } from 'react-auth-kit';
 import Cookies from 'js-cookie';
@@ -85,6 +85,14 @@ const setDailyPacks = (body: DailyPackDetail[]) => {
 const getDailyPacks = () => {
   return axios.get(`http://localhost:8080/api/GetDailyPacks`);
 }
+
+const setDailyFault = (body : DailyFault) => {
+  return axios.post(`http://localhost:8080/SetDailyFaults`, body)
+}
+
+const getDailyFaults = () => {
+  return axios.get(`http://localhost:8080/GetDailyFaults`)
+}
  
 export default {
   startWeekly,
@@ -106,5 +114,7 @@ export default {
   setDailyMoment,
   getDailyMoment,
   setDailyPacks,
-  getDailyPacks
+  getDailyPacks,
+  setDailyFault,
+  getDailyFaults
 };

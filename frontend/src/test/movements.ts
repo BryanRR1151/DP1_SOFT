@@ -97,3 +97,10 @@ export type DailyPackDetail = {
   carAmount: number;
   bikeAmount: number;
 }
+
+export type DailyFault = {
+  id: number;
+  selected: String;
+  currentTime: number;
+  resumeAt: number;
+}
