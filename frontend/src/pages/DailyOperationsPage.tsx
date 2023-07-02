@@ -122,6 +122,14 @@ export const DailyOperationsPage = () => {
     return vehicles;
   }
 
+  const notifyVehicleReturn = async(id: number) => {
+    await AlgorithmService.notifyVehicleReturn(id.toString()).then((response) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
+  }
+
   const planTheRoutes = async() => {
     //get fault list
     let dailyFaults : DailyFault[] = [];
@@ -198,7 +206,10 @@ export const DailyOperationsPage = () => {
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
-
+        let foundIndex = apiMoment!.activeVehicles.findIndex(av=>av.id==v.id);
+        if(foundIndex!=-1){
+          apiMoment?.activeVehicles.splice(foundIndex,1);
+        }
         let foundDailyPackDetail = dailyPackDetails.find(p=>p.id==v!.pack!.id);
         if(foundDailyPackDetail==undefined){
           let dailyPackDetail : DailyPackDetail;
@@ -260,6 +271,8 @@ export const DailyOperationsPage = () => {
       }else{
         if(v.state==1){
           if(v.location!.destination==true){
+            //notify vehicle has returned to storage
+            notifyVehicleReturn(v.id);
             shouldBeAddedToVehicles=false;
             return null;
           }else{
@@ -276,6 +289,7 @@ export const DailyOperationsPage = () => {
             apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
             AlgorithmService.completePack(v.id,currentTime.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+              v.carry = 0;
               v.location!.destination=true;
               v!.movement!.from!.x=v.route!.chroms[0].from.x;
               v!.movement!.from!.y=v.route!.chroms[0].from.y;
