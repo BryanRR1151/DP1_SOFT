@@ -206,8 +206,22 @@ export const DailyOperationsPage = () => {
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
+        let needsToBeInitialized = true;
         let foundIndex = apiMoment!.activeVehicles.findIndex(av=>av.id==v.id);
         if(foundIndex!=-1){
+          if(apiMoment?.activeVehicles[foundIndex].route?.chroms.length != 0){
+            needsToBeInitialized=false;
+            if(apiMoment?.activeVehicles[foundIndex].movement?.to?.x
+              == apiMoment?.activeVehicles[foundIndex].route?.chroms[0].from.x
+              && apiMoment?.activeVehicles[foundIndex].movement?.to?.y
+              == apiMoment?.activeVehicles[foundIndex].route?.chroms[0].from.y){
+              
+              v.movement=apiMoment!.activeVehicles[foundIndex].movement;
+              
+            }else{
+              v.route?.chroms.unshift(apiMoment!.activeVehicles[foundIndex].route!.chroms[0]);
+            }
+          }
           apiMoment?.activeVehicles.splice(foundIndex,1);
         }
         let foundDailyPackDetail = dailyPackDetails.find(p=>p.id==v!.pack!.id);
@@ -224,11 +238,12 @@ export const DailyOperationsPage = () => {
             foundDailyPackDetail.secondsLeft = newSecondsLeft;
           }
         }
-
-        v!.movement!.from!.x=45;
-        v!.movement!.from!.y=30;
-        v!.movement!.to!.x=45;
-        v!.movement!.to!.y=30;
+        if(needsToBeInitialized){
+          v!.movement!.from!.x=45;
+          v!.movement!.from!.y=30;
+          v!.movement!.to!.x=45;
+          v!.movement!.to!.y=30;
+        }  
         v.state=1;
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
