@@ -67,6 +67,15 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
     setError({idCustomer: error.idCustomer, quantity: error.quantity, term: booleanValue, x: error.x, y: error.y});
   }
 
+  const setErrorXY = (booleanValue:boolean , stringValue:String) => {
+    setErrorMessageX(stringValue);
+    setDisabledX(booleanValue);
+    setError({idCustomer: error.idCustomer, quantity: error.quantity, term: error.term, x: booleanValue, y: error.y});
+    setErrorMessageY(stringValue);
+    setDisabledY(booleanValue);
+    setError({idCustomer: error.idCustomer, quantity: error.quantity, term: error.term, x: error.x, y: booleanValue});
+  }
+
   const setErrorX = (booleanValue:boolean , stringValue:String) => {
     setErrorMessageX(stringValue);
     setDisabledX(booleanValue);
@@ -174,7 +183,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
         />
         <TextField 
           label="Posicion X"
-          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, x: e.target?.value } });e.target?.value>=0&&e.target?.value<=69?setErrorX(false," "):setErrorX(true,"Debe ingresar un valor entre 0 y 69");}}
+          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, x: e.target?.value } });e.target?.value>=0&&e.target?.value<=69?(e.target?.value==45&&data.orderNode.y==30?setErrorX(true,"Las coordenadas deben ser distintas al almacén"):(data.orderNode.y==30?setErrorXY(false," "):setErrorX(false," "))):setErrorX(true,"Debe ingresar un valor entre 0 y 69");}}
           required
           variant="outlined"
           color="secondary"
@@ -187,7 +196,7 @@ export const OrdersForm = ({ order, type, handlePanel, handleDeselect }: IOrders
         />
         <TextField 
           label="Posicion Y"
-          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, y: e.target?.value } });e.target?.value>=0&&e.target?.value<=49?setErrorY(false," "):setErrorY(true,"Debe ingresar un valor entre 0 y 49");}}
+          onChange={(e: any) => {setData({ ...data, orderNode: { ...data.orderNode, y: e.target?.value } });e.target?.value>=0&&e.target?.value<=49?(e.target?.value==30&&data.orderNode.x==45?setErrorY(true,"Las coordenadas deben ser distintas al almacén"):(data.orderNode.x==45?setErrorXY(false," "):setErrorY(false," "))):setErrorY(true,"Debe ingresar un valor entre 0 y 49");}}
           required
           variant="outlined"
           color="secondary"
