@@ -34,8 +34,8 @@ const completePack = (idVehicle: number, time: String) => {
   return axios.get(`http://localhost:8080/api/CompletePack?idVehicle=${ idVehicle }&time=${ time }`);
 }
 
-const getBlockages = () => {
-  return axios.get(`http://localhost:8080/api/GetBlockages`);
+const getBlockages = (minute: String) => {
+  return axios.get(`http://localhost:8080/api/GetBlockages?minute=${ minute }`);
 }
 
 const getPacks = () => {

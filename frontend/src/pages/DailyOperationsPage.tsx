@@ -89,8 +89,11 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
 
-    await BlockageService.getBlockages().then((response) => {
+    await AlgorithmService.getBlockages(currentTime.toString()).then((response) => {
+      console.log(response);
       todaysBlockages=response.data
       setTodaysBlockages(todaysBlockages);
       console.log('Blockages retrieved successfully');
@@ -99,8 +102,6 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=[];
     let blockagesToAdd : TBlockage[]=[];
-    let fullTime = new Date();
-    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     todaysBlockages.forEach(b => {
       if(b.start==currentTime || b.end==currentTime){
         AlgorithmService.setBlockages(currentTime.toString()).then((response) => {
@@ -143,8 +144,10 @@ export const DailyOperationsPage = () => {
         }
       }
     });
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
 
-    await BlockageService.getBlockages().then((response) => {
+    await AlgorithmService.getBlockages(currentTime.toString()).then((response) => {
       let newBlockages : TBlockage[] = response.data;
       newBlockages.forEach(b => {
         if(todaysBlockages.find(tb=>tb.id==b.id)==undefined){
@@ -157,8 +160,6 @@ export const DailyOperationsPage = () => {
       console.log(err);
     });
     let blockagesToAdd : TBlockage[]=[];
-    let fullTime = new Date();
-    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     
     
     
