@@ -16,7 +16,7 @@ import { TBlockage as registerBlockageType }  from '../types/types';
 import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
 
 export const DailyOperationsPage = () => {
-
+  var [vehicleSelections, setVehicleSelections] = useState<{value: String;label: String;}[]>([]);
   var [mainFrontComponent, setMainFrontComponent] = useState<Boolean>(false);
   var [dailyPackDetails, setDailyPackDetails] = useState<DailyPackDetail[]>([]);
   var [started, setStarted] = useState<boolean>(false);
@@ -28,7 +28,7 @@ export const DailyOperationsPage = () => {
   var [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
   var [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<String>(" ");
   var [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
-  var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
+  var [vehicleCodeValue, setVehicleCodeValue] = useState<String>('');
   var [bFiles, setBFiles] = useState<any[]>([]);
   var [selected, setSelected] = useState<String>("1");
   var [selectedVehicleType, setSelectedVehicleType] = useState<String>("Aut");
@@ -206,7 +206,11 @@ export const DailyOperationsPage = () => {
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
-        let needsToBeInitialized = true;
+
+        let needsToBeInitialized=true;
+
+        vehicleSelections.push({value:v.code!,label:v.code!});
+
         let foundIndex = apiMoment!.activeVehicles.findIndex(av=>av.id==v.id);
         if(foundIndex!=-1){
           if(apiMoment?.activeVehicles[foundIndex].route?.chroms.length != 0){
@@ -286,6 +290,9 @@ export const DailyOperationsPage = () => {
       }else{
         if(v.state==1){
           if(v.location!.destination==true){
+
+            vehicleSelections.splice(vehicleSelections.findIndex(vs=>vs.value==v.code),1);
+
             //notify vehicle has returned to storage
             notifyVehicleReturn(v.id);
             shouldBeAddedToVehicles=false;
@@ -467,7 +474,7 @@ export const DailyOperationsPage = () => {
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     let damagedVehicleIndex:number=-1;
-    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"));
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==vehicleCodeValue);
     if(damagedVehicleIndex==-1){
       vehicleCodeError = true;
       saveNeedsToBeDisabled = true;
@@ -533,31 +540,20 @@ export const DailyOperationsPage = () => {
     }
   }
 
-  const handleVehicleCodeChange = (formVehicleCode: number) => {
+  const handleVehicleCodeChange = (formVehicleCode: String) => {
     vehicleCodeValue=formVehicleCode;
     setVehicleCodeValue(vehicleCodeValue);
-    if(vehicleCodeValue<=0){
+    let foundVehicle = apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"));
+    if(formVehicleCode==''){
       vehicleCodeError = true;
       saveNeedsToBeDisabled = true;
-      vehicleCodeErrorMessage = "El código debe ser mayor que 0";
+      vehicleCodeErrorMessage = "Debe seleccionar un vehículo";
     }else{
-      let foundVehicle = apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"));
-      if(foundVehicle==undefined){
-        vehicleCodeError = true;
-        saveNeedsToBeDisabled = true;
-        vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
-      }else{
-        if(foundVehicle!.state==0){
-          vehicleCodeError = true;
-          saveNeedsToBeDisabled = true;
-          vehicleCodeErrorMessage = "El vehículo ya está averiado";
-        }else{
-          vehicleCodeError = false;
-          saveNeedsToBeDisabled = false;
-          vehicleCodeErrorMessage = " ";
-        }
-      }
+      vehicleCodeError = false;
+      saveNeedsToBeDisabled = false;
+      vehicleCodeErrorMessage = " ";
     }
+    
     setVehicleCodeError(vehicleCodeError);
     setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
     setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
@@ -572,7 +568,6 @@ export const DailyOperationsPage = () => {
     { value: VehicleType.auto, label: 'Aut' },
     { value: VehicleType.moto, label: 'Mot' }
   ]
-
   const handleIncidentTypeChange = (selectedOption: String) => {
     selected=selectedOption;
     setSelected(selected);
@@ -605,7 +600,7 @@ export const DailyOperationsPage = () => {
     setVehicle(undefined); 
     vehicleCodeError=false; 
     setVehicleCodeError(vehicleCodeError); 
-    vehicleCodeErrorMessage=""; 
+    vehicleCodeErrorMessage=" "; 
     setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
     saveNeedsToBeDisabled=true; 
     setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
@@ -624,7 +619,7 @@ export const DailyOperationsPage = () => {
       setVehicle(undefined); 
       vehicleCodeError=false; 
       setVehicleCodeError(vehicleCodeError); 
-      vehicleCodeErrorMessage=""; 
+      vehicleCodeErrorMessage=" "; 
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
       saveNeedsToBeDisabled=true; 
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
@@ -946,37 +941,19 @@ export const DailyOperationsPage = () => {
             <Box>
               <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
               <form autoComplete="off" onSubmit={handleSubmit}> 
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  sx={{}}
+                <Box sx={{width:294, height:65}}
                 >
-                  <Box
-                    sx={{width:130}}
-                  >
-                    <Select 
-                      defaultValue={vehicleOptions[0]}
-                      isSearchable = {false}
-                      name = "vehicle options"
-                      options={vehicleOptions} 
-                      onChange={(e: any) => {handleVehicleTypeChange(e.label)}}
-                      //onChange={handleChange}
-                    />
-                  </Box>
-                  <TextField 
-                    label="Código del vehículo"
-                    onChange={(e: any) => {handleVehicleCodeChange(e.target?.value)}}
-                    required
-                    variant="outlined"
-                    color="secondary"
-                    type="number"
-                    //value={vehicleCodeValue}
-                    error={vehicleCodeError}
-                    helperText={vehicleCodeErrorMessage}
-                    fullWidth
-                    size="small"
-                    sx={{marginLeft: 2,mb: 3}}
+                  <Select 
+                    
+                    defaultValue={{value:'',label:'Seleccionar Vehículo Activo'}}
+                    isSearchable = {true}
+                    name = "vehicle selection"
+                    options={vehicleSelections} 
+                    onChange={(e: any) => {{handleVehicleCodeChange(e.value)}}}
                   />
+                </Box>
+                <Box sx={{width:294, height:10}}>
+                  <Typography variant='h6' sx={{color: 'red', marginTop: -3, marginLeft: 1, marginBottom: 2, fontSize: '10px'}}>{vehicleCodeErrorMessage}</Typography>
                 </Box>
                 <Box sx={{width:294, height:65}}>
                   <Select 
@@ -1146,7 +1123,7 @@ export const DailyOperationsPage = () => {
       </Box>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); 
         setVehicle(undefined); vehicleCodeError=false; setVehicleCodeError(vehicleCodeError); 
-        vehicleCodeErrorMessage=""; setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
+        vehicleCodeErrorMessage=" "; setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
         saveNeedsToBeDisabled=true; setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
         fileBlockages=[]; setFileBlockages(fileBlockages);
         temporaryFilePackages=[]; setTemporaryFilePackages(temporaryFilePackages);}}/>}
