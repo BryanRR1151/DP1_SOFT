@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { DailyFault, DailyPackDetail, TMoment, TPack } from '../test/movements';
+import { DailyFault, DailyPackDetail, TMoment, TNode, TPack } from '../test/movements';
 import moment from 'moment';
 import { useAuthUser } from 'react-auth-kit';
 import Cookies from 'js-cookie';
@@ -32,6 +32,10 @@ const planRoutes = (time: String) => {
 
 const completePack = (idVehicle: number, time: String) => {
   return axios.get(`http://localhost:8080/api/CompletePack?idVehicle=${ idVehicle }&time=${ time }`);
+}
+
+const type1Return = (idVehicle: number, time: String, x: String, y:String) => {
+  return axios.get(`http://localhost:8080/api/CompletePack?idVehicle=${ idVehicle }&time=${ time }&x=${x}&y=${y}`);
 }
 
 const getBlockages = (minute: String) => {
@@ -121,5 +125,6 @@ export default {
   getDailyPacks,
   setDailyFault,
   getDailyFaults,
-  notifyVehicleReturn
+  notifyVehicleReturn,
+  type1Return
 };

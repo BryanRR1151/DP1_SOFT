@@ -248,7 +248,10 @@ export const DailyOperationsPage = () => {
           v!.movement!.to!.x=45;
           v!.movement!.to!.y=30;
         }  
+        v.resumeAt=0;
+        v.isFailureType1=false;
         v.state=1;
+        console.log(v);
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
       let packs : TPack[]=[];
@@ -290,14 +293,13 @@ export const DailyOperationsPage = () => {
       }else{
         if(v.state==1){
           if(v.location!.destination==true){
-
-            vehicleSelections.splice(vehicleSelections.findIndex(vs=>vs.value==v.code),1);
-
             //notify vehicle has returned to storage
             notifyVehicleReturn(v.id);
             shouldBeAddedToVehicles=false;
             return null;
           }else{
+
+            vehicleSelections.splice(vehicleSelections.findIndex(vs=>vs.value==v.code),1);
             
             let dailyPackDetailIndex = dailyPackDetails.findIndex(dpd => dpd.id == v.pack?.id);
             v.type==VehicleType.auto?dailyPackDetails[dailyPackDetailIndex].carAmount-=1
@@ -329,9 +331,33 @@ export const DailyOperationsPage = () => {
               console.log(err);
             });
           }
-        }else if(v.resumeAt==Math.trunc(new Date().getTime()/1000)){
-          shouldBeAddedToVehicles=false;
-          return null;
+        }else if(v.resumeAt==currentTime){
+          if(v.isFailureType1){
+            AlgorithmService.type1Return(v.id,currentTime.toString(),v.movement!.from!.x.toString(),v.movement!.from!.y.toString()).then((response) => {
+              v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+              v.carry = 0;
+              v.state = 1;
+              v.location!.destination=true;
+              v!.movement!.from!.x=v.route!.chroms[0].from.x;
+              v!.movement!.from!.y=v.route!.chroms[0].from.y;
+              if(v.movement!.from!.x < v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
+              }
+              console.log('Type 1 incident completed');
+            }).catch((err) => {
+              console.log(err);
+            });
+          }
+          else{
+            shouldBeAddedToVehicles=false;
+            return null;
+          }
         }
       }
       if(shouldBeAddedToVehicles){
@@ -474,7 +500,7 @@ export const DailyOperationsPage = () => {
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     let damagedVehicleIndex:number=-1;
-    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==vehicleCodeValue);
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==vehicleCodeValue && v.location?.destination==false);
     if(damagedVehicleIndex==-1){
       vehicleCodeError = true;
       saveNeedsToBeDisabled = true;
@@ -509,7 +535,7 @@ export const DailyOperationsPage = () => {
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     let damagedVehicleIndex:number=-1;
-    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v==vehicle);
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v==vehicle && v.location?.destination==false);
     if(damagedVehicleIndex==-1){
       vehicleCodeError = true;
       saveNeedsToBeDisabled = true;
@@ -521,7 +547,11 @@ export const DailyOperationsPage = () => {
         setOpenPanel(false);
       if(mainFrontComponent){
         apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
-        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt=currentTime+(selected=="3"?14400:60);//7200);
+        console.log(apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt);
+        if(selected=='1'){
+          apiMoment!.activeVehicles[damagedVehicleIndex].isFailureType1=true;
+        }
         registerFault(vehicle!.code!,selected,currentTime.toString());
 
         if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
@@ -1069,7 +1099,7 @@ export const DailyOperationsPage = () => {
             <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
-            {vehicle.state==1&&
+            {vehicle.state==1&&vehicle.location?.destination==false&&
               <Box>
                 <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
                 <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 
