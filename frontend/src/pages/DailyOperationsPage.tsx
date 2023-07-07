@@ -512,7 +512,7 @@ export const DailyOperationsPage = () => {
       setOpenPanel(false);
       if(mainFrontComponent){
         apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
-        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt=currentTime+(selected=="3"?14400:7200);
         registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
         
         if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
@@ -547,7 +547,7 @@ export const DailyOperationsPage = () => {
         setOpenPanel(false);
       if(mainFrontComponent){
         apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
-        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt=currentTime+(selected=="3"?14400:60);//7200);
+        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt=currentTime+(selected=="3"?14400:7200);
         console.log(apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt);
         if(selected=='1'){
           apiMoment!.activeVehicles[damagedVehicleIndex].isFailureType1=true;
