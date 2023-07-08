@@ -426,6 +426,15 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     })
+
+    let newVehicleSelections : {value: String, label: String}[] = [];
+    apiMoment?.activeVehicles.forEach(av => {
+      if(av.location?.destination == false && av.state == 1){
+        newVehicleSelections.push({value: av.code!, label: av.code!});
+      }
+    });
+    vehicleSelections = newVehicleSelections;
+    setVehicleSelections(vehicleSelections),
     
     await AlgorithmService.getDailyPacks().then((response) => {
       dailyPackDetails = response.data;
