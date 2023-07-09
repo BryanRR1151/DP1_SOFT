@@ -89,6 +89,7 @@ export const Simulation = (props: ISimulation) => {
 
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [selectedIncident, setSelectedIncident] = useState<string>('1');
+  const [resultsError, setResultsError] = useState<boolean>(false);
 
   const interval = useRef<any>(null);
   const realInterval = useRef<any>(null);
@@ -155,6 +156,11 @@ export const Simulation = (props: ISimulation) => {
       setPrevSpeed(speed);
       if (prevSpeed == speed && extra == timer-1 && speed != 1 && !callFinalMoment) return;
       await AlgorithmService.getMoment( !callFinalMoment ? timer : 2147483645, !callFinalMoment ? speed*RATIO : 1 ).then((response) => {
+        if (!response.data) {
+          setResultsError(true);
+          setStopped(true);
+          return;
+        }
         let moments: TMoment[] = response.data;
         let newMoment = moments[0];
         let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((v) => newMoment.faultVehicles ? !newMoment.faultVehicles.find((fv) => v.code == fv.code) : true).filter((vehicle) => vehicle.stopTime! >= timer)];
@@ -181,6 +187,8 @@ export const Simulation = (props: ISimulation) => {
         }
       }).catch((err) => {
         console.log(err);
+        setResultsError(true);
+        setStopped(true);
       });
     }
     else {
@@ -241,7 +249,7 @@ export const Simulation = (props: ISimulation) => {
     setLoading(false);
     setCallFinalMoment(false);
     setFinishTime(moment());
-    if (stopType != -2) {
+    if (stopType != -2 && !resultsError) {
       switch(stopType) {
         case(-1):
           toast.error(`Hubo un error: ${stopMessage}`);
@@ -257,12 +265,6 @@ export const Simulation = (props: ISimulation) => {
           break;
       }
     }
-  }
-  
-  const handleTimer = () => {
-    interval.current = setInterval(() => {
-      setTimer((count) => count + 1);
-    }, 1000);
   }
 
   useEffect(() => {
@@ -389,7 +391,7 @@ export const Simulation = (props: ISimulation) => {
 
     return (
       <>
-       {
+       {!resultsError ?
         <>
           {stopType == -1 &&
             <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Hubo un error en la simulación. Inténtelo de nuevo</Typography>
@@ -426,6 +428,7 @@ export const Simulation = (props: ISimulation) => {
             }} />
           </Box>
         </>
+       : <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Hubo un error en la simulación. Inténtelo de nuevo</Typography>
        }
       </>
     )
@@ -467,7 +470,7 @@ export const Simulation = (props: ISimulation) => {
                     variant='contained'
                     color='secondary'
                     disabled={timer >= 0}
-                    onClick={() => { if(initialDate) { setTimer(INITIAL_TIMER); setShowResults(false); } else { toast.error(`Debe ingresar una fecha de inicio de simulación`); } }}
+                    onClick={() => { if(initialDate) { setTimer(INITIAL_TIMER); setShowResults(false); setResultsError(false); } else { toast.error(`Debe ingresar una fecha de inicio de simulación`); } }}
                     sx={{ width: '220px' }}
                   >
                     Iniciar simulación
