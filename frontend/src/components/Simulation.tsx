@@ -157,7 +157,7 @@ export const Simulation = (props: ISimulation) => {
       await AlgorithmService.getMoment( !callFinalMoment ? timer : 2147483645, !callFinalMoment ? speed*RATIO : 1 ).then((response) => {
         let moments: TMoment[] = response.data;
         let newMoment = moments[0];
-        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
+        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((v) => newMoment.faultVehicles ? !newMoment.faultVehicles.find((fv) => v.code == fv.code) : true).filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
 
@@ -186,7 +186,7 @@ export const Simulation = (props: ISimulation) => {
     else {
       if (auxCount < apiMoments.length) {
         let newMoment = apiMoments[auxCount];
-        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
+        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((v) => newMoment.faultVehicles ? !newMoment.faultVehicles.find((fv) => v.code == fv.code) : true).filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
         setApiMoment(parseMoment(newMoment));
