@@ -172,12 +172,12 @@ export const AnimationGrid = ({ moment, openVehiclePopup, speed }: IAnimationGri
                 return (<div
                   style={{
                     position: 'absolute',
-                    width: c.from.x - c.to.x == 0 ? 5 : CELL_SIZE,
-                    height: c.from.y - c.to.y == 0 ? 5 : CELL_SIZE,
+                    width: c.from.x - c.to.x == 0 ? 3 : CELL_SIZE,
+                    height: c.from.y - c.to.y == 0 ? 3 : CELL_SIZE,
                     backgroundColor: color,
                     //borderRadius: 2,
-                    top: c.from.y-c.to.y == 0 ? c.from.y*CELL_SIZE-2.5:(c.from.y<c.to.y?c.from.y*CELL_SIZE:c.to.y*CELL_SIZE),
-                    left: c.from.x - c.to.x == 0 ? c.from.x*CELL_SIZE-2.5 : (c.from.x<c.to.x?c.from.x*CELL_SIZE:c.to.x*CELL_SIZE)
+                    top: c.from.y-c.to.y == 0 ? c.from.y*CELL_SIZE-1.5:(c.from.y<c.to.y?c.from.y*CELL_SIZE:c.to.y*CELL_SIZE),
+                    left: c.from.x - c.to.x == 0 ? c.from.x*CELL_SIZE-1.5 : (c.from.x<c.to.x?c.from.x*CELL_SIZE:c.to.x*CELL_SIZE)
                   }}
                 />)
               })

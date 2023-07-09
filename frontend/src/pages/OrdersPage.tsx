@@ -175,6 +175,7 @@ export const OrdersPage = () => {
       },
       minWidth: 150
     },
+    /*
     {
       field: 'actions',
       headerName: '',
@@ -182,9 +183,10 @@ export const OrdersPage = () => {
       minWidth: 50,
       getActions: (params: GridRowParams) => [
         //<GridActionsCellItem icon={<FaPen/>} label="Editar" onClick={(e) => handleEdit(e, params)} />,
-        <GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
+        //<GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
     }
+    */
   ];
   
   return (

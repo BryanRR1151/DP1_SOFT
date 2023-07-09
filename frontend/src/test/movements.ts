@@ -36,6 +36,7 @@ export type TVehicle = {
   resumeAt?: number;
   stopTime?: number;
   failureType?: number;
+  isFailureType1?: boolean;
 }
 
 export type TSolution = {
@@ -97,4 +98,11 @@ export type DailyPackDetail = {
   secondsLeft: number;
   carAmount: number;
   bikeAmount: number;
+}
+
+export type DailyFault = {
+  id: number;
+  selected: String;
+  currentTime: number;
+  resumeAt: number;
 }

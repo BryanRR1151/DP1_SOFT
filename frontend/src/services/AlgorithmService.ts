@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { DailyPackDetail, TMoment, TPack } from '../test/movements';
+import { DailyFault, DailyPackDetail, TMoment, TNode, TPack } from '../test/movements';
 import moment from 'moment';
 import { useAuthUser } from 'react-auth-kit';
 import Cookies from 'js-cookie';
@@ -34,8 +34,12 @@ const completePack = (idVehicle: number, time: String) => {
   return axios.get(`http://localhost:8080/api/CompletePack?idVehicle=${ idVehicle }&time=${ time }`);
 }
 
-const getBlockages = () => {
-  return axios.get(`http://localhost:8080/api/GetBlockages`);
+const type1Return = (idVehicle: number, time: String, x: String, y:String) => {
+  return axios.get(`http://localhost:8080/api/CompletePack?idVehicle=${ idVehicle }&time=${ time }&x=${x}&y=${y}`);
+}
+
+const getBlockages = (minute: String) => {
+  return axios.get(`http://localhost:8080/api/GetBlockages?minute=${ minute }`);
 }
 
 const getPacks = () => {
@@ -85,6 +89,18 @@ const setDailyPacks = (body: DailyPackDetail[]) => {
 const getDailyPacks = () => {
   return axios.get(`http://localhost:8080/api/GetDailyPacks`);
 }
+
+const setDailyFault = (body : DailyFault) => {
+  return axios.post(`http://localhost:8080/api/SetDailyFaults`, body)
+}
+
+const getDailyFaults = () => {
+  return axios.get(`http://localhost:8080/api/GetDailyFaults`)
+}
+
+const notifyVehicleReturn = (idVehicle: String) => {
+  return axios.get(`http://localhost:8080/api/SetVehicleOrigin?idVehicle=${ idVehicle }`);
+}
  
 export default {
   startWeekly,
@@ -106,5 +122,9 @@ export default {
   setDailyMoment,
   getDailyMoment,
   setDailyPacks,
-  getDailyPacks
+  getDailyPacks,
+  setDailyFault,
+  getDailyFaults,
+  notifyVehicleReturn,
+  type1Return
 };

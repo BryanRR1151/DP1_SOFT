@@ -8,7 +8,7 @@ import BlockageService from '../services/BlockageService';
 import Select, { GroupBase } from 'react-select'
 import { ToastContainer, toast } from 'react-toastify';
 import { Accordion, AccordionSummary, AccordionDetails, Button, Breadcrumbs, Box, Typography, Container, Grid, TextField } from '@mui/material';
-import { TMoment, TBlockage, TPack, DailyPackDetail, TVehicle, VehicleType } from '../test/movements';
+import { TMoment, TBlockage, TPack, DailyPackDetail, TVehicle, VehicleType, DailyFault } from '../test/movements';
 import AlgorithmService from '../services/AlgorithmService';
 import { PanelType, panelStyles } from "../types/types";
 import Dropzone from 'react-dropzone'
@@ -16,7 +16,7 @@ import { TBlockage as registerBlockageType }  from '../types/types';
 import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
 
 export const DailyOperationsPage = () => {
-
+  var [vehicleSelections, setVehicleSelections] = useState<{value: String;label: String;}[]>([]);
   var [mainFrontComponent, setMainFrontComponent] = useState<Boolean>(false);
   var [dailyPackDetails, setDailyPackDetails] = useState<DailyPackDetail[]>([]);
   var [started, setStarted] = useState<boolean>(false);
@@ -28,7 +28,7 @@ export const DailyOperationsPage = () => {
   var [vehicleCodeError, setVehicleCodeError] = useState<boolean>(false);
   var [vehicleCodeErrorMessage, setVehicleCodeErrorMessage] = useState<String>(" ");
   var [saveNeedsToBeDisabled, setSaveNeedsToBeDisabled] = useState<boolean>(true);
-  var [vehicleCodeValue, setVehicleCodeValue] = useState<number>(0);
+  var [vehicleCodeValue, setVehicleCodeValue] = useState<String>('');
   var [bFiles, setBFiles] = useState<any[]>([]);
   var [selected, setSelected] = useState<String>("1");
   var [selectedVehicleType, setSelectedVehicleType] = useState<String>("Aut");
@@ -71,7 +71,6 @@ export const DailyOperationsPage = () => {
 
   const initiateAlgorithm = async() => {
     await AlgorithmService.getDailyFlag().then((response)=>{
-      console.log(response.data);
       let dailyFlag : boolean = response.data;
       if(!dailyFlag){
         mainFrontComponent = true;
@@ -82,7 +81,6 @@ export const DailyOperationsPage = () => {
     });
 
     if(!mainFrontComponent){
-      console.log('Theres already a main front');
       return;
     }
 
@@ -91,8 +89,11 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
 
-    await BlockageService.getBlockages().then((response) => {
+    await AlgorithmService.getBlockages(currentTime.toString()).then((response) => {
+      console.log(response);
       todaysBlockages=response.data
       setTodaysBlockages(todaysBlockages);
       console.log('Blockages retrieved successfully');
@@ -101,8 +102,6 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=[];
     let blockagesToAdd : TBlockage[]=[];
-    let fullTime = new Date();
-    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     todaysBlockages.forEach(b => {
       if(b.start==currentTime || b.end==currentTime){
         AlgorithmService.setBlockages(currentTime.toString()).then((response) => {
@@ -117,54 +116,46 @@ export const DailyOperationsPage = () => {
     });
     apiMoment!.activeBlockages=apiMoment!.activeBlockages.concat(blockagesToAdd);
     setApiMoment(apiMoment);
-    /*
-    await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
-      console.log(response.data);
-      vehicles=parseVehicles(response.data);
-      vehicles!.forEach( (v)=>{
-        v!.movement!.from!.x=45;
-        v!.movement!.from!.y=30;
-        v!.movement!.to!.x=45;
-        v!.movement!.to!.y=30;
-        v.broken=false;
-      })
-      apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
-      let packs : TPack[]=[];
-      vehicles.forEach(v => {
-        packs.push(v.pack!);
-      });
-      apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
-      vehicles=[];
-      apiMoment?.activeVehicles.forEach(v => {
-        v.movement!.from!.x=v.movement!.to!.x;
-          v.movement!.from!.y=v.movement!.to!.y;
-          if(v.movement!.from!.x < v.route!.chroms[0].to.x){
-            v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
-          }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
-            v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
-          }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
-            v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
-          }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
-            v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
-          }
-          if(v.movement!.to!.x == v.route!.chroms[0].to.x && v.movement!.to!.y == v.route!.chroms[0].to.y){
-            v.route!.chroms.shift();
-          }
-      })
-      setApiMoment(apiMoment);
-      console.log('Routes planned successfully');
-    }).catch((err) => {
-      console.log(err);
-    });
-    */
   }
 
   const parseVehicles = (vehicles: TVehicle[]) => {
     return vehicles;
   }
 
+  const notifyVehicleReturn = async(id: number) => {
+    await AlgorithmService.notifyVehicleReturn(id.toString()).then((response) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
+  }
+
   const planTheRoutes = async() => {
-    await BlockageService.getBlockages().then((response) => {
+    //get fault list
+    let dailyFaults : DailyFault[] = [];
+    await AlgorithmService.getDailyFaults().then((response) => {
+      dailyFaults = response.data;
+    }).catch((err) => {
+      console.log(err);
+    })
+    dailyFaults.forEach(df => {
+      let foundVehicle = apiMoment!.activeVehicles.find(av => av.id==df.id);
+      if(foundVehicle!=undefined && foundVehicle!.state!=0){
+        foundVehicle!.state=0;
+        foundVehicle!.resumeAt=df.resumeAt;
+        registerFault(foundVehicle!.code!,df.selected,df.currentTime.toString());
+
+        if(foundVehicle!.location?.destination==false){
+          foundVehicle!.type==VehicleType.auto?
+            dailyPackDetails.find(dpd=>dpd.id==foundVehicle!.pack!.id)!.carAmount-=1
+            :dailyPackDetails.find(dpd=>dpd.id==foundVehicle!.pack!.id)!.bikeAmount-=1
+        }
+      }
+    });
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+
+    await AlgorithmService.getBlockages(currentTime.toString()).then((response) => {
       let newBlockages : TBlockage[] = response.data;
       newBlockages.forEach(b => {
         if(todaysBlockages.find(tb=>tb.id==b.id)==undefined){
@@ -177,25 +168,8 @@ export const DailyOperationsPage = () => {
       console.log(err);
     });
     let blockagesToAdd : TBlockage[]=[];
-    let fullTime = new Date();
-    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     
-    let updatedPackFromFileArray : TPack[] = [];
-    filePackages.forEach(p => {
-      if(p.originalTime==currentTime){
-        AlgorithmService.insertPack(p).then((response) => {
-          toast.success('Pedido registrado exitosamente');
-        }).catch((err) => {
-          updatedPackFromFileArray.push(p);
-          toast.error('Ocurrió un error al registrar el pedido')
-          console.log(err);
-        });
-      }else if(p.originalTime>currentTime){
-        updatedPackFromFileArray.push(p);
-      }
-    });
-    filePackages = updatedPackFromFileArray;
-    setFilePackages(filePackages);
+    
     
     todaysBlockages.forEach(b => {
       if(b.start==currentTime && apiMoment!.activeBlockages.find(ab=>ab.id==b.id)==undefined){
@@ -233,6 +207,27 @@ export const DailyOperationsPage = () => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
 
+        let needsToBeInitialized=true;
+
+        vehicleSelections.push({value:v.code!,label:v.code!});
+
+        let foundIndex = apiMoment!.activeVehicles.findIndex(av=>av.id==v.id);
+        if(foundIndex!=-1){
+          if(apiMoment?.activeVehicles[foundIndex].route?.chroms.length != 0){
+            needsToBeInitialized=false;
+            if(apiMoment?.activeVehicles[foundIndex].movement?.to?.x
+              == apiMoment?.activeVehicles[foundIndex].route?.chroms[0].from.x
+              && apiMoment?.activeVehicles[foundIndex].movement?.to?.y
+              == apiMoment?.activeVehicles[foundIndex].route?.chroms[0].from.y){
+              
+              v.movement=apiMoment!.activeVehicles[foundIndex].movement;
+              
+            }else{
+              v.route?.chroms.unshift(apiMoment!.activeVehicles[foundIndex].route!.chroms[0]);
+            }
+          }
+          apiMoment?.activeVehicles.splice(foundIndex,1);
+        }
         let foundDailyPackDetail = dailyPackDetails.find(p=>p.id==v!.pack!.id);
         if(foundDailyPackDetail==undefined){
           let dailyPackDetail : DailyPackDetail;
@@ -242,18 +237,21 @@ export const DailyOperationsPage = () => {
           dailyPackDetails.push(dailyPackDetail);
         }else{
           v.type==VehicleType.auto?foundDailyPackDetail.carAmount+=1:foundDailyPackDetail.bikeAmount+=1;
-          console.log()
           let newSecondsLeft = parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0));
           if(newSecondsLeft > foundDailyPackDetail.secondsLeft){
             foundDailyPackDetail.secondsLeft = newSecondsLeft;
           }
         }
-
-        v!.movement!.from!.x=45;
-        v!.movement!.from!.y=30;
-        v!.movement!.to!.x=45;
-        v!.movement!.to!.y=30;
+        if(needsToBeInitialized){
+          v!.movement!.from!.x=45;
+          v!.movement!.from!.y=30;
+          v!.movement!.to!.x=45;
+          v!.movement!.to!.y=30;
+        }  
+        v.resumeAt=0;
+        v.isFailureType1=false;
         v.state=1;
+        console.log(v);
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
       let packs : TPack[]=[];
@@ -266,7 +264,6 @@ export const DailyOperationsPage = () => {
     }).catch((err) => {
       console.log(err);
     });
-    console.log(dailyPackDetails);
     let temporaryVehicles:TVehicle[]=[];
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
       let shouldBeAddedToVehicles:boolean=true;
@@ -289,16 +286,20 @@ export const DailyOperationsPage = () => {
         }else{
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
-          v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
+          //v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
           v.route!.chroms=[];
           apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
         }
       }else{
         if(v.state==1){
           if(v.location!.destination==true){
+            //notify vehicle has returned to storage
+            notifyVehicleReturn(v.id);
             shouldBeAddedToVehicles=false;
             return null;
           }else{
+
+            vehicleSelections.splice(vehicleSelections.findIndex(vs=>vs.value==v.code),1);
             
             let dailyPackDetailIndex = dailyPackDetails.findIndex(dpd => dpd.id == v.pack?.id);
             v.type==VehicleType.auto?dailyPackDetails[dailyPackDetailIndex].carAmount-=1
@@ -312,18 +313,51 @@ export const DailyOperationsPage = () => {
             apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
             AlgorithmService.completePack(v.id,currentTime.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+              v.carry = 0;
               v.location!.destination=true;
-              v.movement!.from=v.route!.chroms[0].from;
-              v.movement!.to=v.route!.chroms[0].to;
-              v.route!.chroms.shift();
+              v!.movement!.from!.x=v.route!.chroms[0].from.x;
+              v!.movement!.from!.y=v.route!.chroms[0].from.y;
+              if(v.movement!.from!.x < v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
+              }
               console.log('Package completed successfully');
             }).catch((err) => {
               console.log(err);
             });
           }
-        }else if(v.resumeAt==Math.trunc(new Date().getTime()/1000)){
-          shouldBeAddedToVehicles=false;
-          return null;
+        }else if(v.resumeAt==currentTime){
+          if(v.isFailureType1){
+            AlgorithmService.type1Return(v.id,currentTime.toString(),v.movement!.from!.x.toString(),v.movement!.from!.y.toString()).then((response) => {
+              v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
+              v.carry = 0;
+              v.state = 1;
+              v.location!.destination=true;
+              v!.movement!.from!.x=v.route!.chroms[0].from.x;
+              v!.movement!.from!.y=v.route!.chroms[0].from.y;
+              if(v.movement!.from!.x < v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.x > v.route!.chroms[0].to.x){
+                v.movement!.to!.x=parseFloat((v.movement!.from!.x-(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y < v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y+(v.speed/60)/10).toFixed(2));
+              }else if(v.movement!.from!.y > v.route!.chroms[0].to.y){
+                v.movement!.to!.y=parseFloat((v.movement!.from!.y-(v.speed/60)/10).toFixed(2));
+              }
+              console.log('Type 1 incident completed');
+            }).catch((err) => {
+              console.log(err);
+            });
+          }
+          else{
+            shouldBeAddedToVehicles=false;
+            return null;
+          }
         }
       }
       if(shouldBeAddedToVehicles){
@@ -334,7 +368,6 @@ export const DailyOperationsPage = () => {
     newVehicles = newVehicles!.filter((value)=>value!=null);
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
-    console.log(apiMoment);
     await AlgorithmService.setDailyMoment(apiMoment!).then((response) => {
       console.log(response.data);
     }).catch((err) => {
@@ -378,20 +411,30 @@ export const DailyOperationsPage = () => {
         }).catch((error) => {
           console.log(error);
         })
-        console.log('Switched to main front');
-        return;
       }
     }).catch((err) => {
       console.log(err);
     });
 
+    if(mainFrontComponent){
+      return;
+    }
+
     await AlgorithmService.getDailyMoment().then((response) => {
       apiMoment = response.data;
       setApiMoment(apiMoment);
-      console.log(apiMoment);
     }).catch((err) => {
       console.log(err);
     })
+
+    let newVehicleSelections : {value: String, label: String}[] = [];
+    apiMoment?.activeVehicles.forEach(av => {
+      if(av.location?.destination == false && av.state == 1){
+        newVehicleSelections.push({value: av.code!, label: av.code!});
+      }
+    });
+    vehicleSelections = newVehicleSelections;
+    setVehicleSelections(vehicleSelections),
     
     await AlgorithmService.getDailyPacks().then((response) => {
       dailyPackDetails = response.data;
@@ -407,14 +450,43 @@ export const DailyOperationsPage = () => {
       if(mainFrontComponent){
         planTheRoutes();
       }else{
-        console.log('reading');
         readTheRoutes();
       }
     }, 6000);
     return () => {
       clearInterval(intervalId);
     };
-  }, [filePackages,apiMoment,todaysBlockages,mainFrontComponent]);  
+  }, [apiMoment,todaysBlockages,mainFrontComponent]);  
+
+  const registerFilePacks = async() => {
+    let fullTime = new Date();
+    let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+    let updatedPackFromFileArray : TPack[] = [];
+    filePackages.forEach(p => {
+      if(p.originalTime==currentTime){
+        AlgorithmService.insertPack(p).then((response) => {
+          toast.success('Pedido registrado exitosamente');
+        }).catch((err) => {
+          updatedPackFromFileArray.push(p);
+          toast.error('Ocurrió un error al registrar el pedido')
+          console.log(err);
+        });
+      }else if(p.originalTime>currentTime){
+        updatedPackFromFileArray.push(p);
+      }
+    });
+    filePackages = updatedPackFromFileArray;
+    setFilePackages(filePackages);
+  }
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      registerFilePacks();
+    }, 6000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [filePackages]);  
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
     await AlgorithmService.setFault(vehicle,fault,time).then(() => {
@@ -424,12 +496,20 @@ export const DailyOperationsPage = () => {
     });
   }
 
+  const pushDailyFault = async(dailyFault : DailyFault) => {
+    await AlgorithmService.setDailyFault(dailyFault).then((response) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
+  }
+
   const handleSubmit = (e: any) => {
     e.preventDefault()
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     let damagedVehicleIndex:number=-1;
-    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"));
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code==vehicleCodeValue && v.location?.destination==false);
     if(damagedVehicleIndex==-1){
       vehicleCodeError = true;
       saveNeedsToBeDisabled = true;
@@ -438,14 +518,24 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
       setOpenPanel(false);
-      registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
-      
-      if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
-        apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
-          dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
-          :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+      if(mainFrontComponent){
+        apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
+        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt=currentTime+(selected=="3"?14400:7200);
+        registerFault(selectedVehicleType+vehicleCodeValue.toString().padStart(3,"0"),selected,currentTime.toString());
+        
+        if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
+          apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
+            dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
+            :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+        }
+      }else{
+        let currentTime = Math.trunc(new Date().getTime()/1000);
+        let dailyFault : DailyFault = {id:apiMoment!.activeVehicles[damagedVehicleIndex].id, 
+          selected: selected, currentTime: currentTime,
+          resumeAt:currentTime+(selected=="3"?14400:7200)};
+        //push dailyFault
+        pushDailyFault(dailyFault);
       }
     }
   }
@@ -454,7 +544,7 @@ export const DailyOperationsPage = () => {
     let fullTime = new Date();
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
     let damagedVehicleIndex:number=-1;
-    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v==vehicle);
+    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v==vehicle && v.location?.destination==false);
     if(damagedVehicleIndex==-1){
       vehicleCodeError = true;
       saveNeedsToBeDisabled = true;
@@ -463,43 +553,46 @@ export const DailyOperationsPage = () => {
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
     }else{
-      apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
-      setOpenPanel(false);
-      registerFault(vehicle!.code!,selected,currentTime.toString());
+        setOpenPanel(false);
+      if(mainFrontComponent){
+        apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
+        apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt=currentTime+(selected=="3"?14400:7200);
+        console.log(apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt);
+        if(selected=='1'){
+          apiMoment!.activeVehicles[damagedVehicleIndex].isFailureType1=true;
+        }
+        registerFault(vehicle!.code!,selected,currentTime.toString());
 
-      if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
-        apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
-          dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
-          :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+        if(apiMoment!.activeVehicles[damagedVehicleIndex].location?.destination==false){
+          apiMoment!.activeVehicles[damagedVehicleIndex].type==VehicleType.auto?
+            dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.carAmount-=1
+            :dailyPackDetails.find(dpd=>dpd.id==apiMoment!.activeVehicles[damagedVehicleIndex]!.pack!.id)!.bikeAmount-=1
+        }
+      }else{
+        let currentTime = Math.trunc(new Date().getTime()/1000);
+        let dailyFault : DailyFault = {id:apiMoment!.activeVehicles[damagedVehicleIndex].id, 
+          selected: selected, currentTime: currentTime,
+          resumeAt:currentTime+(selected=="3"?14400:7200)};
+        //push dailyFault
+        pushDailyFault(dailyFault);
       }
     }
   }
 
-  const handleVehicleCodeChange = (formVehicleCode: number) => {
+  const handleVehicleCodeChange = (formVehicleCode: String) => {
     vehicleCodeValue=formVehicleCode;
     setVehicleCodeValue(vehicleCodeValue);
-    if(vehicleCodeValue<=0){
+    let foundVehicle = apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"));
+    if(formVehicleCode==''){
       vehicleCodeError = true;
       saveNeedsToBeDisabled = true;
-      vehicleCodeErrorMessage = "El código debe ser mayor que 0";
+      vehicleCodeErrorMessage = "Debe seleccionar un vehículo";
     }else{
-      let foundVehicle = apiMoment?.activeVehicles.find(v => v.code==selectedVehicleType+formVehicleCode.toString().padStart(3,"0"));
-      if(foundVehicle==undefined){
-        vehicleCodeError = true;
-        saveNeedsToBeDisabled = true;
-        vehicleCodeErrorMessage = "El vehículo no se encuentra en ruta";
-      }else{
-        if(foundVehicle!.state==0){
-          vehicleCodeError = true;
-          saveNeedsToBeDisabled = true;
-          vehicleCodeErrorMessage = "El vehículo ya está averiado";
-        }else{
-          vehicleCodeError = false;
-          saveNeedsToBeDisabled = false;
-          vehicleCodeErrorMessage = " ";
-        }
-      }
+      vehicleCodeError = false;
+      saveNeedsToBeDisabled = false;
+      vehicleCodeErrorMessage = " ";
     }
+    
     setVehicleCodeError(vehicleCodeError);
     setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
     setVehicleCodeErrorMessage(vehicleCodeErrorMessage);
@@ -514,7 +607,6 @@ export const DailyOperationsPage = () => {
     { value: VehicleType.auto, label: 'Aut' },
     { value: VehicleType.moto, label: 'Mot' }
   ]
-
   const handleIncidentTypeChange = (selectedOption: String) => {
     selected=selectedOption;
     setSelected(selected);
@@ -547,7 +639,7 @@ export const DailyOperationsPage = () => {
     setVehicle(undefined); 
     vehicleCodeError=false; 
     setVehicleCodeError(vehicleCodeError); 
-    vehicleCodeErrorMessage=""; 
+    vehicleCodeErrorMessage=" "; 
     setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
     saveNeedsToBeDisabled=true; 
     setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
@@ -566,7 +658,7 @@ export const DailyOperationsPage = () => {
       setVehicle(undefined); 
       vehicleCodeError=false; 
       setVehicleCodeError(vehicleCodeError); 
-      vehicleCodeErrorMessage=""; 
+      vehicleCodeErrorMessage=" "; 
       setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
       saveNeedsToBeDisabled=true; 
       setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
@@ -725,7 +817,7 @@ export const DailyOperationsPage = () => {
 
   const getCards = () => {
     const rows = dailyPackDetails.map((dpd, index) => (
-      <div style={{height:150}}>
+      <div key={index} style={{height:150}}>
       <div
         key={index}
         style={{ flex: 1,
@@ -888,37 +980,19 @@ export const DailyOperationsPage = () => {
             <Box>
               <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
               <form autoComplete="off" onSubmit={handleSubmit}> 
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  sx={{}}
+                <Box sx={{width:294, height:65}}
                 >
-                  <Box
-                    sx={{width:130}}
-                  >
-                    <Select 
-                      defaultValue={vehicleOptions[0]}
-                      isSearchable = {false}
-                      name = "vehicle options"
-                      options={vehicleOptions} 
-                      onChange={(e: any) => {handleVehicleTypeChange(e.label)}}
-                      //onChange={handleChange}
-                    />
-                  </Box>
-                  <TextField 
-                    label="Código del vehículo"
-                    onChange={(e: any) => {handleVehicleCodeChange(e.target?.value)}}
-                    required
-                    variant="outlined"
-                    color="secondary"
-                    type="number"
-                    //value={vehicleCodeValue}
-                    error={vehicleCodeError}
-                    helperText={vehicleCodeErrorMessage}
-                    fullWidth
-                    size="small"
-                    sx={{marginLeft: 2,mb: 3}}
+                  <Select 
+                    
+                    defaultValue={{value:'',label:'Seleccionar Vehículo Activo'}}
+                    isSearchable = {true}
+                    name = "vehicle selection"
+                    options={vehicleSelections} 
+                    onChange={(e: any) => {{handleVehicleCodeChange(e.value)}}}
                   />
+                </Box>
+                <Box sx={{width:294, height:10}}>
+                  <Typography variant='h6' sx={{color: 'red', marginTop: -3, marginLeft: 1, marginBottom: 2, fontSize: '10px'}}>{vehicleCodeErrorMessage}</Typography>
                 </Box>
                 <Box sx={{width:294, height:65}}>
                   <Select 
@@ -1034,7 +1108,7 @@ export const DailyOperationsPage = () => {
             <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
-            {vehicle.state==1&&
+            {vehicle.state==1&&vehicle.location?.destination==false&&
               <Box>
                 <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
                 <form autoComplete="off" onSubmit={handleSubmitFromVehicle}> 
@@ -1088,7 +1162,7 @@ export const DailyOperationsPage = () => {
       </Box>
       {openPanel && <Box sx={panelStyles.overlay} onClick={ () => { setOpenPanel(false); setTypePanel(null); 
         setVehicle(undefined); vehicleCodeError=false; setVehicleCodeError(vehicleCodeError); 
-        vehicleCodeErrorMessage=""; setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
+        vehicleCodeErrorMessage=" "; setVehicleCodeErrorMessage(vehicleCodeErrorMessage); 
         saveNeedsToBeDisabled=true; setSaveNeedsToBeDisabled(saveNeedsToBeDisabled);
         fileBlockages=[]; setFileBlockages(fileBlockages);
         temporaryFilePackages=[]; setTemporaryFilePackages(temporaryFilePackages);}}/>}

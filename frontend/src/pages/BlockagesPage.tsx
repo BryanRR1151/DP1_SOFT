@@ -30,11 +30,18 @@ export const BlockagesPage = () => {
   const [isOpenPanel, setIsOpenPanel] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [blockages, setBlockages] = useState<TBlockage[]>([]);
-
+/*
   useEffect(() => {
     loadBlockages();
-  });
-
+  });*/
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      loadBlockages();
+    }, 7000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
   const loadBlockages = async() => {
     await BlockageService.getBlockages().then((response) => {
       console.log(response);
@@ -129,6 +136,7 @@ export const BlockagesPage = () => {
     //   headerName: 'Fecha de registro',
     //   minWidth: 150
     // },
+    /*
     {
       field: 'actions',
       headerName: '',
@@ -138,6 +146,7 @@ export const BlockagesPage = () => {
         //<GridActionsCellItem icon={<FaTrash/>} label="Eliminar" onClick={(e) => handleDelete(e, params)} />,
       ]
     }
+    */
   ];
   
   return (
@@ -171,7 +180,10 @@ export const BlockagesPage = () => {
                 Nuevo
               </Button>
             </Box>
-            <DataGrid rows={blockages} columns={columns} />
+            <div style={{ height:'578px', width: '100%' }}>
+            <DataGrid rows={blockages} columns={columns} autoHeight={false}
+            initialState={{pagination: { paginationModel: { pageSize: 9 } }}}/>
+            </div>
           </Box>
         </Container>
         <Box
