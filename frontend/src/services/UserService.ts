@@ -13,7 +13,7 @@ const loginUser = (data: TUser) => {
 }
 
 const logout = (data: TUser) => {
-  return axios.post(`http://localhost:8080/api/logout`, JSON.stringify(data), {
+  return axios.post(`http://localhost:8080/api/cerrarCesion`, JSON.stringify(data), {
     headers: {
       "Accept": 'application/json',
       "Content-Type": "application/json"

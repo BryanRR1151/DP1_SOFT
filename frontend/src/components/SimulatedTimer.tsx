@@ -22,8 +22,7 @@ export const SimulatedTimer = ({ min, initialDate }: ISimulatedTimer) => {
         <Typography variant={'h6'}>{`${('0'+days).slice(-2)}:${('0'+hours%24).slice(-2)}:${('0'+(minutes%60).toString()).slice(-2)}`}</Typography>
         <Typography sx={{marginLeft: '5px', marginTop: '3px'}}>{`(dd/hh/mm)`}</Typography>
       </Box>
-      <Typography variant={'h6'} sx={{marginTop: '10px'}}>Día:</Typography>
-      <Typography sx={{marginTop: '5px'}}>{moment([ad, Number(md)-1, dd]).add(days, 'days').format('DD/MM/YYYY')}</Typography>
+      <Typography sx={{marginTop: '10px'}}><b>Día:</b> {moment([ad, Number(md)-1, dd]).add(days, 'days').format('DD/MM/YYYY')}</Typography>
     </>
   );
 }

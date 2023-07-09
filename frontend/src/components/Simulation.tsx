@@ -31,7 +31,7 @@ interface ISimulation {
 }
 
 const INITIAL_TIMER = 0;
-const RATIO = 2;
+const RATIO = 1;
 
 const options = [
   { value: "1", label: 'TI1' },
@@ -61,6 +61,7 @@ export const Simulation = (props: ISimulation) => {
   const [apiMoments, setApiMoments] = useState<TMoment[]>([]);
   const [apiMoment, setApiMoment] = useState<TMoment|undefined>(undefined);
   const [timer, setTimer] = useState(-1);
+  const [realTimer, setRealTimer] = useState(0);
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
   const [fFiles, setFFiles] = useState<any[]>([]);
@@ -87,8 +88,11 @@ export const Simulation = (props: ISimulation) => {
   const [alter, setAlter] = useState<number>(0);
   const [initTime, setInitTime] = useState<any>();
   const [finishTime, setFinishTime] = useState<any>();
+  const [extra, setExtra] = useState<number>(0);
+  const [prevSpeed, setPrevSpeed] = useState<number>(1);
 
   const interval = useRef<any>(null);
+  const realInterval = useRef<any>(null);
 
   useEffect(() => {
     window.addEventListener("beforeunload", function(e){
@@ -148,18 +152,21 @@ export const Simulation = (props: ISimulation) => {
       return;
     }
     if ((auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) || callFinalMoment) {
+      setExtra(timer);
+      setPrevSpeed(speed);
+      if (prevSpeed == speed && extra == timer-1 && speed != 1 && !callFinalMoment) return;
       await AlgorithmService.getMoment( !callFinalMoment ? timer : 2147483645, !callFinalMoment ? speed*RATIO : 1 ).then((response) => {
         let moments: TMoment[] = response.data;
         let newMoment = moments[0];
-        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
+        let newFaultVehicles = [...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
 
         setApiMoment(parseMoment(newMoment));
         setApiMoments(moments);
-        if (moments.length < speed*RATIO) {
-          setAlter(moments.length);
-        }
+        // if (moments.length < speed*RATIO) {
+        //   setAlter(moments.length);
+        // }
         if (speed != 1 || (speed == 1 && RATIO > 1)) setAuxCount(1);
 
         if (moments[0].finish && !stopped)  {
@@ -178,21 +185,23 @@ export const Simulation = (props: ISimulation) => {
       });
     }
     else {
-      let newMoment = apiMoments[auxCount];
-      let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
-      newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
-      setFaultVehicles(newFaultVehicles);
-      
-      setApiMoment(parseMoment(newMoment));
+      if (auxCount < apiMoments.length) {
+        let newMoment = apiMoments[auxCount];
+        let newFaultVehicles = [...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
+        newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
+        setFaultVehicles(newFaultVehicles);
+        setApiMoment(parseMoment(newMoment));
+      }
+
       if (auxCount < (!alter ? (speed*RATIO - 1) : (alter - 1))) {
         setAuxCount((count) => count + 1);
       }
       else {
         setAuxCount(0);
-        setAlter(0);
+        // setAlter(0);
       }
 
-      if (apiMoments[auxCount].finish && !stopped) {
+      if (auxCount < apiMoments.length && apiMoments[auxCount].finish && !stopped) {
         setStopped(true);
         setStopType(apiMoments[auxCount].finish!.code);
         setStopMessage(apiMoments[auxCount].finish!.message);
@@ -222,6 +231,7 @@ export const Simulation = (props: ISimulation) => {
     const days = Math.floor(hours / 24);
     setStopped(false);
     clearInterval(interval.current);
+    clearInterval(realInterval.current);
     setApiMoment(undefined);
     setApiMoments([]);
     setTimer(-2);
@@ -267,11 +277,13 @@ export const Simulation = (props: ISimulation) => {
       setLoading(true);
       setStopType(-2);
       setTimeout(() => {
-        handleTimer();
         setLoading(false);
         setSpeed(8);
-        setAuxCount(0);
+        setRealTimer(0);
         setInitTime(moment());
+        realInterval.current = setInterval(() => {
+          setRealTimer((count) => count + 1);
+        }, 1000);
       }, 5000);
     }
     if (timer > INITIAL_TIMER && timer < props.targetTimer*24*60) {
@@ -281,13 +293,12 @@ export const Simulation = (props: ISimulation) => {
 
   useEffect(() => {
     if(speed == 1 && timer < 0) return;
-    if (interval.current) {
+    if (interval.current) 
       clearInterval(interval.current);
-      setAuxCount(0);
-      interval.current = setInterval(() => {
-        setTimer((count) => count + 1);
-      }, 1000/speed);
-    }
+    setAuxCount(0);
+    interval.current = setInterval(() => {
+      setTimer((count) => count + 1);
+    }, 1000/speed);
   }, [speed]);
 
   const openVehiclePopup = (vehicle: TVehicle) => {
@@ -332,16 +343,19 @@ export const Simulation = (props: ISimulation) => {
 
   const handleVehicleFailure = (e: any, code: String) => {
     e.preventDefault()
-    let damagedVehicleIndex = -1;
-    damagedVehicleIndex = apiMoment!.activeVehicles.findIndex(v => v.code == code);
-    if(damagedVehicleIndex == -1) {
+    let aux = apiMoment!.activeVehicles.find(v => v.code == code)!;
+    let failure = +selected;
+    let stop = failure == 1 || failure == 2 ? timer + 120 : timer + 240;
+    if(!aux.code) {
       setVehicleCodeError(true);
     } else {
+      let failVehicle: TVehicle = { ...aux, movement: { from: { ...aux.movement!.to! }, to: { ...aux.movement!.to! }}, stopTime: stop, failureType: failure };
       let newApiMoments = apiMoments.map((moment: TMoment) => {
         let newMoment = moment; 
-        newMoment?.activeVehicles.splice(damagedVehicleIndex, 1);
+        newMoment?.activeVehicles.filter(v => v.code == code);
         return newMoment;
       });
+      setFaultVehicles([...faultVehicles, failVehicle]);
       setVehicleCodeError(false);
       setApiMoments(newApiMoments);
       setOpenPanel(false); 
@@ -469,7 +483,7 @@ export const Simulation = (props: ISimulation) => {
                     Detener simulación
                   </Button>
                 </Box>
-                {(timer >= 0) &&
+                {/* {(timer >= 0) &&
                   <>
                     <Box>
                       <Button
@@ -483,28 +497,32 @@ export const Simulation = (props: ISimulation) => {
                       </Button>
                     </Box>
                   </>
-                }
+                } */}
                 <Box>
                   {(timer <= -1) &&
                     <Box sx={{ marginTop: 5 }}>
                         <TextField required label='Fecha de inicio' type='date' value={initialDate} onChange={(e) => setInitialDate(e.target?.value)} sx={{ width: '220px' }} />
                     </Box>
                   }
-                  {timer >= 0 && !loading && 
+                  {timer >= 0 && !loading && apiMoment &&
                     <>
-                      <Box sx={{ display: 'flex', gap: 5, marginTop: 5 }}>
+                      <Box sx={{ display: 'flex', gap: 5, marginTop: 2 }}>
                         <Box sx={{ gap: 1, borderRadius: 2, display: 'flex', justifyContent: 'space-between', width: '220px'}}>
                           <Button variant={ speed == 1 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(1); }}>x1</Button>
                           <Button variant={ speed == 2 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(2); }}>x2</Button>
                           <Button variant={ speed == 8 ? 'contained' : 'outlined' } color='secondary' onClick={() => { setSpeed(8); }}>x8</Button>
                         </Box>
                       </Box>
-                      {!loading && <Box sx={{ marginTop: 5 }}>
+                      <Box sx={{ marginTop: 4 }}>
                         <SimulatedTimer min={timer} initialDate={initialDate} />
-                      </Box>}
+                        <Typography sx={{marginTop: 2, marginBottom: 2}}><b>Tiempo real transcurrido: </b>{moment.utc(realTimer*1000).format('HH:mm:ss')}</Typography>
+                        <Typography sx={{marginBottom: 2}}><b>Pedidos entregados: </b>{apiMoment.ordersDelivered}</Typography>
+                        <Typography sx={{marginBottom: 2}}><b>Pedidos restantes: </b>{apiMoment.ordersLeft}</Typography>
+                        <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota: </b>{apiMoment.fleetCapacity.toFixed(2)}%</Typography>
+                      </Box>
                     </>
                   }
-                  <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ marginTop: 10, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
                     <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
                     <Box sx={{ display: 'flex' }}>
                       <Typography>Depósito:</Typography>
@@ -547,6 +565,13 @@ export const Simulation = (props: ISimulation) => {
                   onChange={(e: any) => {setSelected(e.value)}}
                 />
               </>
+            }
+            {vehicle.stopTime ?
+              <>
+                <Typography sx={{marginBottom: 2}}>
+                  <b>Tipo de incidente: </b>{vehicle.failureType}
+                </Typography>
+              </> : null
             }
             {vehicleCodeError && <Typography sx={{marginBottom: 1, color: 'red'}}>* El vehículo no se encuentra en ruta</Typography>}
             <Button sx={{marginTop: 2}} variant="contained" color="secondary" type="submit" onClick={(e) => handleVehicleFailure(e, vehicle.code!)}>Guardar</Button>
