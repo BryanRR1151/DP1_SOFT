@@ -158,7 +158,7 @@ export const Simulation = (props: ISimulation) => {
       await AlgorithmService.getMoment( !callFinalMoment ? timer : 2147483645, !callFinalMoment ? speed*RATIO : 1 ).then((response) => {
         let moments: TMoment[] = response.data;
         let newMoment = moments[0];
-        let newFaultVehicles = [...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
+        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
 
@@ -187,7 +187,7 @@ export const Simulation = (props: ISimulation) => {
     else {
       if (auxCount < apiMoments.length) {
         let newMoment = apiMoments[auxCount];
-        let newFaultVehicles = [...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
+        let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
         setApiMoment(parseMoment(newMoment));
@@ -349,7 +349,7 @@ export const Simulation = (props: ISimulation) => {
     if(!aux.code) {
       setVehicleCodeError(true);
     } else {
-      let failVehicle: TVehicle = { ...aux, movement: { from: { ...aux.movement!.to! }, to: { ...aux.movement!.to! }}, stopTime: stop, failureType: failure, route: null };
+      let failVehicle: TVehicle = { ...aux, movement: { from: { ...aux.movement!.to! }, to: { ...aux.movement!.to! }}, stopTime: stop, faultType: failure, route: null };
       let newApiMoments = apiMoments.map((moment: TMoment) => {
         let newMoment = moment; 
         newMoment?.activeVehicles.filter(v => v.code == code);
@@ -571,7 +571,7 @@ export const Simulation = (props: ISimulation) => {
             {vehicle.stopTime ?
               <>
                 <Typography sx={{marginBottom: 2}}>
-                  <b>Tipo de incidente: </b>{vehicle.failureType}
+                  <b>Tipo de incidente: </b>{vehicle.faultType}
                 </Typography>
               </> : null
             }

@@ -35,7 +35,7 @@ export type TVehicle = {
   broken?: boolean;
   resumeAt?: number;
   stopTime?: number;
-  failureType?: number;
+  faultType?: number;
   isFailureType1?: boolean;
 }
 
