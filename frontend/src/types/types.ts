@@ -12,7 +12,8 @@ export enum PanelType {
   filter = 'Filter',
   simulationFiles = 'SimulationFiles',
   simulationDetails = 'SimulationDetails',
-  vehicleInfo = 'VehicleInfo'
+  vehicleInfo = 'VehicleInfo',
+  activeVehicles = 'ActiveVehicles'
 }
 
 export type TOrder = {
