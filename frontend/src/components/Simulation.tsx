@@ -349,7 +349,7 @@ export const Simulation = (props: ISimulation) => {
     if(!aux.code) {
       setVehicleCodeError(true);
     } else {
-      let failVehicle: TVehicle = { ...aux, movement: { from: { ...aux.movement!.to! }, to: { ...aux.movement!.to! }}, stopTime: stop, failureType: failure };
+      let failVehicle: TVehicle = { ...aux, movement: { from: { ...aux.movement!.to! }, to: { ...aux.movement!.to! }}, stopTime: stop, failureType: failure, route: null };
       let newApiMoments = apiMoments.map((moment: TMoment) => {
         let newMoment = moment; 
         newMoment?.activeVehicles.filter(v => v.code == code);
@@ -361,12 +361,14 @@ export const Simulation = (props: ISimulation) => {
       setOpenPanel(false); 
       setTypePanel(null); 
       setVehicle(undefined);
-      registerFault(code, selected);
+      let x = failVehicle.movement!.from!.x.toString();
+      let y = failVehicle.movement!.from!.y.toString();
+      registerFault(code, selected, x, y);
     }
   }
 
-  const registerFault = async(code: String, fault: string) => {
-    await AlgorithmService.manualKill(code, fault).then(() => {
+  const registerFault = async(code: String, fault: string, x: string, y: string) => {
+    await AlgorithmService.manualKill(code, fault, x, y).then(() => {
       toast.success(`Falla ingresada correctamente`);
     }).catch((err) => {
       console.log(err);
