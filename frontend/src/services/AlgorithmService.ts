@@ -58,8 +58,8 @@ const setFault = (vehicle: String, fault: String, time: String) => {
   return axios.get(`http://localhost:8080/api/SetFault?vehicle=${ vehicle }&fault=${ fault }&time=${ time }`);
 }
 
-const manualKill = (vehicle: String, fault: string) => {
-  return axios.get(`http://localhost:8080/api/ManualKill?vehicle=${ vehicle }&type=${ fault }`);
+const manualKill = (vehicle: String, fault: string, x: string, y: string) => {
+  return axios.get(`http://localhost:8080/api/ManualKill?vehicle=${ vehicle }&type=${ fault }&x=${ x }&y=${ y }`);
 }
 
 const deletePack = (id: number) => {
