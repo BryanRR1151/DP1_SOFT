@@ -38,10 +38,6 @@ const options = [
   { value: "2", label: 'TI2' },
   { value: "3", label: 'TI3' }
 ]
-const vehicleOptions = [
-  { value: VehicleType.auto, label: 'Aut' },
-  { value: VehicleType.moto, label: 'Mot' }
-]
 
 ChartJS.register(
   CategoryScale,
@@ -90,6 +86,9 @@ export const Simulation = (props: ISimulation) => {
   const [finishTime, setFinishTime] = useState<any>();
   const [extra, setExtra] = useState<number>(0);
   const [prevSpeed, setPrevSpeed] = useState<number>(1);
+
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
+  const [selectedIncident, setSelectedIncident] = useState<string>('1');
 
   const interval = useRef<any>(null);
   const realInterval = useRef<any>(null);
@@ -349,7 +348,7 @@ export const Simulation = (props: ISimulation) => {
     if(!aux.code) {
       setVehicleCodeError(true);
     } else {
-      let failVehicle: TVehicle = { ...aux, movement: { from: { ...aux.movement!.to! }, to: { ...aux.movement!.to! }}, stopTime: stop, faultType: failure, route: null };
+      let failVehicle: TVehicle = { ...aux, movement: { from: { x: Math.ceil(aux.movement!.to!.x), y: Math.ceil(aux.movement!.to!.y) }, to: { x: Math.ceil(aux.movement!.to!.x), y: Math.ceil(aux.movement!.to!.y) }}, stopTime: stop, faultType: failure, route: null };
       let newApiMoments = apiMoments.map((moment: TMoment) => {
         let newMoment = moment; 
         newMoment?.activeVehicles.filter(v => v.code == code);
@@ -485,21 +484,21 @@ export const Simulation = (props: ISimulation) => {
                     Detener simulación
                   </Button>
                 </Box>
-                {/* {(timer >= 0) &&
+                {(timer >= 0) &&
                   <>
                     <Box>
                       <Button
                         variant='outlined'
                         color='secondary'
-                        onClick={() => { setOpenPanel(true); setTypePanel(PanelType.simulationDetails) }}
+                        onClick={() => { setOpenPanel(true); setTypePanel(PanelType.activeVehicles) }}
                         sx={{ width: '220px' }}
                         disabled={loading}
                       >
-                        Ver detalles
+                        Ver vehículos activos
                       </Button>
                     </Box>
                   </>
-                } */}
+                }
                 <Box>
                   {(timer <= -1) &&
                     <Box sx={{ marginTop: 5 }}>
@@ -524,7 +523,7 @@ export const Simulation = (props: ISimulation) => {
                       </Box>
                     </>
                   }
-                  <Box sx={{ marginTop: 10, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ marginTop: 5, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
                     <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
                     <Box sx={{ display: 'flex' }}>
                       <Typography>Depósito:</Typography>
@@ -586,6 +585,32 @@ export const Simulation = (props: ISimulation) => {
             <Typography sx={{marginTop: 2, marginBottom: 2}}><b>Pedidos entregados: </b>{apiMoment.ordersDelivered}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Pedidos restantes: </b>{apiMoment.ordersLeft}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota: </b>{apiMoment.fleetCapacity.toFixed(2)}%</Typography>
+          </Box>
+        }
+        {typePanel == PanelType.activeVehicles && apiMoment !== undefined &&
+          <Box sx={{paddingRight: 3.5, paddingLeft: 3.5, paddingBottom: 3.5, height: '100%'}}>
+            <Box>
+              <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
+              <form autoComplete="off" onSubmit={(e) => handleVehicleFailure(e, selectedVehicle)}> 
+                <Box sx={{width:294, height:65}}>
+                  <Select 
+                    defaultValue={{value:'',label:'Seleccionar Vehículo Activo'}}
+                    isSearchable = {true}
+                    options={apiMoment.activeVehicles.filter((v) => !v.faultType).map((v) => ({ value: v.code?.toString()!, label: v.code?.toString()! }))} 
+                    onChange={(e: any) => {{setSelectedVehicle(e.value)}}}
+                  />
+                </Box>
+                <Box sx={{width:294, height:65}}>
+                  <Select 
+                    defaultValue={options[0]}
+                    isSearchable = {true}
+                    options={options} 
+                    onChange={(e: any) => {setSelected(e.value)}}
+                  />
+                </Box>
+                <Button variant="contained" color="secondary" type="submit">Guardar</Button>
+              </form>
+            </Box>
           </Box>
         }
       </Box>
