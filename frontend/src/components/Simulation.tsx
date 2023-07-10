@@ -30,7 +30,7 @@ interface ISimulation {
   targetTimer: number; // In days
 }
 
-const INITIAL_TIMER = 0;
+const INITIAL_TIMER = -1;
 const RATIO = 2;
 
 const options = [
@@ -56,7 +56,7 @@ export const Simulation = (props: ISimulation) => {
   const [firstRender, setFirstRender] = useState<boolean>(true);
   const [apiMoments, setApiMoments] = useState<TMoment[]>([]);
   const [apiMoment, setApiMoment] = useState<TMoment|undefined>(undefined);
-  const [timer, setTimer] = useState(-1);
+  const [timer, setTimer] = useState(-2);
   const [realTimer, setRealTimer] = useState(0);
   const [openPanel, setOpenPanel] = useState<boolean>(false);
   const [typePanel, setTypePanel] = useState<PanelType|null>(null);
@@ -117,7 +117,7 @@ export const Simulation = (props: ISimulation) => {
     if (!props.isCollapse) {
       await AlgorithmService.startWeekly(sendDate).then((response) => {
         console.log('Algorithm executed successfully');
-        if (timer >= props.targetTimer*24*60) setTimer(-1);
+        if (timer >= props.targetTimer*24*60) setTimer(-2);
       }).catch((err) => {
         console.log(err);
       });
@@ -125,7 +125,7 @@ export const Simulation = (props: ISimulation) => {
     else {
       await AlgorithmService.startCollapse(sendDate).then((response) => {
         console.log('Algorithm executed successfully');
-        if (timer >= props.targetTimer*24*60) setTimer(-1);
+        if (timer >= props.targetTimer*24*60) setTimer(-2);
       }).catch((err) => {
         console.log(err);
       });
@@ -151,7 +151,7 @@ export const Simulation = (props: ISimulation) => {
       stopCollapse();
       return;
     }
-    if ((auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) || callFinalMoment) {
+    if ((auxCount == 0 && (timer + speed*RATIO <= props.targetTimer*24*60)) || callFinalMoment) {
       // setExtra(timer);
       // setPrevSpeed(speed);
       // if (prevSpeed == speed && extra == timer-1 && speed != 1 && !callFinalMoment) return;
@@ -166,14 +166,14 @@ export const Simulation = (props: ISimulation) => {
         let newFaultVehicles = [...newMoment.faultVehicles ?? [], ...faultVehicles.filter((v) => newMoment.faultVehicles ? !newMoment.faultVehicles.find((fv) => v.code == fv.code) : true).filter((vehicle) => vehicle.stopTime! >= timer)];
         newMoment.activeVehicles = [...newMoment.activeVehicles.filter((vehicle) => !newFaultVehicles.find((fv) => fv.code == vehicle.code)) ?? [], ...newFaultVehicles];
         setFaultVehicles(newFaultVehicles);
-
+        
         setApiMoment(parseMoment(newMoment));
         setApiMoments(moments);
         if (moments.length < speed*RATIO) {
           setAlter(moments.length);
         }
         if (speed != 1 || (speed == 1 && RATIO > 1)) setAuxCount(1);
-
+        
         if (moments[0].finish && !stopped)  {
           setStopped(true);
           setStopType(moments[0].finish.code);
@@ -272,7 +272,7 @@ export const Simulation = (props: ISimulation) => {
       setFirstRender(false);
       return;
     }
-    if (timer == -1 || timer == -2) return;
+    if (timer == -2) return;
     if (timer === INITIAL_TIMER) {
       startAlgorithm();
       setLoading(true);
@@ -351,7 +351,7 @@ export const Simulation = (props: ISimulation) => {
       setVehicleCodeError(true);
     } else {
       let routeIndex = aux.route!.chroms.findIndex((c) => (c.from.x == Math.ceil(aux.movement!.from!.x) && c.from.y == Math.ceil(aux.movement!.from!.y)));
-      if (routeIndex + (aux.type == VehicleType.moto ? speed*RATIO : speed*RATIO/2) >= aux.route!.chroms!.length) {
+      if (routeIndex + (aux.type == VehicleType.moto ? speed*RATIO : speed*RATIO/2) + 1 >= aux.route!.chroms!.length) {
         setVehicleCodeError(false);
         setOpenPanel(false); 
         setTypePanel(null); 
@@ -587,7 +587,7 @@ export const Simulation = (props: ISimulation) => {
               </> : null
             }
             {vehicleCodeError && <Typography sx={{marginBottom: 1, color: 'red'}}>* El vehículo no se encuentra en ruta</Typography>}
-            <Button sx={{marginTop: 2}} variant="contained" color="secondary" type="submit" onClick={(e) => handleVehicleFailure(e, vehicle.code!)}>Guardar</Button>
+            {!vehicle.stopTime && <Button sx={{marginTop: 2}} variant="contained" color="secondary" type="submit" onClick={(e) => handleVehicleFailure(e, vehicle.code!)}>Guardar</Button>}
           </Box>
         }
         {typePanel == PanelType.simulationDetails && apiMoment !== undefined &&
