@@ -16,7 +16,7 @@ import { TBlockage as registerBlockageType }  from '../types/types';
 import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
 
 export const DailyOperationsPage = () => {
-  var [vehicleSelections, setVehicleSelections] = useState<{value: String;label: String;}[]>([]);
+  var [vehicleSelections, setVehicleSelections] = useState<{value: string;label: string;}[]>([]);
   var [mainFrontComponent, setMainFrontComponent] = useState<Boolean>(false);
   var [dailyPackDetails, setDailyPackDetails] = useState<DailyPackDetail[]>([]);
   var [started, setStarted] = useState<boolean>(false);
@@ -427,7 +427,7 @@ export const DailyOperationsPage = () => {
       console.log(err);
     })
 
-    let newVehicleSelections : {value: String, label: String}[] = [];
+    let newVehicleSelections : {value: string, label: string}[] = [];
     apiMoment?.activeVehicles.forEach(av => {
       if(av.location?.destination == false && av.state == 1){
         newVehicleSelections.push({value: av.code!, label: av.code!});
