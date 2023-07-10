@@ -362,8 +362,8 @@ export const Simulation = (props: ISimulation) => {
       setOpenPanel(false); 
       setTypePanel(null); 
       setVehicle(undefined);
-      let x = failVehicle.movement!.from!.x.toString();
-      let y = failVehicle.movement!.from!.y.toString();
+      let x = Math.ceil(failVehicle.movement!.from!.x).toString();
+      let y = Math.ceil(failVehicle.movement!.from!.y).toString();
       registerFault(code, selected, x, y);
     }
   }
