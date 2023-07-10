@@ -487,7 +487,7 @@ export const Simulation = (props: ISimulation) => {
                     Detener simulación
                   </Button>
                 </Box>
-                {(timer >= 0) &&
+                {(timer >= 0 && !props.isCollapse) &&
                   <>
                     <Box>
                       <Button
