@@ -903,7 +903,6 @@ export const DailyOperationsPage = () => {
               //backgroundColor:'green'
             }}>
               <div style={{ position: 'relative', height: '100%' }}>
-                <Space onCreate={vp => vp.setBounds({ x: [0, 847], y: [0, 600] })}>
                   <div>
                     <AnimationGrid 
                       moment = {apiMoment}
@@ -911,7 +910,6 @@ export const DailyOperationsPage = () => {
                       speed = {1/6}
                     />
                   </div>
-                </Space>
               </div>
           </Box>
           <Box 
