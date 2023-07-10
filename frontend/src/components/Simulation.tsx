@@ -350,6 +350,15 @@ export const Simulation = (props: ISimulation) => {
     if(!aux.code) {
       setVehicleCodeError(true);
     } else {
+      let routeIndex = aux.route!.chroms.findIndex((c) => (c.from.x == Math.ceil(aux.movement!.from!.x) && c.from.y == Math.ceil(aux.movement!.from!.y)));
+      if (routeIndex + (aux.type == VehicleType.moto ? speed*RATIO : speed*RATIO/2) >= aux.route!.chroms!.length) {
+        setVehicleCodeError(false);
+        setOpenPanel(false); 
+        setTypePanel(null); 
+        setVehicle(undefined);
+        toast.warn(`La falla no puede ser aplicada porque está por entregar un pedido`);
+        return;
+      }
       let failVehicle: TVehicle = { ...aux, movement: { from: { x: Math.ceil(aux.movement!.to!.x), y: Math.ceil(aux.movement!.to!.y) }, to: { x: Math.ceil(aux.movement!.to!.x), y: Math.ceil(aux.movement!.to!.y) }}, stopTime: stop, faultType: failure, route: null };
       let newApiMoments = apiMoments.map((moment: TMoment) => {
         let newMoment = moment; 
