@@ -31,7 +31,7 @@ interface ISimulation {
 }
 
 const INITIAL_TIMER = 0;
-const RATIO = 1;
+const RATIO = 2;
 
 const options = [
   { value: "1", label: 'TI1' },
@@ -152,9 +152,9 @@ export const Simulation = (props: ISimulation) => {
       return;
     }
     if ((auxCount == 0 && (timer + speed <= props.targetTimer*24*60)) || callFinalMoment) {
-      setExtra(timer);
-      setPrevSpeed(speed);
-      if (prevSpeed == speed && extra == timer-1 && speed != 1 && !callFinalMoment) return;
+      // setExtra(timer);
+      // setPrevSpeed(speed);
+      // if (prevSpeed == speed && extra == timer-1 && speed != 1 && !callFinalMoment) return;
       await AlgorithmService.getMoment( !callFinalMoment ? timer : 2147483645, !callFinalMoment ? speed*RATIO : 1 ).then((response) => {
         if (!response.data) {
           setResultsError(true);
@@ -169,9 +169,9 @@ export const Simulation = (props: ISimulation) => {
 
         setApiMoment(parseMoment(newMoment));
         setApiMoments(moments);
-        // if (moments.length < speed*RATIO) {
-        //   setAlter(moments.length);
-        // }
+        if (moments.length < speed*RATIO) {
+          setAlter(moments.length);
+        }
         if (speed != 1 || (speed == 1 && RATIO > 1)) setAuxCount(1);
 
         if (moments[0].finish && !stopped)  {
@@ -205,7 +205,7 @@ export const Simulation = (props: ISimulation) => {
       }
       else {
         setAuxCount(0);
-        // setAlter(0);
+        setAlter(0);
       }
 
       if (auxCount < apiMoments.length && apiMoments[auxCount].finish && !stopped) {
