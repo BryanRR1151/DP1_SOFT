@@ -1,9 +1,10 @@
 import { TNode } from "../test/movements";
 
 export enum OrderState {
-  active = 'Activo',
+  active = 'Atendiendo',
   pending = 'Pendiente',
-  fullfiled = 'Entregado'
+  fullfiled = 'Entregado',
+  overdue = 'Vencido'
 }
 
 export enum PanelType {

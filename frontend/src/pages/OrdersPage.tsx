@@ -65,12 +65,14 @@ export const OrdersPage = () => {
 
   const getPackList = async() => {
     await AlgorithmService.getPacks().then((response) => {
+      let fullTime = new Date();
+      let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
       packsToShow = parsePacks(response.data);
       setPacksToShow(parsePacks(response.data));
       rowsToShow = [];
       packsToShow.forEach(p => {
         let temporaryOrder: TOrder = {order:p.id.toString(), idCustomer: p.idCustomer, id: p.id, registerDate:p.time.toString(),
-          quantity: p.demand, term: p.deadline, orderNode: {x:p.location.x,y:p.location.y}, state:p.fullfilled==0?OrderState.pending:p.fullfilled==p.demand?OrderState.fullfiled:OrderState.active}
+          quantity: p.demand, term: p.deadline, orderNode: {x:p.location.x,y:p.location.y}, state:p.deadline<currentTime?OrderState.overdue:p.unassigned==p.demand?OrderState.pending:p.unassigned==0?p.fullfilled==p.demand?OrderState.fullfiled:OrderState.active:OrderState.active}
           rowsToShow.push(temporaryOrder)
       });
       setRowsToShow(rowsToShow);
@@ -158,7 +160,7 @@ export const OrdersPage = () => {
       field: 'state',
       headerName: 'Estado',
       renderCell: (params: GridRenderCellParams<any>) => {
-        let color = params.value == OrderState.active ? "#2E5AAC" : params.value == OrderState.pending ? "#4E9C4C" : "black";
+        let color = params.value == OrderState.active ? "#2E5AAC" : params.value == OrderState.pending ? "#4E9C4C" : params.value == OrderState.overdue ? "red" : "black";
         return (
           <div style={{ 
             display: 'flex', 
