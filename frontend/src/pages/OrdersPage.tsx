@@ -163,12 +163,13 @@ export const OrdersPage = () => {
         let color = params.value == OrderState.active ? "#2E5AAC" : params.value == OrderState.pending ? "#4E9C4C" : params.value == OrderState.overdue ? "red" : "black";
         return (
           <div style={{ 
+            width: 60,
             display: 'flex', 
             justifyContent: 'center', 
             alignItems: 'center',
             border: `0.5px solid ${ color }`,
             borderRadius: '5px',
-            padding: '2px 10px 2px 10px',
+            padding: '4px 10px 2px 10px',
             color
           }}>
             { params.value }

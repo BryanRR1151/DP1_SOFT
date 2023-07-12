@@ -14,6 +14,7 @@ import { PanelType, panelStyles } from "../types/types";
 import Dropzone from 'react-dropzone'
 import { TBlockage as registerBlockageType }  from '../types/types';
 import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
+import { a } from "react-spring";
 
 export const DailyOperationsPage = () => {
   var [vehicleSelections, setVehicleSelections] = useState<{value: string;label: string;}[]>([]);
@@ -258,7 +259,7 @@ export const DailyOperationsPage = () => {
       vehicles.forEach(v => {
         packs.push(v.pack!);
       });
-      apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
+      //apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
       vehicles=[];
       console.log('Routes planned successfully');
     }).catch((err) => {
@@ -288,7 +289,7 @@ export const DailyOperationsPage = () => {
           v.movement!.from!.y=v.movement!.to!.y;
           //v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
           v.route!.chroms=[];
-          apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
+          //apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
         }
       }else{
         if(v.state==1){
@@ -310,7 +311,7 @@ export const DailyOperationsPage = () => {
             }
 
             //notify package has been delivered
-            apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
+            //apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
             AlgorithmService.completePack(v.id,currentTime.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
               v.carry = 0;
@@ -457,6 +458,33 @@ export const DailyOperationsPage = () => {
       clearInterval(intervalId);
     };
   }, [apiMoment,todaysBlockages,mainFrontComponent]);  
+
+  const updatePackagesOnMap = async() => {
+    await AlgorithmService.getPacks().then((response) => {
+      let fullTime = new Date();
+      let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
+      let packs : TPack[] = response.data;
+      let packsToShow : TPack[] = [];
+      packs.forEach(p => {
+        if(p.deadline >= currentTime && p.demand != p.fullfilled){
+          packsToShow.push(p)
+        }  
+      });
+      apiMoment!.activePacks = packsToShow;
+      setApiMoment(apiMoment);
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      updatePackagesOnMap();
+    }, 6000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [apiMoment]);  
 
   const registerFilePacks = async() => {
     let fullTime = new Date();
