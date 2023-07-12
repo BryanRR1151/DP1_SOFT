@@ -208,11 +208,12 @@ export const DailyOperationsPage = () => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
 
-        let needsToBeInitialized=true;
+        //let needsToBeInitialized=true;
 
         vehicleSelections.push({value:v.code!,label:v.code!});
 
-        let foundIndex = apiMoment!.activeVehicles.findIndex(av=>av.id==v.id);
+        //let foundIndex = apiMoment!.activeVehicles.findIndex(av=>av.id==v.id);
+        /*
         if(foundIndex!=-1){
           if(apiMoment?.activeVehicles[foundIndex].route?.chroms.length != 0){
             needsToBeInitialized=false;
@@ -228,7 +229,7 @@ export const DailyOperationsPage = () => {
             }
           }
           apiMoment?.activeVehicles.splice(foundIndex,1);
-        }
+        }*/
         let foundDailyPackDetail = dailyPackDetails.find(p=>p.id==v!.pack!.id);
         if(foundDailyPackDetail==undefined){
           let dailyPackDetail : DailyPackDetail;
@@ -243,12 +244,17 @@ export const DailyOperationsPage = () => {
             foundDailyPackDetail.secondsLeft = newSecondsLeft;
           }
         }
+        /*
         if(needsToBeInitialized){
           v!.movement!.from!.x=45;
           v!.movement!.from!.y=30;
           v!.movement!.to!.x=45;
           v!.movement!.to!.y=30;
-        }  
+        }  */
+        v!.movement!.from!.x=45;
+        v!.movement!.from!.y=30;
+        v!.movement!.to!.x=45;
+        v!.movement!.to!.y=30;
         v.resumeAt=0;
         v.isFailureType1=false;
         v.state=1;
@@ -369,6 +375,7 @@ export const DailyOperationsPage = () => {
     newVehicles = newVehicles!.filter((value)=>value!=null);
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
+    console.log(apiMoment);
     await AlgorithmService.setDailyMoment(apiMoment!).then((response) => {
       console.log(response.data);
     }).catch((err) => {
@@ -978,6 +985,9 @@ export const DailyOperationsPage = () => {
               >
                 Detalles
               </Button>
+            </Box>
+            <Box sx={{ marginTop: 4 }}>
+              <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota: </b>{apiMoment!.activeVehicles.length*100/54}%</Typography>
             </Box>
             <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
               <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
