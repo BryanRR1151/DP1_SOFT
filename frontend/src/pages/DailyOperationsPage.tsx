@@ -94,7 +94,6 @@ export const DailyOperationsPage = () => {
     let currentTime = Math.trunc(fullTime.getTime()/1000)-fullTime.getSeconds();
 
     await AlgorithmService.getBlockages(currentTime.toString()).then((response) => {
-      console.log(response);
       todaysBlockages=response.data
       setTodaysBlockages(todaysBlockages);
       console.log('Blockages retrieved successfully');
@@ -258,7 +257,6 @@ export const DailyOperationsPage = () => {
         v.resumeAt=0;
         v.isFailureType1=false;
         v.state=1;
-        console.log(v);
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
       let packs : TPack[]=[];
@@ -375,7 +373,6 @@ export const DailyOperationsPage = () => {
     newVehicles = newVehicles!.filter((value)=>value!=null);
     apiMoment!.activeVehicles=temporaryVehicles;
     setApiMoment(apiMoment);
-    console.log(apiMoment);
     await AlgorithmService.setDailyMoment(apiMoment!).then((response) => {
       console.log(response.data);
     }).catch((err) => {
@@ -592,7 +589,6 @@ export const DailyOperationsPage = () => {
       if(mainFrontComponent){
         apiMoment!.activeVehicles[damagedVehicleIndex].state=0;
         apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt=currentTime+(selected=="3"?14400:7200);
-        console.log(apiMoment!.activeVehicles[damagedVehicleIndex].resumeAt);
         if(selected=='1'){
           apiMoment!.activeVehicles[damagedVehicleIndex].isFailureType1=true;
         }
@@ -888,7 +884,7 @@ export const DailyOperationsPage = () => {
           <Typography>Id: {dpd.id}  |  x: {dpd.x} km, y: {dpd.y} km</Typography>
           </div>
           <div style={{padding: '10px', alignItems: 'center', textAlign:'center'}}>
-            <Typography>Tiempo estimado: {Math.trunc(dpd.secondsLeft/60)} min</Typography>
+            <Typography>Tiempo estimado: {Math.trunc(dpd.secondsLeft/60)+1} min</Typography>
             <div style={{height: 10}}></div>
             <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', textAlign:'center'}}>
               <div style={{width:40}}></div>
@@ -987,7 +983,9 @@ export const DailyOperationsPage = () => {
               </Button>
             </Box>
             <Box sx={{ marginTop: 4 }}>
-              <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota: </b>{apiMoment!.activeVehicles.length*100/54}%</Typography>
+              <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota en uso: </b>{Math.trunc(apiMoment!.activeVehicles.length*100/54)}%</Typography>
+              <Typography sx={{marginBottom: 2}}><b>Autos en uso: </b>{apiMoment!.activeVehicles!.filter(av=>av.type==VehicleType.auto).length}</Typography>
+              <Typography sx={{marginBottom: 2}}><b>Motos en uso: </b>{apiMoment!.activeVehicles!.filter(av=>av.type==VehicleType.moto).length}</Typography>
             </Box>
             <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
               <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
@@ -1144,6 +1142,7 @@ export const DailyOperationsPage = () => {
             <Typography sx={{marginBottom: 2}}><b>Código: </b>{vehicle.code}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Carga actual: </b>{vehicle.carry}</Typography>
             <Typography sx={{marginBottom: 2}}><b>Capacidad total: </b>{vehicle.capacity}</Typography>
+            <Typography sx={{marginBottom: 2}}><b>{vehicle.location?.destination==false?"Pedido actual: ":<></>}</b>{vehicle.location?.destination==false?vehicle.pack?.id:<></>}</Typography>
             {vehicle.state==1&&vehicle.location?.destination==false&&
               <Box>
                 <Typography variant='h6' sx={{marginBottom: 2, fontSize: '18px'}}>Registrar falla vehicular:</Typography>
