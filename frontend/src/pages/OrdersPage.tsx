@@ -72,7 +72,7 @@ export const OrdersPage = () => {
       rowsToShow = [];
       packsToShow.forEach(p => {
         let temporaryOrder: TOrder = {order:p.id.toString(), idCustomer: p.idCustomer, id: p.id, registerDate:p.time.toString(),
-          quantity: p.demand, term: p.deadline, orderNode: {x:p.location.x,y:p.location.y}, state:p.deadline<currentTime?OrderState.overdue:p.unassigned==p.demand?OrderState.pending:p.unassigned==0?p.fullfilled==p.demand?OrderState.fullfiled:OrderState.active:OrderState.active}
+          quantity: p.demand, term: p.deadline, orderNode: {x:p.location.x,y:p.location.y}, state:p.fullfilled==p.demand?OrderState.fullfiled:p.deadline<currentTime?OrderState.overdue:p.unassigned==p.demand?OrderState.pending:p.unassigned==0?OrderState.active:OrderState.active}
           rowsToShow.push(temporaryOrder)
       });
       setRowsToShow(rowsToShow);
