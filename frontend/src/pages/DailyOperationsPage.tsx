@@ -522,7 +522,7 @@ export const DailyOperationsPage = () => {
 
   const registerFault = async(vehicle: String, fault: String, time: String) => {
     await AlgorithmService.setFault(vehicle,fault,time).then(() => {
-      console.log('Fault registered successfully');
+      toast.success('Falla registrada exitosamente');
     }).catch((err) => {
       console.log(err);
     });
@@ -984,8 +984,8 @@ export const DailyOperationsPage = () => {
             </Box>
             <Box sx={{ marginTop: 4 }}>
               <Typography sx={{marginBottom: 2}}><b>Capacidad de la flota en uso: </b>{Math.trunc(apiMoment!.activeVehicles.length*100/54)}%</Typography>
-              <Typography sx={{marginBottom: 2}}><b>Autos en uso: </b>{apiMoment!.activeVehicles!.filter(av=>av.type==VehicleType.auto).length}</Typography>
-              <Typography sx={{marginBottom: 2}}><b>Motos en uso: </b>{apiMoment!.activeVehicles!.filter(av=>av.type==VehicleType.moto).length}</Typography>
+              <Typography sx={{marginBottom: 2}}><b>Autos en uso: </b>{apiMoment!.activeVehicles!.filter(av=>av.type==VehicleType.auto && av.state==1).length}</Typography>
+              <Typography sx={{marginBottom: 2}}><b>Motos en uso: </b>{apiMoment!.activeVehicles!.filter(av=>av.type==VehicleType.moto && av.state==1).length}</Typography>
             </Box>
             <Box sx={{ marginTop: 20, gap: 1, borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
               <Box><Typography variant={'h6'}>Leyenda:</Typography></Box>
