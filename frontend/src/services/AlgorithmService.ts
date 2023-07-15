@@ -101,6 +101,10 @@ const getDailyFaults = () => {
 const notifyVehicleReturn = (idVehicle: String) => {
   return axios.get(`http://localhost:8080/api/SetVehicleOrigin?idVehicle=${ idVehicle }`);
 }
+
+const reprogramVehicle = (idVehicle: string, idPack: string, x:string, y:string, time: string) => {
+  return axios.get(`http://localhost:8080/api/ReprogramVehicle?idVehicle=${ idVehicle }&idPack=${ idPack }&x=${ x }&y=${ y }&time=${ time }`);
+}
  
 export default {
   startWeekly,
@@ -126,5 +130,6 @@ export default {
   setDailyFault,
   getDailyFaults,
   notifyVehicleReturn,
-  type1Return
+  type1Return,
+  reprogramVehicle
 };

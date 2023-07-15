@@ -17,6 +17,8 @@ import { FaCarSide, FaMotorcycle } from 'react-icons/fa';
 import { a } from "react-spring";
 
 export const DailyOperationsPage = () => {
+  var [lowestPriorityPack, setLowestPriorityPack] = useState<TPack|undefined>(undefined);
+  var [packToPrioritize, setPackToPrioritize] = useState<TPack|undefined>(undefined);
   var [vehicleSelections, setVehicleSelections] = useState<{value: string;label: string;}[]>([]);
   var [mainFrontComponent, setMainFrontComponent] = useState<Boolean>(false);
   var [dailyPackDetails, setDailyPackDetails] = useState<DailyPackDetail[]>([]);
@@ -206,50 +208,28 @@ export const DailyOperationsPage = () => {
     await AlgorithmService.planRoutes(currentTime.toString()).then((response) => {
       vehicles=parseVehicles(response.data);
       vehicles!.forEach( (v)=>{
-
-        //let needsToBeInitialized=true;
-
         vehicleSelections.push({value:v.code!,label:v.code!});
 
-        //let foundIndex = apiMoment!.activeVehicles.findIndex(av=>av.id==v.id);
-        /*
-        if(foundIndex!=-1){
-          if(apiMoment?.activeVehicles[foundIndex].route?.chroms.length != 0){
-            needsToBeInitialized=false;
-            if(apiMoment?.activeVehicles[foundIndex].movement?.to?.x
-              == apiMoment?.activeVehicles[foundIndex].route?.chroms[0].from.x
-              && apiMoment?.activeVehicles[foundIndex].movement?.to?.y
-              == apiMoment?.activeVehicles[foundIndex].route?.chroms[0].from.y){
-              
-              v.movement=apiMoment!.activeVehicles[foundIndex].movement;
-              
-            }else{
-              v.route?.chroms.unshift(apiMoment!.activeVehicles[foundIndex].route!.chroms[0]);
-            }
-          }
-          apiMoment?.activeVehicles.splice(foundIndex,1);
-        }*/
         let foundDailyPackDetail = dailyPackDetails.find(p=>p.id==v!.pack!.id);
+
         if(foundDailyPackDetail==undefined){
+
           let dailyPackDetail : DailyPackDetail;
           dailyPackDetail = {id:v!.pack!.id, x:v.pack!.location.x, y:v.pack!.location.y, 
             secondsLeft:parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0)),
             carAmount:v.type==VehicleType.auto?1:0, bikeAmount:v.type==VehicleType.moto?1:0};
           dailyPackDetails.push(dailyPackDetail);
+
         }else{
+
           v.type==VehicleType.auto?foundDailyPackDetail.carAmount+=1:foundDailyPackDetail.bikeAmount+=1;
           let newSecondsLeft = parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0));
           if(newSecondsLeft > foundDailyPackDetail.secondsLeft){
             foundDailyPackDetail.secondsLeft = newSecondsLeft;
           }
+
         }
-        /*
-        if(needsToBeInitialized){
-          v!.movement!.from!.x=45;
-          v!.movement!.from!.y=30;
-          v!.movement!.to!.x=45;
-          v!.movement!.to!.y=30;
-        }  */
+        
         v!.movement!.from!.x=45;
         v!.movement!.from!.y=30;
         v!.movement!.to!.x=45;
@@ -257,23 +237,126 @@ export const DailyOperationsPage = () => {
         v.resumeAt=0;
         v.isFailureType1=false;
         v.state=1;
+
       })
       apiMoment!.activeVehicles=apiMoment!.activeVehicles.concat(vehicles);
-      let packs : TPack[]=[];
-      vehicles.forEach(v => {
-        packs.push(v.pack!);
-      });
-      //apiMoment!.activePacks=apiMoment!.activePacks.concat(packs);
       vehicles=[];
       console.log('Routes planned successfully');
     }).catch((err) => {
       console.log(err);
     });
+
+    //check if pack attending needs to be switched
+    lowestPriorityPack = undefined;
+    setLowestPriorityPack(lowestPriorityPack);
+    packToPrioritize = undefined;
+    setPackToPrioritize(packToPrioritize);
+    if(apiMoment!.activeVehicles.length==54){
+      await AlgorithmService.getPacks().then((response) => {
+        //get the pack that is being attended with higher leniency
+        let packs : TPack[] = response.data;
+        packs.forEach(p => {
+          if(p.deadline > currentTime + 36000 && p.unassigned != p.demand - p.fullfilled){
+            if(lowestPriorityPack == undefined){
+              lowestPriorityPack = p;
+              setLowestPriorityPack(lowestPriorityPack);
+            }else if(p.demand - p.fullfilled < lowestPriorityPack.demand - p.fullfilled){
+                lowestPriorityPack = p;
+                setLowestPriorityPack(lowestPriorityPack);
+            }
+          }
+        });
+        if(lowestPriorityPack != undefined){
+          //find if there's a more emergent pack
+          packs.forEach(p => {
+            if(p.deadline < currentTime + 36000 
+              && p.deadline > currentTime
+              && p.fullfilled < p.demand
+              && p.unassigned > lowestPriorityPack!.demand - p.fullfilled){
+              if(packToPrioritize == undefined){
+                packToPrioritize = p;
+                setPackToPrioritize(packToPrioritize);
+              }else if(p.unassigned > packToPrioritize.unassigned){
+                packToPrioritize = p;
+                setPackToPrioritize(packToPrioritize);
+              }
+            }
+          });
+        }
+      }).catch((error) => {
+        console.log(error);
+      });
+    }
     let temporaryVehicles:TVehicle[]=[];
     let newVehicles = apiMoment!.activeVehicles!.map((v,index) => {
       let shouldBeAddedToVehicles:boolean=true;
       if(v.route!.chroms.length!=0){
         if(v.state==1 || v.movement!.to!.x != v.route!.chroms[0].from.x || v.movement!.to!.y != v.route!.chroms[0].from.y){
+          //at node
+          if(v.movement!.to!.x == v.route!.chroms[0].from.x  
+            && v.movement!.to!.y == v.route!.chroms[0].from.y){
+            //check if reprogramming is needed
+            if(lowestPriorityPack != undefined && packToPrioritize != undefined){
+              //check if current vehicle is part of reprogramming
+              if(v.location?.destination == false && v.route!.chroms.length > 3 
+                && v.pack!.id == lowestPriorityPack.id && v.carry < packToPrioritize.unassigned){
+                //reprogram vehicle
+                AlgorithmService.reprogramVehicle(v.id.toString(), packToPrioritize.id.toString()
+                  , v.movement!.to!.x.toString(), v.movement!.to!.y.toString()
+                  , currentTime.toString()).then((response) => {
+                  console.log(response.data);
+                  let oldVehiclePackIndex = dailyPackDetails.findIndex(dpd => dpd.id == v.pack!.id);
+                  console.log(dailyPackDetails[oldVehiclePackIndex])
+                  v.pack = response.data.pack;
+                  apiMoment!.activeVehicles.forEach(av => {
+                    if(av.pack!.id == v.pack!.id){
+                      av.pack = v.pack;
+                    }
+                  });
+                  packToPrioritize = v.pack!;
+                  let newVehiclePack = dailyPackDetails.find(dpd => dpd.id == v.pack!.id);
+                  if(v.type == VehicleType.auto){
+                    dailyPackDetails[oldVehiclePackIndex].carAmount
+                      = dailyPackDetails[oldVehiclePackIndex].carAmount-1;
+                    if(newVehiclePack==undefined){
+
+                      let dailyPackDetail : DailyPackDetail;
+                      dailyPackDetail = {id:v!.pack!.id, x:v.pack!.location.x, y:v.pack!.location.y, 
+                        secondsLeft:parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0)),
+                        carAmount:1, bikeAmount:0};
+                      dailyPackDetails.push(dailyPackDetail);
+
+                    }else{
+                      newVehiclePack!.carAmount=newVehiclePack!.carAmount+1;
+                    }  
+                  }else{
+                    dailyPackDetails[oldVehiclePackIndex].bikeAmount
+                      = dailyPackDetails[oldVehiclePackIndex].bikeAmount-1;
+                    if(newVehiclePack==undefined){
+
+                      let dailyPackDetail : DailyPackDetail;
+                      dailyPackDetail = {id:v!.pack!.id, x:v.pack!.location.x, y:v.pack!.location.y, 
+                        secondsLeft:parseInt(((v.route!.chroms.length/v.speed)*3600).toFixed(0)),
+                        carAmount:0, bikeAmount:1};
+                      dailyPackDetails.push(dailyPackDetail);
+
+                    }else{
+                      newVehiclePack!.bikeAmount=newVehiclePack!.bikeAmount+1;
+                    }
+                  }
+                  if(dailyPackDetails[oldVehiclePackIndex].carAmount==0 
+                    && dailyPackDetails[oldVehiclePackIndex].bikeAmount==0){
+                    dailyPackDetails.splice(oldVehiclePackIndex,1);
+                  }
+                  v.route = response.data.route;
+                  toast.success('El vehículo ' + v.id + ' ha sido reprogramado');
+                }).catch((error) => {
+                  console.log(error);
+                })
+              }
+            }
+          }
+          
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
           if(v.movement!.from!.x < v.route!.chroms[0].to.x){
@@ -291,9 +374,7 @@ export const DailyOperationsPage = () => {
         }else{
           v.movement!.from!.x=v.movement!.to!.x;
           v.movement!.from!.y=v.movement!.to!.y;
-          //v.resumeAt==Math.trunc(new Date().getTime()/1000)+(selected=="3"?14400:7200);
           v.route!.chroms=[];
-          //apiMoment?.activePacks.splice(apiMoment.activePacks.findIndex(ap=>ap.id==v.pack?.id),1);
         }
       }else{
         if(v.state==1){
@@ -315,7 +396,6 @@ export const DailyOperationsPage = () => {
             }
 
             //notify package has been delivered
-            //apiMoment?.activePacks.splice(apiMoment!.activePacks.indexOf(v.pack!),1);
             AlgorithmService.completePack(v.id,currentTime.toString()).then((response) => {
               v.route!.chroms = parseVehicle(response.data)!.route!.chroms;
               v.carry = 0;
@@ -461,7 +541,7 @@ export const DailyOperationsPage = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [apiMoment,todaysBlockages,mainFrontComponent]);  
+  }, [apiMoment,todaysBlockages,mainFrontComponent,lowestPriorityPack,packToPrioritize]);  
 
   const updatePackagesOnMap = async() => {
     await AlgorithmService.getPacks().then((response) => {
